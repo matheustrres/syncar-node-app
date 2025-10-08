@@ -9,7 +9,9 @@ interface ContractFormProps {
   initialData?: Contract | null;
   vehicles: Vehicle[];
   drivers: Driver[];
-  onSave: (data: Omit<Contract, "id" | "userId">) => void;
+  onSave: (
+    data: Omit<Contract, "id" | "userId" | "createdAt" | "updatedAt">
+  ) => void;
   onCancel: () => void;
 }
 
