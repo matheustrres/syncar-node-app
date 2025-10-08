@@ -22,7 +22,13 @@ export type Driver = {
   email: string;
   cnh: string;
   cnhValidity: string;
-  address: string;
+  cep: string | null;
+  logradouro: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidade: string | null;
+  uf: string | null;
   status: string;
   userId: string;
   createdAt: string;

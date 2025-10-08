@@ -53,7 +53,13 @@ model Driver {
   email       String
   cnh         String     @unique
   cnhValidity DateTime   @map("cnh_validity")
-  address     String
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  uf          String?
   status      String     @default("Ativo")
   userId      String     @map("user_id")
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)

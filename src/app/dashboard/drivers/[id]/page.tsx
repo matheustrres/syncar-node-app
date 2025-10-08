@@ -67,6 +67,17 @@ export default function DriverDetailsPage() {
   if (loading) return <DriverDetailsSkeleton />;
   if (!driver) return <div>Motorista não encontrado.</div>;
 
+  const fullAddress = [
+    driver.logradouro,
+    driver.numero,
+    driver.complemento,
+    driver.bairro,
+    driver.cidade,
+    driver.uf,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
   return (
     <div>
       <button
@@ -112,10 +123,10 @@ export default function DriverDetailsPage() {
 
         <div className="border-t mt-6 pt-6">
           <h3 className="text-xl font-semibold mb-4 text-gray-700">
-            Detalhes do motorista
+            Detalhes do Motorista
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-            <DetailItem label="Nome completo" value={driver.name} />
+            <DetailItem label="Nome Completo" value={driver.name} />
             <DetailItem label="CPF" value={driver.cpf} />
             <DetailItem label="Telefone" value={driver.phone} />
             <DetailItem label="Email" value={driver.email} />
@@ -124,9 +135,11 @@ export default function DriverDetailsPage() {
               label="Validade da CNH"
               value={new Date(driver.cnhValidity).toLocaleDateString("pt-BR")}
             />
-            <div className="md:col-span-2 lg:col-span-3">
-              <DetailItem label="Endereço" value={driver.address} />
-            </div>
+            {fullAddress && (
+              <div className="md:col-span-2 lg:col-span-3">
+                <DetailItem label="Endereço" value={fullAddress} />
+              </div>
+            )}
           </div>
         </div>
       </div>
