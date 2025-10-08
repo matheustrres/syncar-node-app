@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String     @id @default(cuid())
+  name        String
+  email       String     @unique
+  password    String
+  companyName String     @map("company_name")
+  phone       String
+  vehicles    Vehicle[]
+  drivers     Driver[]
+  contracts   Contract[]
+  expenses    Expense[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Vehicle {
+  id        String     @id @default(cuid())
+  plate     String     @unique
+  brand     String
+  model     String
+  year      Int
+  color     String
+  renavam   String     @unique
+  chassis   String     @unique
+  km        Int
+  status    String     @default("Disponível")
+  userId    String     @map("user_id")
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contracts Contract[]
+  expenses  Expense[]
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  @@map("vehicles")
+}
+
+model Driver {
+  id          String     @id @default(cuid())
+  name        String
+  cpf         String     @unique
+  phone       String
+  email       String
+  cnh         String     @unique
+  cnhValidity DateTime   @map("cnh_validity")
+  address     String
+  status      String     @default("Ativo")
+  userId      String     @map("user_id")
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contracts   Contract[]
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+
+  @@map("drivers")
+}
+
+model Contract {
+  id          String    @id @default(cuid())
+  weeklyValue Float     @map("weekly_value")
+  paymentDay  String    @map("payment_day")
+  startDate   DateTime  @map("start_date")
+  deposit     Float
+  status      String    @default("Ativo")
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id])
+  vehicleId   String    @map("vehicle_id")
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId    String    @map("driver_id")
+  driver      Driver    @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  payments    Payment[]
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("contracts")
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  weekStart   DateTime  @map("week_start")
+  weekEnd     DateTime  @map("week_end")
+  value       Float
+  dueDate     DateTime  @map("due_date")
+  paymentDate DateTime? @map("payment_date")
+  status      String    @default("Pendente")
+  contractId  String    @map("contract_id")
+  contract    Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  type        String
+  description String
+  value       Float
+  date        DateTime
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+  vehicleId   String   @map("vehicle_id")
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("expenses")
+}
