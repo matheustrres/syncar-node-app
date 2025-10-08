@@ -1,13 +1,11 @@
-// src/components/VehicleForm.tsx
-
 "use client";
 
-import { Vehicle } from "@/types";
+import { Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 
 interface VehicleFormProps {
   initialData?: Vehicle | null;
-  onSave: (data: Omit<Vehicle, "id" | "userId">) => void;
+  onSave: (data: WithoutBaseItem<Vehicle>) => void;
   onCancel: () => void;
 }
 

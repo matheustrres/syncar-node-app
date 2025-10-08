@@ -1,6 +1,6 @@
 "use client";
 
-import { Driver } from "@/types";
+import { Driver, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { IMaskInput } from "react-imask";
 import {
@@ -15,7 +15,7 @@ import {
 
 interface DriverFormProps {
   initialData?: Driver | null;
-  onSave: (data: Omit<Driver, "id" | "userId">) => void;
+  onSave: (data: WithoutBaseItem<Driver>) => void;
   onCancel: () => void;
 }
 
@@ -50,7 +50,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
     }
   }, [initialData]);
 
-  // Manipulador para inputs e selects PADRÃO
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -58,7 +57,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Manipulador específico para os inputs com MÁSCARA
   const handleMaskedInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Contract, Vehicle, Driver } from "@/types";
+import { Contract, Vehicle, Driver, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { Car, User, Calendar, Shield, Hash, DollarSign } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
@@ -9,9 +9,7 @@ interface ContractFormProps {
   initialData?: Contract | null;
   vehicles: Vehicle[];
   drivers: Driver[];
-  onSave: (
-    data: Omit<Contract, "id" | "userId" | "createdAt" | "updatedAt">
-  ) => void;
+  onSave: (data: WithoutBaseItem<Contract>) => void;
   onCancel: () => void;
 }
 
@@ -62,7 +60,6 @@ const ContractForm: React.FC<ContractFormProps> = ({
 
     const parseCurrency = (value: string | undefined): number => {
       if (!value) return 0;
-      // Remove o símbolo 'R$' e os pontos de milhar, depois troca a vírgula por ponto
       const cleanedValue = value
         .replace(/R\$\s?/, "")
         .replace(/\./g, "")

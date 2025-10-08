@@ -52,6 +52,8 @@ export type Payment = {
   paymentDate?: string | null;
   status: string;
   contractId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Expense = {
@@ -62,4 +64,11 @@ export type Expense = {
   date: string;
   vehicleId: string;
   userId: string;
+  createdAt: string;
+  updatedAt: string;
 };
+
+export type WithoutBaseItem<T> = Omit<
+  T,
+  "id" | "userId" | "createdAt" | "updatedAt"
+>;

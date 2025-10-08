@@ -1,6 +1,6 @@
 "use client";
 
-import { Expense, Vehicle } from "@/types";
+import { Expense, Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { DollarSign, Car, List, Calendar, MessageSquare } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
@@ -8,7 +8,7 @@ import CurrencyInput from "../ui/CurrencyInput";
 interface ExpenseFormProps {
   initialData?: Expense | null;
   vehicles: Vehicle[];
-  onSave: (data: Omit<Expense, "id" | "userId">) => void;
+  onSave: (data: WithoutBaseItem<Expense>) => void;
   onCancel: () => void;
 }
 

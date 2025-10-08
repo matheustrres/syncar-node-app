@@ -1,6 +1,6 @@
 "use client";
 
-import { Payment, Contract, Driver, Vehicle } from "@/types";
+import { Payment, Contract, Driver, Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { Hash, DollarSign, HelpCircle } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
@@ -11,7 +11,7 @@ interface PaymentFormProps {
   contracts: Contract[];
   drivers: Driver[];
   vehicles: Vehicle[];
-  onSave: (data: Omit<Payment, "id">) => void;
+  onSave: (data: WithoutBaseItem<Payment>) => void;
   onCancel: () => void;
 }
 
