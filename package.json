@@ -19,7 +19,8 @@
     "react": "19.1.0",
     "react-currency-input-field": "^4.0.3",
     "react-dom": "19.1.0",
-    "react-imask": "^7.6.1"
+    "react-imask": "^7.6.1",
+    "swr": "^2.3.6"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
