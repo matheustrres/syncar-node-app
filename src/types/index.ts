@@ -1,5 +1,3 @@
-// Tipos que espelham o schema do Prisma para uso seguro no Frontend
-
 export type Vehicle = {
   id: string;
   plate: string;
@@ -12,6 +10,8 @@ export type Vehicle = {
   km: number;
   status: string;
   userId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Driver = {
@@ -21,22 +21,26 @@ export type Driver = {
   phone: string;
   email: string;
   cnh: string;
-  cnhValidity: string; // A data virá como string do JSON
+  cnhValidity: string;
   address: string;
   status: string;
   userId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Contract = {
   id: string;
   weeklyValue: number;
   paymentDay: string;
-  startDate: string; // A data virá como string do JSON
+  startDate: string;
   deposit: number;
   status: string;
   userId: string;
   vehicleId: string;
   driverId: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Payment = {

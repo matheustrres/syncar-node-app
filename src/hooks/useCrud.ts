@@ -1,35 +1,28 @@
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import useSWR from "swr";
+
+const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) {
+      throw new Error("An error occurred while fetching the data.");
+    }
+    return res.json();
+  });
 
 interface BaseItem {
   id: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function useCrud<T extends BaseItem>(apiPath: string) {
   const router = useRouter();
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, error, isLoading, mutate } = useSWR<T[]>(apiPath, fetcher);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<T | null>(null);
   const [itemToDelete, setItemToDelete] = useState<T | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(apiPath);
-      if (!res.ok) throw new Error(`Falha ao buscar dados de ${apiPath}.`);
-      const fetchedData = await res.json();
-      setData(fetchedData);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  }, [apiPath]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const handleOpenFormModal = (item: T | null = null) => {
     setEditingItem(item);
@@ -52,7 +45,7 @@ export function useCrud<T extends BaseItem>(apiPath: string) {
       body: JSON.stringify(formData),
     });
     handleCloseFormModal();
-    await fetchData();
+    mutate();
   };
 
   const handleDeleteClick = (item: T) => {
@@ -67,7 +60,7 @@ export function useCrud<T extends BaseItem>(apiPath: string) {
     if (itemToDelete) {
       await fetch(`${apiPath}/${itemToDelete.id}`, { method: "DELETE" });
       setItemToDelete(null);
-      await fetchData();
+      mutate();
     }
   };
 
@@ -77,12 +70,12 @@ export function useCrud<T extends BaseItem>(apiPath: string) {
   };
 
   return {
-    data,
-    loading,
+    data: data,
+    loading: isLoading,
+    error,
     isFormModalOpen,
     editingItem,
     itemToDelete,
-    fetchData,
     handleOpenFormModal,
     handleCloseFormModal,
     handleSave,

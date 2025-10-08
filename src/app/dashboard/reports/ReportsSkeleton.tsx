@@ -7,7 +7,7 @@ export default function ReportsSkeleton() {
 
       {/* Card Fluxo de Caixa */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-lg font-semibold mb-4">Fluxo de caixa Mensal</h3>
+        <h3 className="text-lg font-semibold mb-4">Fluxo de caixa mensal</h3>
         <div className="space-y-4">
           <SkeletonCard className="h-8 w-full" />
           <SkeletonCard className="h-8 w-full" />
@@ -18,7 +18,7 @@ export default function ReportsSkeleton() {
       {/* Card Inadimplência */}
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h3 className="text-lg font-semibold mb-4 text-orange-700">
-          Relatório de Inadimplência
+          Relatório de inadimplência
         </h3>
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded-lg">
