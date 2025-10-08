@@ -2,9 +2,16 @@
 
 import { Payment, Contract, Driver, Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
-import { Hash, DollarSign, HelpCircle } from "lucide-react";
+import {
+  DollarSign,
+  HelpCircle,
+  Calendar,
+  List,
+  CheckSquare,
+} from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
 import Tooltip from "../ui/ToolTip";
+import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 interface PaymentFormProps {
   initialData?: Payment | null;
@@ -32,6 +39,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     paymentDate: "",
     status: "Pago" as "Pago" | "Pendente",
   });
+
+  const statusOptions: SelectOption[] = [
+    { value: "Pago", label: "Pago" },
+    { value: "Pendente", label: "Pendente" },
+  ];
+
+  const contractOptions: SelectOption[] = contracts
+    .filter((c) => c.status === "Ativo")
+    .map((contract) => {
+      const driver = drivers.find((d) => d.id === contract.driverId);
+      const vehicle = vehicles.find((v) => v.id === contract.vehicleId);
+      return {
+        value: contract.id,
+        label: `${driver?.name} - ${vehicle?.plate} (${vehicle?.model})`,
+      };
+    });
 
   useEffect(() => {
     if (initialData) {
@@ -97,45 +120,34 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Contrato *
-          </label>
-          <select
-            name="contractId"
+          <CustomSelect
+            label="Contrato *"
             value={formData.contractId}
-            onChange={handleChange}
-            required
-            className="pl-4 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Selecione um contrato</option>
-            {contracts
-              .filter((c) => c.status === "Ativo")
-              .map((contract) => {
-                const driver = drivers.find((d) => d.id === contract.driverId);
-                const vehicle = vehicles.find(
-                  (v) => v.id === contract.vehicleId
-                );
-                return (
-                  <option key={contract.id} value={contract.id}>
-                    {driver?.name} - {vehicle?.plate} ({vehicle?.model})
-                  </option>
-                );
-              })}
-          </select>
+            onChange={(value) => {
+              const event = {
+                target: { name: "contractId", value },
+              } as React.ChangeEvent<HTMLSelectElement>;
+              handleChange(event);
+            }}
+            options={contractOptions}
+            placeholder="Selecione um contrato"
+            Icon={List}
+          />
         </div>
 
-        <div>
+        <div className="relative">
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="weekStart"
               className="block text-sm font-medium text-gray-700"
             >
-              Início da Semana *
+              Início da semana *
             </label>
             <Tooltip text="O primeiro dia do período de 7 dias que este pagamento cobre.">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
             </Tooltip>
           </div>
+          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
           <input
             id="weekStart"
             type="date"
@@ -143,22 +155,23 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.weekStart}
             onChange={handleChange}
             required
-            className="pl-4 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div>
+        <div className="relative">
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="weekEnd"
               className="block text-sm font-medium text-gray-700"
             >
-              Fim da Semana *
+              Fim da semana *
             </label>
             <Tooltip text="O último dia do período de 7 dias que este pagamento cobre.">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
             </Tooltip>
           </div>
+          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
           <input
             id="weekEnd"
             type="date"
@@ -166,7 +179,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.weekEnd}
             onChange={handleChange}
             required
-            className="pl-4 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -178,18 +191,19 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           onValueChange={(value) => handleCurrencyChange(value, "value")}
           required
         />
-        <div>
+        <div className="relative">
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="dueDate"
               className="block text-sm font-medium text-gray-700"
             >
-              Data de Vencimento *
+              Data de vencimento *
             </label>
             <Tooltip text="O prazo final para o pagamento. Usado no controle de inadimplência.">
               <HelpCircle size={16} className="text-gray-400 cursor-help" />
             </Tooltip>
           </div>
+          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
           <input
             id="dueDate"
             type="date"
@@ -197,38 +211,36 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.dueDate}
             onChange={handleChange}
             required
-            className="pl-4 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Data do Pagamento
+            Data do pagamento
           </label>
+          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
           <input
             type="date"
             name="paymentDate"
             value={formData.paymentDate}
             onChange={handleChange}
-            className="pl-4 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status *
-          </label>
-          <Hash className="absolute left-3 top-8 text-gray-400" size={18} />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            required
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Pago">Pago</option>
-            <option value="Pendente">Pendente</option>
-          </select>
-        </div>
+
+        <CustomSelect
+          label="Status *"
+          value={formData.status}
+          onChange={(value) =>
+            setFormData((prev) => ({
+              ...prev,
+              status: value as "Pago" | "Pendente",
+            }))
+          }
+          options={statusOptions}
+          Icon={CheckSquare}
+        />
       </div>
       <div className="flex justify-end gap-4 pt-4">
         <button

@@ -43,7 +43,7 @@ export default function DashboardSkeleton() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-400">
             <AlertCircle />
-            Pagamentos Pendentes
+            Pagamentos pendentes
           </h3>
           <div className="space-y-3">
             <ListItemSkeleton />
@@ -55,7 +55,7 @@ export default function DashboardSkeleton() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-400">
             <Car />
-            Status da Frota
+            Status da frota
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">

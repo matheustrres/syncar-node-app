@@ -192,7 +192,7 @@ export default function DashboardPage() {
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <AlertCircle className="text-orange-500" />
-            Pagamentos Pendentes
+            Pagamentos pendentes
           </h3>
           <div className="space-y-3 max-h-72 overflow-y-auto">
             {dashboardStats.pendingPayments.length > 0 ? (

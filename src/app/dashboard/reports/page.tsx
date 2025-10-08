@@ -222,7 +222,7 @@ export default function ReportsPage() {
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-4">Resumo por Motorista</h3>
+        <h3 className="text-lg font-semibold mb-4">Resumo por motorista</h3>
         <div className="space-y-3">
           {driverSummaries.map((summary) => (
             <div

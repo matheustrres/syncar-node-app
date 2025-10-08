@@ -1,6 +1,6 @@
 "use client";
 
-import { Expense, Vehicle, WithoutBaseItem } from "@/types";
+import { Expense, Vehicle } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { DollarSign, Car, List, Calendar, MessageSquare } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
@@ -8,7 +8,9 @@ import CurrencyInput from "../ui/CurrencyInput";
 interface ExpenseFormProps {
   initialData?: Expense | null;
   vehicles: Vehicle[];
-  onSave: (data: WithoutBaseItem<Expense>) => void;
+  onSave: (
+    data: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">
+  ) => void;
   onCancel: () => void;
 }
 
@@ -79,7 +81,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             value={formData.vehicleId}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione um veículo</option>
             {vehicles.map((v) => (
@@ -100,7 +102,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             value={formData.type}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Manutenção">Manutenção</option>
             <option value="IPVA">IPVA</option>
@@ -122,7 +124,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             value={formData.date}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -141,7 +143,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             onChange={handleChange}
             required
             placeholder="Ex: Troca de óleo e filtros"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 

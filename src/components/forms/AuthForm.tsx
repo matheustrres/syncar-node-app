@@ -249,7 +249,7 @@ const AuthForm = () => {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome Completo *
+                    Nome completo *
                   </label>
                   <div className="relative">
                     <User
@@ -378,7 +378,7 @@ const AuthForm = () => {
             {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar Senha *
+                  Confirmar senha *
                 </label>
                 <div className="relative">
                   <Lock

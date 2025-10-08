@@ -1,6 +1,6 @@
 "use client";
 
-import { Driver, WithoutBaseItem } from "@/types";
+import { Driver } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { IMaskInput } from "react-imask";
 import {
@@ -12,10 +12,13 @@ import {
   MapPin,
   CheckSquare,
 } from "lucide-react";
+import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 interface DriverFormProps {
   initialData?: Driver | null;
-  onSave: (data: WithoutBaseItem<Driver>) => void;
+  onSave: (
+    data: Omit<Driver, "id" | "userId" | "createdAt" | "updatedAt">
+  ) => void;
   onCancel: () => void;
 }
 
@@ -34,6 +37,11 @@ const DriverForm: React.FC<DriverFormProps> = ({
     address: "",
     status: "Ativo",
   });
+
+  const statusOptions: SelectOption[] = [
+    { value: "Ativo", label: "Ativo" },
+    { value: "Inativo", label: "Inativo" },
+  ];
 
   useEffect(() => {
     if (initialData) {
@@ -97,7 +105,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
             mask="000.000.000-00"
             name="cpf"
             value={formData.cpf}
-            onAccept={(value) => handleMaskedInputChange("cpf", value)}
+            onAccept={(value) => handleMaskedInputChange("cpf", String(value))}
             placeholder="000.000.000-00"
             required
             className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -113,7 +121,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             mask="(00) 00000-0000"
             name="phone"
             value={formData.phone}
-            onAccept={(value) => handleMaskedInputChange("phone", value)}
+            onAccept={(value) =>
+              handleMaskedInputChange("phone", String(value))
+            }
             placeholder="(00) 00000-0000"
             required
             className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -183,24 +193,15 @@ const DriverForm: React.FC<DriverFormProps> = ({
           />
         </div>
 
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status *
-          </label>
-          <CheckSquare
-            className="absolute left-3 top-9 text-gray-400"
-            size={20}
-          />
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
-        </div>
+        <CustomSelect
+          label="Status *"
+          value={formData.status}
+          onChange={(value) =>
+            setFormData((prev) => ({ ...prev, status: value }))
+          }
+          options={statusOptions}
+          Icon={CheckSquare}
+        />
       </div>
 
       <div className="flex justify-end gap-4 pt-4">

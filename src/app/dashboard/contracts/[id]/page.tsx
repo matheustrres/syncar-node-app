@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Contract, Driver, Vehicle } from "@/types";
+import { Contract, Driver, Vehicle, WithoutBaseItem } from "@/types";
 import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
 import ContractDetailsSkeleton from "./ContractDetailsSkeleton";
 import Modal from "@/components/ui/Modal";
@@ -60,7 +60,7 @@ export default function ContractDetailPage() {
     fetchContract();
   }, [fetchContract]);
 
-  const handleSave = async (data: Omit<Contract, "id" | "userId">) => {
+  const handleSave = async (data: WithoutBaseItem<Contract>) => {
     await fetch(`/api/contracts/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -137,7 +137,7 @@ export default function ContractDetailPage() {
               value={`R$ ${contract.weeklyValue.toFixed(2)}`}
               className="font-semibold text-green-600"
             />
-            <DetailItem label="Dia do pagamento" value={contract.paymentDay} />
+            <DetailItem label="Data do pagamento" value={contract.paymentDay} />
             <DetailItem
               label="Caução"
               value={`R$ ${contract.deposit.toFixed(2)}`}

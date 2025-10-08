@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Driver } from "@/types";
+import { Driver, WithoutBaseItem } from "@/types";
 import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DriverDetailsSkeleton from "./DriverDetailsSkeleton";
 import Modal from "@/components/ui/Modal";
@@ -48,7 +48,7 @@ export default function DriverDetailsPage() {
     fetchDriver();
   }, [fetchDriver]);
 
-  const handleSave = async (data: Omit<Driver, "id" | "userId">) => {
+  const handleSave = async (data: WithoutBaseItem<Driver>) => {
     await fetch(`/api/drivers/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

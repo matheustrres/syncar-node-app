@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Payment, Expense, Contract, Driver, Vehicle } from "@/types";
+import {
+  Payment,
+  Expense,
+  Contract,
+  Driver,
+  Vehicle,
+  WithoutBaseItem,
+} from "@/types";
 import Modal from "@/components/ui/Modal";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
@@ -57,7 +64,7 @@ export default function FinancialPage() {
 
   const handleSave = async (
     apiPath: string,
-    data: Omit<Payment, "id"> | Omit<Expense, "id" | "userId">
+    data: WithoutBaseItem<Payment> | WithoutBaseItem<Expense>
   ) => {
     await fetch(apiPath, {
       method: "POST",

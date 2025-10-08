@@ -182,7 +182,7 @@ export default function ContractsPage() {
       <Modal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
-        title={editingItem ? "Editar Contrato" : "Novo Contrato"}
+        title={editingItem ? "Editar contrato" : "Novo contrato"}
         size="4xl"
       >
         <ContractForm
@@ -197,7 +197,7 @@ export default function ContractsPage() {
       <Modal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteModal}
-        title="Confirmar Exclusão"
+        title="Confirmar exclusão"
         size="md"
       >
         <div className="text-center p-4">
