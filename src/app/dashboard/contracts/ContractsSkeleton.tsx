@@ -1,3 +1,5 @@
+"use client";
+
 import SkeletonCard from "@/components/ui/SkeletonCard";
 
 const TableRowSkeleton = () => (
@@ -23,14 +25,37 @@ const TableRowSkeleton = () => (
   </tr>
 );
 
+const CardSkeleton = () => (
+  <div className="bg-white rounded-lg shadow-md p-4 space-y-3 animate-pulse">
+    <div className="flex justify-between items-start">
+      <div>
+        <SkeletonCard className="h-5 w-32 mb-2" />
+        <SkeletonCard className="h-4 w-40" />
+      </div>
+      <SkeletonCard className="h-6 w-16 rounded-full" />
+    </div>
+    <div className="border-t pt-2 flex justify-between items-center">
+      <SkeletonCard className="h-5 w-28" />
+      <div className="flex gap-2">
+        <SkeletonCard className="h-7 w-7 rounded-full" />
+        <SkeletonCard className="h-7 w-7 rounded-full" />
+      </div>
+    </div>
+  </div>
+);
+
 export default function ContractsSkeleton() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Contratos</h2>
-        <div className="bg-gray-200 h-10 w-44 rounded-lg animate-pulse" />
+        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+          Contratos
+        </h2>
+        <SkeletonCard className="h-10 w-10 sm:w-44 rounded-lg animate-pulse" />
       </div>
-      <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+
+      {/* Skeleton da Tabela para Desktop */}
+      <div className="hidden lg:block bg-white shadow-md rounded-lg overflow-x-auto animate-pulse">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -41,7 +66,7 @@ export default function ContractsSkeleton() {
                 Veículo
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                Valor semanal
+                Valor Semanal
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                 Status
@@ -55,9 +80,15 @@ export default function ContractsSkeleton() {
             <TableRowSkeleton />
             <TableRowSkeleton />
             <TableRowSkeleton />
-            <TableRowSkeleton />
           </tbody>
         </table>
+      </div>
+
+      {/* Skeleton dos Cartões para Mobile */}
+      <div className="lg:hidden grid grid-cols-1 gap-4">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
       </div>
     </div>
   );

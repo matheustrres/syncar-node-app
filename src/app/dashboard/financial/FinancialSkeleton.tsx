@@ -31,17 +31,17 @@ const ListItemSkeleton = () => (
 export default function FinancialSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
         <h2 className="text-3xl font-bold text-gray-800">Financeiro</h2>
-        <div className="flex gap-4">
-          <SkeletonCard className="h-10 w-48 rounded-lg" />
-          <SkeletonCard className="h-10 w-44 rounded-lg" />
+        <div className="flex gap-2 sm:gap-4 w-full sm:w-auto">
+          <SkeletonCard className="h-10 flex-1 sm:w-44 rounded-lg" />
+          <SkeletonCard className="h-10 flex-1 sm:w-48 rounded-lg" />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          {/* LINHA ATUALIZADA ABAIXO */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Coluna 1: Pagamentos Pendentes */}
+        <div className="bg-white p-6 rounded-lg shadow-md w-full">
           <div className="h-8 mb-4 flex items-center gap-2">
             <Clock size={20} className="text-gray-300" />
             <SkeletonCard className="h-6 w-48" />
@@ -49,11 +49,12 @@ export default function FinancialSkeleton() {
           <div className="space-y-3">
             <PendingItemSkeleton />
             <PendingItemSkeleton />
+            <PendingItemSkeleton />
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          {/* LINHA ATUALIZADA ABAIXO */}
+        {/* Coluna 2: Despesas Recentes */}
+        <div className="bg-white p-6 rounded-lg shadow-md w-full">
           <div className="h-8 mb-4 flex items-center gap-2">
             <TrendingDown size={20} className="text-gray-300" />
             <SkeletonCard className="h-6 w-48" />
@@ -64,18 +65,19 @@ export default function FinancialSkeleton() {
             <ListItemSkeleton />
           </div>
         </div>
-      </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        {/* LINHA ATUALIZADA ABAIXO */}
-        <div className="h-8 mb-4 flex items-center gap-2">
-          <CheckCircle size={20} className="text-gray-300" />
-          <SkeletonCard className="h-6 w-64" />
-        </div>
-        <div className="space-y-3">
-          <ListItemSkeleton />
-          <ListItemSkeleton />
-          <ListItemSkeleton />
+        {/* Coluna 3: Histórico de Pagamentos */}
+        <div className="bg-white p-6 rounded-lg shadow-md w-full">
+          <div className="h-8 mb-4 flex items-center gap-2">
+            <CheckCircle size={20} className="text-gray-300" />
+            <SkeletonCard className="h-6 w-56" />
+          </div>
+          <div className="space-y-3">
+            <ListItemSkeleton />
+            <ListItemSkeleton />
+            <ListItemSkeleton />
+            <ListItemSkeleton />
+          </div>
         </div>
       </div>
     </div>

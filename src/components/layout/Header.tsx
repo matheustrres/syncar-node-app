@@ -1,16 +1,24 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon } from "lucide-react";
+import { LogOut, User as UserIcon, Menu } from "lucide-react";
 import Image from "next/image";
 
-const Header = () => {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession();
 
   return (
-    <header className="bg-white shadow-sm h-16 flex justify-end items-center px-6 z-10 relative">
+    <header className="bg-white shadow-sm h-16 flex justify-between lg:justify-end items-center px-6 z-10 relative">
+      {/* Botão Hambúrguer - Visível apenas em telas pequenas (abaixo de lg) */}
+      <button onClick={onMenuClick} className="lg:hidden text-gray-600">
+        <Menu size={24} />
+      </button>
+
       <div className="flex items-center gap-4">
-        {/* Informações do Usuário */}
         <div className="text-right">
           <p className="font-semibold text-sm text-gray-800">
             {session?.user?.name || "Usuário"}
@@ -18,7 +26,6 @@ const Header = () => {
           <p className="text-xs text-gray-500">{session?.user?.email}</p>
         </div>
 
-        {/* Avatar do Usuário */}
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
           {session?.user?.image ? (
             <Image
@@ -33,10 +40,8 @@ const Header = () => {
           )}
         </div>
 
-        {/* Divisor Visual */}
         <div className="h-8 w-px bg-gray-200" />
 
-        {/* Botão de Sair */}
         <button
           onClick={() => signOut({ callbackUrl: "/" })}
           title="Sair"
