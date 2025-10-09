@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Syncar",
-  description: "Sistema de Gestão de Frotas",
+  description: "Sistema de gestão de frotas",
 };
 
 export default function RootLayout({

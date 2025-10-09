@@ -188,7 +188,7 @@ const AuthForm = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">
-                  Gestão de Veículos
+                  Gestão de veículos
                 </h3>
                 <p className="text-blue-100 text-sm">
                   Controle total da sua frota com informações detalhadas
@@ -201,7 +201,7 @@ const AuthForm = () => {
               </div>
               <div>
                 <h3 className="font-semibold text-lg mb-1">
-                  Controle de Motoristas
+                  Controle de motoristas
                 </h3>
                 <p className="text-blue-100 text-sm">
                   Gerencie documentação e histórico de cada motorista
