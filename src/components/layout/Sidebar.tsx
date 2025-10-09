@@ -9,7 +9,6 @@ import {
   DollarSign,
   Calendar,
   TrendingUp,
-  X,
 } from "lucide-react";
 
 const navItems = [
@@ -39,20 +38,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       />
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-white text-gray-800 flex-col p-4 shadow-lg z-30
+        className={`fixed top-0 left-0 h-full w-64 bg-white flex flex-col z-30
           transform transition-transform duration-300 ease-in-out
-          lg:relative lg:translate-x-0 lg:shadow-none lg:flex ${
+          lg:relative lg:translate-x-0 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-blue-600 p-4">Syncar</h1>
-          <button onClick={onClose} className="lg:hidden p-2">
-            <X size={24} />
-          </button>
+        <div className="flex items-center h-16 px-6 flex-shrink-0">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <Car className="text-blue-600" size={28} />
+            <span className="text-2xl font-bold text-gray-800">Syncar</span>
+          </Link>
         </div>
 
-        <nav className="flex-1">
+        <nav className="flex-1 p-4 overflow-y-auto">
           <ul>
             {navItems.map((item) => (
               <li key={item.label}>
@@ -61,12 +60,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   onClick={onClose}
                   className={`flex items-center gap-3 px-4 py-3 my-1 rounded-lg transition-colors ${
                     pathname === item.href
-                      ? "bg-blue-500 text-white"
-                      : "hover:bg-gray-100"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <item.icon size={20} />
-                  <span>{item.label}</span>
+                  <span className="font-medium">{item.label}</span>
                 </Link>
               </li>
             ))}
