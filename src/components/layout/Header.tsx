@@ -1,8 +1,10 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { LogOut, User as UserIcon, Menu } from "lucide-react";
+import { LogOut, User as UserIcon, Menu as MenuIcon } from "lucide-react";
 import Image from "next/image";
+import { Menu, Transition } from "@headlessui/react";
+import { Fragment } from "react";
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -12,45 +14,68 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession();
 
   return (
-    <header className="bg-white h-16 flex justify-between items-center px-6 sticky top-0 z-10">
+    <header className="bg-white h-16 flex justify-between items-center px-6 border-b border-gray-200 sticky top-0 z-20">
       <button
         onClick={onMenuClick}
         className="lg:hidden text-gray-600"
         title="Abrir menu"
       >
-        <Menu size={24} />
+        <MenuIcon size={24} />
       </button>
 
-      <div className="lg:hidden" />
+      {/* Este div vazio garante que o menu do usuário fique sempre à direita */}
+      <div className="flex-1" />
 
-      <div className="flex items-center gap-4 ml-auto">
-        <div className="text-right hidden sm:block">
-          <p className="font-semibold text-sm text-gray-800">
-            {session?.user?.name || "Usuário"}
-          </p>
-          <p className="text-xs text-gray-500">{session?.user?.email}</p>
+      <Menu as="div" className="relative inline-block text-left">
+        <div>
+          <Menu.Button className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="text-right hidden sm:block">
+              <p className="font-semibold text-sm text-gray-800">
+                {session?.user?.name || "Usuário"}
+              </p>
+              <p className="text-xs text-gray-500">{session?.user?.email}</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt="Avatar"
+                  width={40}
+                  height={40}
+                />
+              ) : (
+                <UserIcon className="text-gray-500" size={24} />
+              )}
+            </div>
+          </Menu.Button>
         </div>
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-          {session?.user?.image ? (
-            <Image
-              src={session.user.image}
-              alt="Avatar"
-              width={40}
-              height={40}
-            />
-          ) : (
-            <UserIcon className="text-gray-500" size={24} />
-          )}
-        </div>
-        <div className="h-8 w-px bg-gray-200" />
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          title="Sair"
-          className="flex items-center gap-2 text-gray-500 hover:text-red-500 transition-colors"
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
         >
-          <LogOut size={20} />
-        </button>
-      </div>
+          <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div className="px-1 py-1 "></div>
+            <div className="px-1 py-1">
+              <Menu.Item>
+                {({ active }) => (
+                  <button
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className={`${active ? "bg-red-500 text-white" : "text-gray-900"} group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                  >
+                    <LogOut className="mr-2 h-5 w-5" aria-hidden="true" />
+                    Sair
+                  </button>
+                )}
+              </Menu.Item>
+            </div>
+          </Menu.Items>
+        </Transition>
+      </Menu>
     </header>
   );
 };
