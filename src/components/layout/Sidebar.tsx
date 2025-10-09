@@ -40,7 +40,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-white flex flex-col z-30
           transform transition-transform duration-300 ease-in-out
-          lg:relative lg:translate-x-0 ${
+          lg:translate-x-0 border-r border-gray-200 ${
             isOpen ? "translate-x-0" : "-translate-x-full"
           }`}
       >
