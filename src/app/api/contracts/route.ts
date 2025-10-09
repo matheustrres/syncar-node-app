@@ -20,10 +20,8 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-
   const data = await request.json();
   const { vehicleId, status, startDate, weeklyValue, paymentDay } = data;
-
   if (status === "Ativo") {
     try {
       const dayMap: { [key: string]: number } = {
@@ -36,7 +34,6 @@ export async function POST(request: Request) {
         Sábado: 6,
       };
       const paymentDayNumber = dayMap[paymentDay];
-
       const newContract = await prisma.$transaction(async (prisma) => {
         const createdContract = await prisma.contract.create({
           data: { ...data, userId: session.user.id },
@@ -70,7 +67,6 @@ export async function POST(request: Request) {
         await prisma.payment.createMany({
           data: paymentsToCreate,
         });
-
         return createdContract;
       });
       return NextResponse.json(newContract, { status: 201 });

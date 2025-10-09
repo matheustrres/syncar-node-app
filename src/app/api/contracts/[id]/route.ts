@@ -3,17 +3,14 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-export async function GET(
-  _: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function GET(_: NextRequest, context: { params: { id: string } }) {
   const { id } = context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const contract = await prisma.contract.findUnique({
-    where: { id: id, userId: session.user.id },
+    where: { id, userId: session.user.id },
     include: {
       driver: true,
       vehicle: true,
@@ -32,12 +29,11 @@ export async function PUT(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
-  const { id } = context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const data = await request.json();
+  const { id } = context.params;
   const contractBeforeUpdate = await prisma.contract.findUnique({
     where: { id },
   });
@@ -50,6 +46,7 @@ export async function PUT(
       { status: 404 }
     );
   }
+  const data = await request.json();
   const updatedContract = await prisma.contract.update({ where: { id }, data });
   if (
     contractBeforeUpdate.status === "Ativo" &&
@@ -67,11 +64,11 @@ export async function DELETE(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
-  const { id } = context.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  const { id } = context.params;
   const contractToDelete = await prisma.contract.findUnique({ where: { id } });
   if (!contractToDelete || contractToDelete.userId !== session.user.id) {
     return NextResponse.json(
