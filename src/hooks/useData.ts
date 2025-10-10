@@ -126,3 +126,7 @@ export function useFetchProfile(initialData?: User | null) {
     mutateProfile: mutate,
   };
 }
+
+export function useFetchVehicleById(id?: string, fallbackData?: Vehicle) {
+  return useFetchItemById<Vehicle>("/api/vehicles", id, fallbackData);
+}
