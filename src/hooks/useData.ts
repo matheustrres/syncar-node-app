@@ -7,6 +7,7 @@ import {
   Payment,
   Expense,
   ContractWithDetails,
+  User,
 } from "@/types";
 import useSWR from "swr";
 
@@ -108,4 +109,20 @@ export function useFetchContractById(
 
 export function useFetchDriverById(id?: string, fallbackData?: Driver) {
   return useFetchItemById<Driver>("/api/drivers", id, fallbackData);
+}
+
+export function useFetchProfile(initialData?: User | null) {
+  const { data, error, isLoading, mutate } = useSWR<User | null>(
+    "/api/profile",
+    fetcher,
+    {
+      fallbackData: initialData,
+    }
+  );
+  return {
+    profile: data,
+    isLoading,
+    isError: error,
+    mutateProfile: mutate,
+  };
 }

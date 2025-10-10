@@ -2,7 +2,7 @@ import { cache } from "react";
 import { prisma } from "./prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./authOptions";
-import { Contract, Driver, Expense, Payment, Vehicle } from "@/types";
+import { Contract, Driver, Expense, Payment, User, Vehicle } from "@/types";
 
 export const getContracts = cache(async () => {
   const session = await getServerSession(authOptions);
@@ -45,4 +45,13 @@ export const getExpenses = cache(async () => {
     where: { userId: session.user.id },
     orderBy: { date: "desc" },
   }) as unknown as Expense[];
+});
+
+export const getProfile = cache(async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return null;
+  return prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { name: true, email: true, companyName: true },
+  }) as unknown as User;
 });
