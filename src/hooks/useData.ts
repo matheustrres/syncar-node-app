@@ -105,3 +105,7 @@ export function useFetchContractById(
     fallbackData
   );
 }
+
+export function useFetchDriverById(id?: string, fallbackData?: Driver) {
+  return useFetchItemById<Driver>("/api/drivers", id, fallbackData);
+}
