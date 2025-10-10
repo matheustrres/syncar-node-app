@@ -43,7 +43,7 @@ export default function ReportsPage() {
     } = {};
     payments.forEach((p) => {
       if (p.status === "Pago" && p.paymentDate) {
-        const month = p.paymentDate.substring(0, 7); // YYYY-MM
+        const month = p.paymentDate.toString().substring(0, 7); // YYYY-MM
         if (!cashFlowData[month]) {
           cashFlowData[month] = { month, revenue: 0, expense: 0 };
         }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Vehicle } from "@/types";
+import { Vehicle, WithoutBaseItem } from "@/types";
 import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
 import VehicleDetailsSkeleton from "./VehicleDetailsSkeleton";
 import Modal from "@/components/ui/Modal";
@@ -49,7 +49,7 @@ export default function VehicleDetailsPage() {
     fetchVehicle();
   }, [fetchVehicle]);
 
-  const handleSave = async (data: Omit<Vehicle, "id" | "userId">) => {
+  const handleSave = async (data: WithoutBaseItem<Vehicle>) => {
     await fetch(`/api/vehicles/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

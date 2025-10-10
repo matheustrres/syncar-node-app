@@ -1,78 +1,22 @@
-export type Vehicle = {
-  id: string;
-  plate: string;
-  brand: string;
-  model: string;
-  year: number;
-  color: string;
-  renavam: string;
-  chassis: string;
-  km: number;
-  status: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
+import {
+  Vehicle as VehicleModel,
+  Driver as DriverModel,
+  Contract as ContractModel,
+  Payment as PaymentModel,
+  Expense as ExpenseModel,
+  User as UserModel,
+} from "@prisma/client";
+
+type ToJson<T> = {
+  [P in keyof T]: T[P] extends Date ? string : T[P];
 };
 
-export type Driver = {
-  id: string;
-  name: string;
-  cpf: string;
-  phone: string;
-  email: string;
-  cnh: string;
-  cnhValidity: string;
-  cep: string | null;
-  logradouro: string | null;
-  numero: string | null;
-  complemento: string | null;
-  bairro: string | null;
-  cidade: string | null;
-  uf: string | null;
-  status: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Contract = {
-  id: string;
-  weeklyValue: number;
-  paymentDay: string;
-  startDate: string;
-  deposit: number;
-  status: string;
-  userId: string;
-  vehicleId: string;
-  driverId: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Payment = {
-  id: string;
-  weekStart: string;
-  weekEnd: string;
-  value: number;
-  dueDate: string;
-  paymentDate?: string | null;
-  status: string;
-  contractId: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type Expense = {
-  id: string;
-  type: string;
-  description: string;
-  value: number;
-  date: string;
-  vehicleId: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-};
+export type Vehicle = ToJson<VehicleModel>;
+export type Driver = ToJson<DriverModel>;
+export type Contract = ToJson<ContractModel>;
+export type Payment = ToJson<PaymentModel>;
+export type Expense = ToJson<ExpenseModel>;
+export type User = ToJson<UserModel>;
 
 export type WithoutBaseItem<T> = Omit<
   T,
