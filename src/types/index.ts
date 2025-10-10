@@ -17,6 +17,10 @@ export type Contract = ToJson<ContractModel>;
 export type Payment = ToJson<PaymentModel>;
 export type Expense = ToJson<ExpenseModel>;
 export type User = ToJson<UserModel>;
+export type ContractWithDetails = Contract & {
+  driver: Driver;
+  vehicle: Vehicle;
+};
 
 export type WithoutBaseItem<T> = Omit<
   T,

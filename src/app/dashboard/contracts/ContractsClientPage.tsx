@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Contract, Vehicle, Driver, WithoutBaseItem } from "@/types";
-import { useContracts, useDrivers, useVehicles } from "@/hooks/useData";
+import {
+  useFetchContracts,
+  useFetchDrivers,
+  useFetchVehicles,
+} from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
 import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
@@ -23,25 +27,24 @@ export default function ContractsClientPage({
 }: ContractsClientPageProps) {
   const router = useRouter();
 
-  // Renomeando as variáveis para evitar conflitos e dar clareza
   const {
     contracts,
     isLoading: isLoadingContracts,
     isError: isErrorContracts,
     mutateContracts,
-  } = useContracts(initialContracts);
+  } = useFetchContracts(initialContracts);
 
   const {
     drivers,
     isLoading: isLoadingDrivers,
     isError: isErrorDrivers,
-  } = useDrivers(initialDrivers);
+  } = useFetchDrivers(initialDrivers);
 
   const {
     vehicles,
     isLoading: isLoadingVehicles,
     isError: isErrorVehicles,
-  } = useVehicles(initialVehicles);
+  } = useFetchVehicles(initialVehicles);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Contract | null>(null);

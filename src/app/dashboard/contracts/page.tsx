@@ -7,7 +7,6 @@ export default async function ContractsPage() {
     getDrivers(),
     getVehicles(),
   ]);
-
   return (
     <ContractsClientPage
       initialContracts={contracts}

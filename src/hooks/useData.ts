@@ -1,11 +1,18 @@
 "use client";
 
-import { Driver, Vehicle, Contract, Payment, Expense } from "@/types";
+import {
+  Driver,
+  Vehicle,
+  Contract,
+  Payment,
+  Expense,
+  ContractWithDetails,
+} from "@/types";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export function useDrivers(fallbackData?: Driver[]) {
+export function useFetchDrivers(fallbackData?: Driver[]) {
   const { data, error, isLoading, mutate } = useSWR<Driver[]>(
     "/api/drivers",
     fetcher,
@@ -19,7 +26,7 @@ export function useDrivers(fallbackData?: Driver[]) {
   };
 }
 
-export function useVehicles(fallbackData?: Vehicle[]) {
+export function useFetchVehicles(fallbackData?: Vehicle[]) {
   const { data, error, isLoading, mutate } = useSWR<Vehicle[]>(
     "/api/vehicles",
     fetcher,
@@ -33,7 +40,7 @@ export function useVehicles(fallbackData?: Vehicle[]) {
   };
 }
 
-export function useContracts(fallbackData?: Contract[]) {
+export function useFetchContracts(fallbackData?: Contract[]) {
   const { data, error, isLoading, mutate } = useSWR<Contract[]>(
     "/api/contracts",
     fetcher,
@@ -47,7 +54,7 @@ export function useContracts(fallbackData?: Contract[]) {
   };
 }
 
-export function usePayments(fallbackData?: Payment[]) {
+export function useFetchPayments(fallbackData?: Payment[]) {
   const { data, error, isLoading, mutate } = useSWR<Payment[]>(
     "/api/payments",
     fetcher,
@@ -61,7 +68,7 @@ export function usePayments(fallbackData?: Payment[]) {
   };
 }
 
-export function useExpenses(fallbackData?: Expense[]) {
+export function useFetchExpenses(fallbackData?: Expense[]) {
   const { data, error, isLoading, mutate } = useSWR<Expense[]>(
     "/api/expenses",
     fetcher,
@@ -73,4 +80,28 @@ export function useExpenses(fallbackData?: Expense[]) {
     isError: error,
     mutateExpenses: mutate,
   };
+}
+
+function useFetchItemById<T>(apiPath: string, id?: string, fallbackData?: T) {
+  const key = id ? `${apiPath}/${id}` : null;
+  const { data, error, isLoading, mutate } = useSWR<T>(key, fetcher, {
+    fallbackData,
+  });
+  return {
+    data,
+    isLoading,
+    isError: error,
+    mutate,
+  };
+}
+
+export function useFetchContractById(
+  id?: string,
+  fallbackData?: ContractWithDetails
+) {
+  return useFetchItemById<ContractWithDetails>(
+    "/api/contracts",
+    id,
+    fallbackData
+  );
 }
