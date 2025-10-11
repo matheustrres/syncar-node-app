@@ -40,15 +40,22 @@ const columns: Column<Vehicle>[] = [
 
 interface ClientPageProps {
   initialVehicles: Vehicle[];
+  total: number;
 }
 
 export default function VehiclesClientPage({
   initialVehicles,
+  total: initialTotal,
 }: ClientPageProps) {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const { vehicles, isError, mutateVehicles } =
-    useFetchVehicles(initialVehicles);
+  const { vehicles, total, isError, isLoading, mutateVehicles } = useFetchVehicles(
+    page,
+    limit,
+    { vehicles: initialVehicles, total: initialTotal }
+  );
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Vehicle | null>(null);
@@ -102,7 +109,7 @@ export default function VehiclesClientPage({
     e.stopPropagation();
   };
 
-  if (!vehicles && !isError) return <VehiclesSkeleton />;
+  if (isLoading) return <VehiclesSkeleton />;
 
   if (isError) {
     return (
@@ -111,6 +118,8 @@ export default function VehiclesClientPage({
       </div>
     );
   }
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div>
@@ -189,6 +198,31 @@ export default function VehiclesClientPage({
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-6 flex items-center justify-between">
+        <div className="text-sm text-gray-700">
+          Mostrando {vehicles.length} de {total} veículos.
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-700">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages || total === 0}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Próximo
+          </button>
+        </div>
       </div>
 
       <Modal

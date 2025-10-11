@@ -1,18 +1,19 @@
 import { prisma } from "@/lib/prisma";
 import ContractDetailsClientPage from "./ContractDetailsClientPage";
-import { getVehicles, getDrivers } from "@/lib/data-access";
+import { getAllVehicles, getAllDrivers } from "@/lib/data-access";
 import { notFound } from "next/navigation";
 import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
 
-export default async function ContractDetailsPage(
-  props: {
-    params: Promise<{ id: string }>;
-  }
-) {
-  const params = await props.params;
+interface ContractDetailsPageProps {
+  params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
+export default async function ContractDetailsPage({ params }: ContractDetailsPageProps) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound();
+
   const contract = await prisma.contract.findUnique({
     where: {
       id: params.id,
@@ -20,8 +21,11 @@ export default async function ContractDetailsPage(
     },
     include: { driver: true, vehicle: true },
   });
+
   if (!contract) notFound();
-  const [vehicles, drivers] = await Promise.all([getVehicles(), getDrivers()]);
+
+  const [vehicles, drivers] = await Promise.all([getAllVehicles(), getAllDrivers()]);
+
   return (
     <ContractDetailsClientPage
       id={params.id}

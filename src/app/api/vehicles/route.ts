@@ -1,18 +1,42 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const vehicles = await prisma.vehicle.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json(vehicles);
+
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const skip = (page - 1) * limit;
+
+  const where = { userId: session.user.id };
+
+  const [vehicles, total] = await prisma.$transaction([
+    prisma.vehicle.findMany({
+      where,
+      select: {
+        id: true,
+        plate: true,
+        brand: true,
+        model: true,
+        year: true,
+        status: true,
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.vehicle.count({ where }),
+  ]);
+
+  return NextResponse.json({ vehicles, total });
 }
 
 export async function POST(request: Request) {

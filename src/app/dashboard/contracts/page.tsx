@@ -1,15 +1,20 @@
-import { getContracts, getDrivers, getVehicles } from "@/lib/data-access";
+import {
+  getContracts,
+  getAllDrivers,
+  getAllVehicles,
+} from "@/lib/data-access";
 import ContractsClientPage from "./ContractsClientPage";
 
 export default async function ContractsPage() {
-  const [contracts, drivers, vehicles] = await Promise.all([
+  const [{ contracts, total }, drivers, vehicles] = await Promise.all([
     getContracts(),
-    getDrivers(),
-    getVehicles(),
+    getAllDrivers(),
+    getAllVehicles(),
   ]);
   return (
     <ContractsClientPage
       initialContracts={contracts}
+      total={total}
       initialDrivers={drivers}
       initialVehicles={vehicles}
     />

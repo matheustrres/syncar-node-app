@@ -4,92 +4,205 @@ import {
   Driver,
   Vehicle,
   Contract,
-  Payment,
-  Expense,
   ContractWithDetails,
   User,
+  Payment,
+  Expense,
+  CashFlowReportItem,
+  OverduePaymentReportItem,
+  DriverSummaryReportItem,
 } from "@/types";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export function useFetchDrivers(fallbackData?: Driver[]) {
-  const { data, error, isLoading, mutate } = useSWR<Driver[]>(
-    "/api/drivers",
-    fetcher,
-    { fallbackData }
-  );
-  return {
-    drivers: data || [],
-    isLoading,
-    isError: error,
-    mutateDrivers: mutate,
-  };
-}
+// --- Type Definitions ---
 
-export function useFetchVehicles(fallbackData?: Vehicle[]) {
-  const { data, error, isLoading, mutate } = useSWR<Vehicle[]>(
-    "/api/vehicles",
-    fetcher,
-    { fallbackData }
-  );
-  return {
-    vehicles: data || [],
-    isLoading,
-    isError: error,
-    mutateVehicles: mutate,
-  };
-}
+export type ContractWithRelations = Contract & {
+  driver: { name: string };
+  vehicle: { plate: string; model: string };
+};
 
-export function useFetchContracts(fallbackData?: Contract[]) {
-  const { data, error, isLoading, mutate } = useSWR<Contract[]>(
-    "/api/contracts",
+export type PaymentWithRelations = Payment & {
+  contract: { driver: { name: string } };
+};
+
+export type ExpenseWithRelations = Expense & {
+  vehicle: { plate: string } | null;
+};
+
+// --- Paginated Hooks ---
+
+export function useFetchContracts(
+  page: number,
+  limit: number,
+  fallbackData?: { contracts: ContractWithRelations[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    contracts: ContractWithRelations[];
+    total: number;
+  }>(
+    `/api/contracts?page=${page}&limit=${limit}`,
     fetcher,
-    { fallbackData }
+    { fallbackData, revalidateOnMount: false }
   );
   return {
-    contracts: data || [],
+    contracts: data?.contracts || [],
+    total: data?.total || 0,
     isLoading,
     isError: error,
     mutateContracts: mutate,
   };
 }
 
-export function useFetchPayments(fallbackData?: Payment[]) {
-  const { data, error, isLoading, mutate } = useSWR<Payment[]>(
-    "/api/payments",
+export function useFetchDrivers(
+  page: number,
+  limit: number,
+  fallbackData?: { drivers: Driver[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    drivers: Driver[];
+    total: number;
+  }>(
+    `/api/drivers?page=${page}&limit=${limit}`,
     fetcher,
-    { fallbackData }
+    { fallbackData, revalidateOnMount: false }
   );
   return {
-    payments: data || [],
+    drivers: data?.drivers || [],
+    total: data?.total || 0,
     isLoading,
     isError: error,
-    mutatePayments: mutate,
+    mutateDrivers: mutate,
   };
 }
 
-export function useFetchExpenses(fallbackData?: Expense[]) {
-  const { data, error, isLoading, mutate } = useSWR<Expense[]>(
-    "/api/expenses",
+export function useFetchVehicles(
+  page: number,
+  limit: number,
+  fallbackData?: { vehicles: Vehicle[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    vehicles: Vehicle[];
+    total: number;
+  }>(
+    `/api/vehicles?page=${page}&limit=${limit}`,
     fetcher,
-    { fallbackData }
+    { fallbackData, revalidateOnMount: false }
   );
   return {
-    expenses: data || [],
+    vehicles: data?.vehicles || [],
+    total: data?.total || 0,
     isLoading,
     isError: error,
-    mutateExpenses: mutate,
+    mutateVehicles: mutate,
   };
 }
+
+// --- "Fetch All" Hooks for Forms ---
+
+export function useAllContracts(fallbackData?: Contract[]) {
+  const { data, error, isLoading, mutate } = useSWR<Contract[]>(
+    `/api/contracts/all`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return {
+    contracts: data || [],
+    isLoading,
+    isError: error,
+    mutateAllContracts: mutate,
+  };
+}
+
+export function useAllDrivers(fallbackData?: Driver[]) {
+  const { data, error, isLoading, mutate } = useSWR<Driver[]>(
+    `/api/drivers/all`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return {
+    drivers: data || [],
+    isLoading,
+    isError: error,
+    mutateAllDrivers: mutate,
+  };
+}
+
+export function useAllVehicles(fallbackData?: Vehicle[]) {
+  const { data, error, isLoading, mutate } = useSWR<Vehicle[]>(
+    `/api/vehicles/all`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return {
+    vehicles: data || [],
+    isLoading,
+    isError: error,
+    mutateAllVehicles: mutate,
+  };
+}
+
+// --- Financial Page Hooks ---
+
+export function useFetchPendingPayments(
+  page: number,
+  limit: number,
+  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    payments: PaymentWithRelations[];
+    total: number;
+  }>(
+    `/api/financial/pending-payments?page=${page}&limit=${limit}`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchPaidPayments(
+  page: number,
+  limit: number,
+  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    payments: PaymentWithRelations[];
+    total: number;
+  }>(
+    `/api/financial/paid-payments?page=${page}&limit=${limit}`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchRecentExpenses(
+  page: number,
+  limit: number,
+  fallbackData?: { expenses: ExpenseWithRelations[]; total: number }
+) {
+  const { data, error, isLoading, mutate } = useSWR<{
+    expenses: ExpenseWithRelations[];
+    total: number;
+  }>(
+    `/api/financial/recent-expenses?page=${page}&limit=${limit}`,
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+// --- Item by ID Hooks ---
 
 function useFetchItemById<T>(apiPath: string, id?: string, fallbackData?: T) {
   const key = id ? `${apiPath}/${id}` : null;
   const { data, error, isLoading, mutate } = useSWR<T>(key, fetcher, {
     fallbackData,
+    revalidateOnMount: false,
   });
   return {
-    data,
+    data: data ?? fallbackData,
     isLoading,
     isError: error,
     mutate,
@@ -111,22 +224,51 @@ export function useFetchDriverById(id?: string, fallbackData?: Driver) {
   return useFetchItemById<Driver>("/api/drivers", id, fallbackData);
 }
 
-export function useFetchProfile(initialData?: User | null) {
+export function useFetchVehicleById(id?: string, fallbackData?: Vehicle) {
+  return useFetchItemById<Vehicle>("/api/vehicles", id, fallbackData);
+}
+
+// --- Profile Hook ---
+
+export function useFetchProfile(fallbackData?: User | null) {
   const { data, error, isLoading, mutate } = useSWR<User | null>(
     "/api/profile",
     fetcher,
-    {
-      fallbackData: initialData,
-    }
+    { fallbackData, revalidateOnMount: false }
   );
   return {
-    profile: data,
+    profile: data ?? fallbackData,
     isLoading,
     isError: error,
     mutateProfile: mutate,
   };
 }
 
-export function useFetchVehicleById(id?: string, fallbackData?: Vehicle) {
-  return useFetchItemById<Vehicle>("/api/vehicles", id, fallbackData);
+// --- Report Hooks ---
+
+export function useFetchCashFlow(fallbackData?: CashFlowReportItem[]) {
+  const { data, error, isLoading, mutate } = useSWR<CashFlowReportItem[]>(
+    "/api/reports/cash-flow",
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchOverduePayments(fallbackData?: OverduePaymentReportItem[]) {
+  const { data, error, isLoading, mutate } = useSWR<OverduePaymentReportItem[]>(
+    "/api/reports/overdue-payments",
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchDriverSummary(fallbackData?: DriverSummaryReportItem[]) {
+  const { data, error, isLoading, mutate } = useSWR<DriverSummaryReportItem[]>(
+    "/api/reports/driver-summary",
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
 }

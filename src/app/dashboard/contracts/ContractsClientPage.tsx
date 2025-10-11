@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { Contract, Vehicle, Driver, WithoutBaseItem } from "@/types";
 import {
   useFetchContracts,
-  useFetchDrivers,
-  useFetchVehicles,
+  useAllDrivers,
+  useAllVehicles,
+  ContractWithRelations,
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
@@ -15,42 +16,38 @@ import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
 
 interface ContractsClientPageProps {
-  initialContracts: Contract[];
+  initialContracts: ContractWithRelations[];
+  total: number;
   initialDrivers: Driver[];
   initialVehicles: Vehicle[];
 }
 
 export default function ContractsClientPage({
   initialContracts,
+  total: initialTotal,
   initialDrivers,
   initialVehicles,
 }: ContractsClientPageProps) {
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const {
-    contracts,
-    isLoading: isLoadingContracts,
-    isError: isErrorContracts,
-    mutateContracts,
-  } = useFetchContracts(initialContracts);
-
-  const {
-    drivers,
-    isLoading: isLoadingDrivers,
-    isError: isErrorDrivers,
-  } = useFetchDrivers(initialDrivers);
-
-  const {
-    vehicles,
-    isLoading: isLoadingVehicles,
-    isError: isErrorVehicles,
-  } = useFetchVehicles(initialVehicles);
+  const { contracts, total, isLoading, isError, mutateContracts } =
+    useFetchContracts(page, limit, {
+      contracts: initialContracts,
+      total: initialTotal,
+    });
+  const { drivers: allDrivers } = useAllDrivers(initialDrivers);
+  const { vehicles: allVehicles } = useAllVehicles(initialVehicles);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<Contract | null>(null);
-  const [itemToDelete, setItemToDelete] = useState<Contract | null>(null);
+  const [editingItem, setEditingItem] = useState<ContractWithRelations | null>(
+    null
+  );
+  const [itemToDelete, setItemToDelete] =
+    useState<ContractWithRelations | null>(null);
 
-  const handleOpenFormModal = (item: Contract | null = null) => {
+  const handleOpenFormModal = (item: ContractWithRelations | null = null) => {
     setEditingItem(item);
     setIsFormModalOpen(true);
   };
@@ -74,7 +71,7 @@ export default function ContractsClientPage({
     mutateContracts();
   };
 
-  const handleDeleteClick = (item: Contract) => {
+  const handleDeleteClick = (item: ContractWithRelations) => {
     setItemToDelete(item);
   };
 
@@ -98,21 +95,16 @@ export default function ContractsClientPage({
     e.stopPropagation();
   };
 
-  const columns: Column<Contract>[] = [
+  const columns: Column<ContractWithRelations>[] = [
     {
       header: "Motorista",
-      accessor: (contract) =>
-        (drivers || []).find((d) => d.id === contract.driverId)?.name || "...",
+      accessor: (contract) => contract.driver.name,
       className: "font-medium text-gray-900",
     },
     {
       header: "Veículo",
-      accessor: (contract) => {
-        const vehicle = (vehicles || []).find(
-          (v) => v.id === contract.vehicleId
-        );
-        return vehicle ? `${vehicle.plate} - ${vehicle.model}` : "...";
-      },
+      accessor: (contract) =>
+        `${contract.vehicle.plate} - ${contract.vehicle.model}`,
     },
     {
       header: "Valor Semanal",
@@ -135,19 +127,17 @@ export default function ContractsClientPage({
     },
   ];
 
-  // Condição de loading unificada e correta
-  const isLoading = isLoadingContracts || isLoadingDrivers || isLoadingVehicles;
-  if (isLoading && (!contracts || !drivers || !vehicles)) {
-    return <ContractsSkeleton />;
-  }
+  if (isLoading) return <ContractsSkeleton />;
 
-  if (isErrorContracts || isErrorDrivers || isErrorVehicles) {
+  if (isError) {
     return (
       <div className="text-center text-red-500 mt-10">
         Falha ao carregar os dados.
       </div>
     );
   }
+
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div>
@@ -179,12 +169,6 @@ export default function ContractsClientPage({
 
       <div className="lg:hidden grid grid-cols-1 gap-4">
         {(contracts || []).map((contract) => {
-          const driver = (drivers || []).find(
-            (d) => d.id === contract.driverId
-          );
-          const vehicle = (vehicles || []).find(
-            (v) => v.id === contract.vehicleId
-          );
           return (
             <div
               key={contract.id}
@@ -193,9 +177,11 @@ export default function ContractsClientPage({
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <p className="font-bold text-gray-900">{driver?.name}</p>
+                  <p className="font-bold text-gray-900">
+                    {contract.driver.name}
+                  </p>
                   <p className="text-sm text-gray-500">
-                    {vehicle?.plate} - {vehicle?.model}
+                    {contract.vehicle.plate} - {contract.vehicle.model}
                   </p>
                 </div>
                 <span
@@ -233,6 +219,31 @@ export default function ContractsClientPage({
         })}
       </div>
 
+      <div className="mt-6 flex items-center justify-between">
+        <div className="text-sm text-gray-700">
+          Mostrando {contracts.length} de {total} contratos.
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Anterior
+          </button>
+          <span className="text-sm text-gray-700">
+            Página {page} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(page + 1)}
+            disabled={page === totalPages || total === 0}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Próximo
+          </button>
+        </div>
+      </div>
+
       <Modal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
@@ -241,8 +252,8 @@ export default function ContractsClientPage({
       >
         <ContractForm
           initialData={editingItem}
-          vehicles={vehicles || []}
-          drivers={drivers || []}
+          vehicles={allVehicles || []}
+          drivers={allDrivers || []}
           onSave={handleSave}
           onCancel={handleCloseFormModal}
         />
@@ -261,13 +272,7 @@ export default function ContractsClientPage({
           </h3>
           <p className="mt-2 text-sm text-gray-500">
             Tem certeza que quer excluir o contrato do motorista{" "}
-            <span className="font-bold">
-              {
-                (drivers || []).find((d) => d.id === itemToDelete?.driverId)
-                  ?.name
-              }
-            </span>
-            ?
+            <span className="font-bold">{itemToDelete?.driver.name}</span>?
           </p>
           <div className="mt-6 flex justify-center gap-4">
             <button

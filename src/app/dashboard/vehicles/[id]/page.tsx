@@ -4,17 +4,18 @@ import { authOptions } from "@/lib/authOptions";
 import { notFound } from "next/navigation";
 import VehicleDetailsClientPage from "./VehicleDetailsClientPage";
 
-export default async function VehicleDetailsPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+interface VehicleDetailsPageProps {
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function VehicleDetailsPage(props: VehicleDetailsPageProps) {
+  const params = await props.params;
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return notFound();
   }
 
-  // Busca o veículo específico no servidor
   const vehicle = await prisma.vehicle.findUnique({
     where: {
       id: params.id,

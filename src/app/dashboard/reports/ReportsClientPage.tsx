@@ -1,119 +1,32 @@
 "use client";
 
-import { useMemo } from "react";
-import { Payment, Expense, Contract, Driver, Vehicle } from "@/types";
-import {
-  useFetchPayments,
-  useFetchExpenses,
-  useFetchContracts,
-  useFetchDrivers,
-  useFetchVehicles,
-} from "@/hooks/useData";
 import { CheckCircle } from "lucide-react";
+import {
+  CashFlowReportItem,
+  DriverSummaryReportItem,
+  OverduePaymentReportItem,
+} from "@/types";
+import {
+  useFetchCashFlow,
+  useFetchDriverSummary,
+  useFetchOverduePayments,
+} from "@/hooks/useData";
 import ReportsSkeleton from "./ReportsSkeleton";
 
 interface ClientPageProps {
-  initialPayments: Payment[];
-  initialExpenses: Expense[];
-  initialContracts: Contract[];
-  initialDrivers: Driver[];
-  initialVehicles: Vehicle[];
+  initialCashFlow: CashFlowReportItem[];
+  initialOverduePayments: OverduePaymentReportItem[];
+  initialDriverSummary: DriverSummaryReportItem[];
 }
 
 export default function ReportsClientPage({
-  initialPayments,
-  initialExpenses,
-  initialContracts,
-  initialDrivers,
-  initialVehicles,
+  initialCashFlow,
+  initialOverduePayments,
+  initialDriverSummary,
 }: ClientPageProps) {
-  const {
-    payments,
-    isError: isPaymentsError,
-    mutatePayments,
-  } = useFetchPayments(initialPayments);
-  const { expenses, isError: isExpensesError } =
-    useFetchExpenses(initialExpenses);
-  const { contracts, isError: isContractsError } =
-    useFetchContracts(initialContracts);
-  const { drivers, isError: isDriversError } = useFetchDrivers(initialDrivers);
-  const { vehicles, isError: isVehiclesError } =
-    useFetchVehicles(initialVehicles);
-
-  const monthlyCashFlow = useMemo(() => {
-    const cashFlowData: {
-      [key: string]: { month: string; revenue: number; expense: number };
-    } = {};
-    (payments || []).forEach((p) => {
-      if (p.status === "Pago" && p.paymentDate) {
-        const month = p.paymentDate.toString().substring(0, 7); // YYYY-MM
-        if (!cashFlowData[month]) {
-          cashFlowData[month] = { month, revenue: 0, expense: 0 };
-        }
-        cashFlowData[month].revenue += p.value;
-      }
-    });
-    (expenses || []).forEach((e) => {
-      const month = new Date(e.date).toISOString().substring(0, 7);
-      if (!cashFlowData[month]) {
-        cashFlowData[month] = { month, revenue: 0, expense: 0 };
-      }
-      cashFlowData[month].expense += e.value;
-    });
-    return Object.values(cashFlowData).sort((a, b) =>
-      b.month.localeCompare(a.month)
-    );
-  }, [payments, expenses]);
-
-  const overduePayments = useMemo(() => {
-    return (payments || [])
-      .filter(
-        (p) => p.status === "Pendente" && new Date(p.dueDate) < new Date()
-      )
-      .map((payment) => {
-        const contract = (contracts || []).find(
-          (c) => c.id === payment.contractId
-        );
-        const driver = (drivers || []).find((d) => d.id === contract?.driverId);
-        const vehicle = (vehicles || []).find(
-          (v) => v.id === contract?.vehicleId
-        );
-        const daysOverdue = Math.floor(
-          (new Date().getTime() - new Date(payment.dueDate).getTime()) /
-            (1000 * 60 * 60 * 24)
-        );
-        return {
-          ...payment,
-          driverName: driver?.name || "N/A",
-          vehicleInfo: vehicle ? `${vehicle.plate} - ${vehicle.model}` : "N/A",
-          daysOverdue,
-        };
-      });
-  }, [payments, contracts, drivers, vehicles]);
-
-  const driverSummaries = useMemo(() => {
-    return (drivers || []).map((driver) => {
-      const driverContracts = (contracts || []).filter(
-        (c) => c.driverId === driver.id
-      );
-      const contractIds = driverContracts.map((c) => c.id);
-      const totalPaid = (payments || [])
-        .filter(
-          (p) => contractIds.includes(p.contractId) && p.status === "Pago"
-        )
-        .reduce((sum, p) => sum + p.value, 0);
-      const activeContract = driverContracts.find((c) => c.status === "Ativo");
-      const vehicle = (vehicles || []).find(
-        (v) => v.id === activeContract?.vehicleId
-      );
-      return {
-        driverId: driver.id,
-        driverName: driver.name,
-        totalPaid,
-        vehicleInfo: vehicle ? `Veículo: ${vehicle.plate}` : "",
-      };
-    });
-  }, [drivers, contracts, payments, vehicles]);
+  const { data: monthlyCashFlow, isError: isCashFlowError, mutate: mutateCashFlow } = useFetchCashFlow(initialCashFlow);
+  const { data: overduePayments, isError: isOverdueError, mutate: mutateOverdue } = useFetchOverduePayments(initialOverduePayments);
+  const { data: driverSummaries, isError: isSummaryError, mutate: mutateSummary } = useFetchDriverSummary(initialDriverSummary);
 
   const handleMarkAsPaid = async (paymentId: string) => {
     await fetch(`/api/payments/${paymentId}`, {
@@ -124,18 +37,19 @@ export default function ReportsClientPage({
         paymentDate: new Date().toISOString(),
       }),
     });
-    await mutatePayments(); // Revalida apenas os pagamentos
+    // Revalidate all reports as they are all affected by a payment
+    mutateCashFlow();
+    mutateOverdue();
+    mutateSummary();
   };
 
-  const hasError =
-    isPaymentsError ||
-    isExpensesError ||
-    isContractsError ||
-    isDriversError ||
-    isVehiclesError;
-  if (!payments || !expenses || !contracts || !drivers || !vehicles) {
+  const isLoading = !monthlyCashFlow || !overduePayments || !driverSummaries;
+  const hasError = isCashFlowError || isOverdueError || isSummaryError;
+
+  if (isLoading) {
     return <ReportsSkeleton />;
   }
+
   if (hasError) {
     return (
       <div className="text-center text-red-500">
@@ -149,7 +63,7 @@ export default function ReportsClientPage({
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Relatórios</h2>
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-lg font-semibold mb-4">Fluxo de Caixa Mensal</h3>
+        <h3 className="text-lg font-semibold mb-4">Fluxo de caixa mensal</h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -186,7 +100,9 @@ export default function ReportsClientPage({
                       R$ {expense.toFixed(2)}
                     </td>
                     <td
-                      className={`px-6 py-4 whitespace-nowrap font-bold ${profit >= 0 ? "text-green-700" : "text-red-700"}`}
+                      className={`px-6 py-4 whitespace-nowrap font-bold ${
+                        profit >= 0 ? "text-green-700" : "text-red-700"
+                      }`}
                     >
                       R$ {profit.toFixed(2)}
                     </td>
@@ -200,7 +116,7 @@ export default function ReportsClientPage({
 
       <div className="bg-white p-6 rounded-lg shadow-md mb-8">
         <h3 className="text-lg font-semibold mb-4 text-orange-700">
-          Relatório de Inadimplência
+          Relatório de inadimplência
         </h3>
         <div className="space-y-4">
           {overduePayments.length > 0 ? (
@@ -248,7 +164,7 @@ export default function ReportsClientPage({
       </div>
 
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-4">Resumo por Motorista</h3>
+        <h3 className="text-lg font-semibold mb-4">Resumo por motorista</h3>
         <div className="space-y-3">
           {driverSummaries.map((summary) => (
             <div
@@ -260,7 +176,7 @@ export default function ReportsClientPage({
                 <p className="text-sm text-gray-600">{summary.vehicleInfo}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-600">Total Pago</p>
+                <p className="text-sm text-gray-600">Total pago</p>
                 <p className="text-2xl font-bold text-blue-600">
                   R$ {summary.totalPaid.toFixed(2)}
                 </p>

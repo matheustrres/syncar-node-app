@@ -115,7 +115,7 @@ const ProfileForm = ({
           disabled={isSubmitting}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:bg-blue-400 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Salvando..." : "Salvar Alterações"}
+          {isSubmitting ? "Salvando..." : "Salvar alterações"}
         </button>
         {message && <p className="text-sm text-green-600 mt-2">{message}</p>}
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
@@ -230,7 +230,7 @@ const PasswordForm = () => {
           disabled={isSubmitting}
           className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:bg-blue-400 disabled:cursor-not-allowed"
         >
-          {isSubmitting ? "Alterando..." : "Alterar Senha"}
+          {isSubmitting ? "Alterando..." : "Alterar senha"}
         </button>
         {message && <p className="text-sm text-green-600 mt-2">{message}</p>}
         {error && <p className="text-sm text-red-600 mt-2">{error}</p>}

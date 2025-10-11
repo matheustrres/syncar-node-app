@@ -14,7 +14,19 @@ import {
   EyeOff,
   LogIn,
   UserPlus,
+  CheckCircle,
 } from "lucide-react";
+import Modal from "../ui/Modal";
+
+type FormErrors = {
+  name?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  phone?: string;
+  companyName?: string;
+  api?: string;
+};
 
 const AuthForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -28,15 +40,7 @@ const AuthForm = () => {
     phone: "",
     companyName: "",
   });
-  const [errors, setErrors] = useState<{
-    name?: string;
-    email?: string;
-    password?: string;
-    confirmPassword?: string;
-    phone?: string;
-    companyName?: string;
-    api?: string;
-  }>({});
+  const [errors, setErrors] = useState<FormErrors>({});
   const [passwordStrength, setPasswordStrength] = useState({
     minLength: false,
     hasLowerCase: false,
@@ -45,6 +49,7 @@ const AuthForm = () => {
     hasSpecialChar: false,
   });
   const router = useRouter();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const validatePassword = (password: string) => {
     return {
@@ -61,35 +66,19 @@ const AuthForm = () => {
   };
 
   const validateForm = () => {
-    const newErrors: {
-      name?: string;
-      email?: string;
-      password?: string;
-      confirmPassword?: string;
-      phone?: string;
-      companyName?: string;
-    } = {};
-
-    if (!isLogin && !formData.name.trim()) {
+    const newErrors: FormErrors = {};
+    if (!isLogin && !formData.name.trim())
       newErrors.name = "Nome é obrigatório";
-    }
-    if (!isLogin && !formData.companyName.trim()) {
+    if (!isLogin && !formData.companyName.trim())
       newErrors.companyName = "Nome da empresa é obrigatório";
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = "Email é obrigatório";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email.trim()) newErrors.email = "Email é obrigatório";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email inválido";
-    }
-    if (!formData.password) {
-      newErrors.password = "Senha é obrigatória";
-    } else if (!isLogin && !isPasswordValid(passwordStrength)) {
-      newErrors.password = "A senha não atende a todos os requisitos";
-    }
-    if (!isLogin && formData.password !== formData.confirmPassword) {
+    if (!formData.password) newErrors.password = "Senha é obrigatória";
+    else if (!isLogin && !isPasswordValid(passwordStrength))
+      newErrors.password = "A senha não atende aos requisitos";
+    if (!isLogin && formData.password !== formData.confirmPassword)
       newErrors.confirmPassword = "As senhas não coincidem";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -97,17 +86,9 @@ const AuthForm = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "password") {
-      setPasswordStrength(validatePassword(value));
-    }
-
-    if (errors.name) {
-      setErrors((prev: unknown) => ({
-        ...(prev as Record<string, unknown>),
-        [name]: "",
-      }));
-    }
+    if (name === "password") setPasswordStrength(validatePassword(value));
+    if (errors[name as keyof FormErrors])
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,30 +113,22 @@ const AuthForm = () => {
         const response = await fetch("/api/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            password: formData.password,
-            companyName: formData.companyName,
-            phone: formData.phone,
-          }),
+          body: JSON.stringify(formData),
         });
         if (response.ok) {
-          alert("Cadastro realizado com sucesso! Faça o login.");
-          toggleMode();
+          setShowSuccessModal(true);
         } else {
           const errorData = await response.json();
-          setErrors({
-            api: errorData.message || "Erro no cadastro. Verifique os dados.",
-          });
+          setErrors({ api: errorData.message || "Erro no cadastro." });
         }
       } catch {
-        setErrors({ api: "Ocorreu um erro de conexão. Tente novamente." });
+        setErrors({ api: "Ocorreu um erro de conexão." });
       } finally {
         setLoading(false);
       }
     }
   };
+
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setFormData({
@@ -168,289 +141,305 @@ const AuthForm = () => {
     });
     setErrors({});
   };
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 flex items-center justify-center p-4">
-      <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-12 text-white flex-col justify-center hidden lg:flex">
-          <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <Car size={48} className="text-white" />
-              <h1 className="text-4xl font-bold">Syncar</h1>
-            </div>
-            <p className="text-blue-100 text-lg">
-              Sistema completo de gestão de frota para aluguel de veículos
-            </p>
-          </div>
-          <div className="space-y-6">
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500 p-3 rounded-lg">
-                <Car size={24} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">
-                  Gestão de veículos
-                </h3>
-                <p className="text-blue-100 text-sm">
-                  Controle total da sua frota com informações detalhadas
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500 p-3 rounded-lg">
-                <User size={24} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">
-                  Controle de motoristas
-                </h3>
-                <p className="text-blue-100 text-sm">
-                  Gerencie documentação e histórico de cada motorista
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4">
-              <div className="bg-blue-500 p-3 rounded-lg">
-                <Building size={24} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-lg mb-1">
-                  Financeiro Completo
-                </h3>
-                <p className="text-blue-100 text-sm">
-                  Acompanhe pagamentos, despesas e lucro em tempo real
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-12 p-6 bg-blue-700 bg-opacity-50 rounded-lg">
-            <p className="text-sm text-blue-100">
-              &ldquo;Transformei meu negócio com o Syncar. Agora tenho
-              controle total sobre meus veículos e pagamentos!&rdquo;
-            </p>
-            <p className="text-sm font-semibold mt-2">
-              — Carlos Silva, Empresário
-            </p>
-          </div>
-        </div>
 
-        <div className="p-12 flex flex-col justify-center">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-800 mb-2">
-              {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
-            </h2>
-            <p className="text-gray-600">
-              {isLogin
-                ? "Entre para gerenciar sua frota"
-                : "Comece a gerenciar sua frota hoje mesmo"}
-            </p>
-          </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome completo *
-                  </label>
-                  <div className="relative">
-                    <User
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      size={20}
-                    />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.name ? "border-red-500" : "border-gray-300"}`}
-                      placeholder="Seu nome completo"
-                    />
-                  </div>
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nome da Empresa *
-                  </label>
-                  <div className="relative">
-                    <Building
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      size={20}
-                    />
-                    <input
-                      type="text"
-                      name="companyName"
-                      value={formData.companyName}
-                      onChange={handleChange}
-                      className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.companyName ? "border-red-500" : "border-gray-300"}`}
-                      placeholder="Nome da sua empresa"
-                    />
-                  </div>
-                  {errors.companyName && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.companyName}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email *
-              </label>
-              <div className="relative">
-                <Mail
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.email ? "border-red-500" : "border-gray-300"}`}
-                  placeholder="seu@email.com"
-                />
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    toggleMode();
+  };
+
+  return (
+    <>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
+          <div className="bg-blue-600 p-12 text-white flex-col justify-center hidden lg:flex">
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <Car size={48} />
+                <h1 className="text-4xl font-bold">Syncar</h1>
               </div>
-              {errors.email && (
-                <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-              )}
+              <p className="text-blue-100 text-lg">
+                Sistema completo de gestão de frota
+              </p>
             </div>
-            {!isLogin && (
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-500 p-3 rounded-lg">
+                  <Car size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Gestão de Veículos
+                  </h3>
+                  <p className="text-blue-100 text-sm">
+                    Controle total da sua frota
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-500 p-3 rounded-lg">
+                  <User size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Controle de Motoristas
+                  </h3>
+                  <p className="text-blue-100 text-sm">
+                    Gerencie documentação e histórico
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="bg-blue-500 p-3 rounded-lg">
+                  <Building size={24} />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-1">
+                    Financeiro Completo
+                  </h3>
+                  <p className="text-blue-100 text-sm">
+                    Acompanhe pagamentos e despesas
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-12 flex flex-col justify-center">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
+              </h2>
+              <p className="text-gray-600">
+                {isLogin
+                  ? "Entre para gerenciar sua frota"
+                  : "Comece a gerenciar sua frota hoje"}
+              </p>
+            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome Completo *
+                    </label>
+                    <div className="relative">
+                      <User
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={20}
+                      />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.name ? "border-red-500" : "border-gray-300"}`}
+                        placeholder="Seu nome completo"
+                      />
+                    </div>
+                    {errors.name && (
+                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome da Empresa *
+                    </label>
+                    <div className="relative">
+                      <Building
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={20}
+                      />
+                      <input
+                        type="text"
+                        name="companyName"
+                        value={formData.companyName}
+                        onChange={handleChange}
+                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.companyName ? "border-red-500" : "border-gray-300"}`}
+                        placeholder="Nome da sua empresa"
+                      />
+                    </div>
+                    {errors.companyName && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.companyName}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefone *
+                  Email *
                 </label>
                 <div className="relative">
-                  <Phone
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  <Mail
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                     size={20}
                   />
                   <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
+                    type="email"
+                    name="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="(00) 00000-0000"
+                    className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.email ? "border-red-500" : "border-gray-300"}`}
+                    placeholder="seu@email.com"
                   />
                 </div>
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
               </div>
-            )}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha *
-              </label>
-              <div className="relative">
-                <Lock
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full pl-11 pr-11 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.password ? "border-red-500" : "border-gray-300"}`}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-              )}
-              {!isLogin && formData.password && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-lg space-y-2">
-                  <p className="text-xs font-medium text-gray-700 mb-2">
-                    Requisitos da senha:
-                  </p>
-                  {/* Password strength indicators... */}
+              {!isLogin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Telefone *
+                  </label>
+                  <div className="relative">
+                    <Phone
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg"
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
                 </div>
               )}
-            </div>
-            {!isLogin && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirmar senha *
+                  Senha *
                 </label>
                 <div className="relative">
                   <Lock
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                     size={20}
                   />
                   <input
                     type={showPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    value={formData.confirmPassword}
+                    name="password"
+                    value={formData.password}
                     onChange={handleChange}
-                    className={`w-full pl-11 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full pl-11 pr-11 py-3 border rounded-lg ${errors.password ? "border-red-500" : "border-gray-300"}`}
                     placeholder="••••••••"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
                 </div>
-                {errors.confirmPassword && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.confirmPassword}
-                  </p>
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
                 )}
               </div>
-            )}
-            {isLogin && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Esqueceu a senha?
-                </button>
-              </div>
-            )}
-            {errors.api && (
-              <p className="text-red-500 text-sm text-center">{errors.api}</p>
-            )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <>
-                  {isLogin ? <LogIn size={20} /> : <UserPlus size={20} />}
-                  {isLogin ? "Entrar" : "Criar Conta"}
-                </>
+              {!isLogin && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Confirmar Senha *
+                  </label>
+                  <div className="relative">
+                    <Lock
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.confirmPassword}
+                    </p>
+                  )}
+                </div>
               )}
-            </button>
-          </form>
-          <div className="mt-6 text-center">
-            <p className="text-gray-600">
-              {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
+              {isLogin && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Esqueceu a senha?
+                  </button>
+                </div>
+              )}
+              {errors.api && (
+                <p className="text-red-500 text-sm text-center">{errors.api}</p>
+              )}
               <button
-                onClick={toggleMode}
-                className="ml-2 text-blue-600 hover:text-blue-700 font-semibold"
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 flex items-center justify-center gap-2"
               >
-                {isLogin ? "Cadastre-se" : "Faça login"}
+                {loading ? (
+                  <div className="w-6 h-6 border-t-2 border-r-2 border-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    {" "}
+                    {isLogin ? (
+                      <LogIn size={20} />
+                    ) : (
+                      <UserPlus size={20} />
+                    )}{" "}
+                    {isLogin ? "Entrar" : "Criar Conta"}{" "}
+                  </>
+                )}
               </button>
-            </p>
-          </div>
-          {!isLogin && (
+            </form>
             <div className="mt-6 text-center">
-              <p className="text-xs text-gray-500">
-                Ao criar uma conta, você concorda com nossos Termos de Serviço e
-                Política de Privacidade
+              <p className="text-gray-600">
+                {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
+                <button
+                  onClick={toggleMode}
+                  className="ml-2 text-blue-600 hover:text-blue-700 font-semibold"
+                >
+                  {isLogin ? "Cadastre-se" : "Faça login"}
+                </button>
               </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
+
+      <Modal
+        isOpen={showSuccessModal}
+        onClose={handleCloseSuccessModal}
+        title="Sucesso!"
+        size="md"
+      >
+        <div className="text-center p-4">
+          <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
+          <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">
+            Cadastro Realizado!
+          </h3>
+          <div className="mt-2 px-7 py-3">
+            <p className="text-sm text-gray-500">
+              Sua conta foi criada com sucesso. Por favor, faça o login para
+              continuar.
+            </p>
+          </div>
+          <div className="mt-4">
+            <button
+              onClick={handleCloseSuccessModal}
+              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold"
+            >
+              Ir para Login
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
   );
 };
 
