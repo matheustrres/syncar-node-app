@@ -366,6 +366,6 @@ export const getProfile = cache(async () => {
   if (!session?.user?.id) return null;
   return prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { name: true, email: true, companyName: true },
+    select: { name: true, email: true, companyName: true, plan: true },
   }) as unknown as User;
 });

@@ -39,6 +39,25 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { plan: true },
+  });
+  if (user?.plan === "BASIC") {
+    const driverCount = await prisma.driver.count({
+      where: { userId: session.user.id },
+    });
+
+    if (driverCount >= 3) {
+      return NextResponse.json(
+        {
+          error:
+            "Limite de motoristas atingido. Faça o upgrade.",
+        },
+        { status: 403 }
+      );
+    }
+  }
   const data = await request.json();
   const newDriver = await prisma.driver.create({
     data: { ...data, userId: session.user.id },

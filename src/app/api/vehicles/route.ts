@@ -44,6 +44,22 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+  if (user?.plan === "BASIC") {
+    const vehicleCount = await prisma.vehicle.count({
+      where: { userId: session.user.id },
+    });
+    if (vehicleCount >= 3) {
+      return NextResponse.json(
+        {
+          error: "Limite de veículos atingido. Faça o upgrade.",
+        },
+        { status: 403 }
+      );
+    }
+  }
   const data = await request.json();
   const newVehicle = await prisma.vehicle.create({
     data: { ...data, userId: session.user.id },

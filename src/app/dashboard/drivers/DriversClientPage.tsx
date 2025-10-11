@@ -9,6 +9,7 @@ import DriverForm from "@/components/forms/DriverForm";
 import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import DriversSkeleton from "./DriversSkeleton";
+import UpgradeModal from "@/components/ui/UpgradeModal";
 
 const columns: Column<Driver>[] = [
   { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
@@ -33,34 +34,45 @@ const columns: Column<Driver>[] = [
 interface ClientPageProps {
   initialDrivers: Driver[];
   total: number;
+  userPlan: string;
 }
 
 export default function DriversClientPage({
   initialDrivers,
   total: initialTotal,
+  userPlan,
 }: ClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const {
-    drivers,
-    total,
-    isError,
-    isLoading,
-    mutateDrivers,
-  } = useFetchDrivers(page, limit, {
-    drivers: initialDrivers,
-    total: initialTotal,
-  });
+  const { drivers, total, isError, isLoading, mutateDrivers } = useFetchDrivers(
+    page,
+    limit,
+    {
+      drivers: initialDrivers,
+      total: initialTotal,
+    }
+  );
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
+
+  const isAtLimit = userPlan === "BASIC" && total >= 3;
 
   const handleOpenFormModal = (item: Driver | null = null) => {
     setEditingItem(item);
     setIsFormModalOpen(true);
+  };
+
+  const handleAddClick = () => {
+    if (isAtLimit) {
+      setIsUpgradeModalOpen(true);
+    } else {
+      handleOpenFormModal();
+    }
   };
 
   const handleCloseFormModal = () => {
@@ -71,11 +83,19 @@ export default function DriversClientPage({
   const handleSave = async (formData: WithoutBaseItem<Driver>) => {
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem ? `/api/drivers/${editingItem.id}` : "/api/drivers";
-    await fetch(url, {
+
+    const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      alert(error);
+      return;
+    }
+
     handleCloseFormModal();
     mutateDrivers();
   };
@@ -118,12 +138,12 @@ export default function DriversClientPage({
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-4 mb-6">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
           Motoristas
         </h2>
         <button
-          onClick={() => handleOpenFormModal()}
+          onClick={handleAddClick}
           className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"
         >
           <Plus size={20} />
@@ -264,6 +284,12 @@ export default function DriversClientPage({
           </div>
         </div>
       </Modal>
+
+      <UpgradeModal 
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        resourceName="motoristas"
+      />
     </div>
   );
 }
