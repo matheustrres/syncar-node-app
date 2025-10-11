@@ -11,8 +11,33 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || "";
   const skip = (page - 1) * limit;
-  const where = { userId: session.user.id };
+  const where: { [key: string]: unknown } = { userId: session.user.id };
+  if (status) {
+    where.status = status;
+  }
+  if (search) {
+    where.OR = [
+      {
+        driver: {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      },
+      {
+        vehicle: {
+          plate: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+      },
+    ];
+  }
   const [contracts, total] = await prisma.$transaction([
     prisma.contract.findMany({
       where,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Driver, WithoutBaseItem } from "@/types";
 import { useFetchDrivers } from "@/hooks/useData";
@@ -10,6 +10,7 @@ import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import FilterBar from "@/components/ui/FilterBar";
 
 const columns: Column<Driver>[] = [
   { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
@@ -31,6 +32,12 @@ const columns: Column<Driver>[] = [
   },
 ];
 
+const statusOptions = [
+  { value: "", label: "Todos os status" },
+  { value: "Ativo", label: "Ativo" },
+  { value: "Inativo", label: "Inativo" },
+];
+
 interface ClientPageProps {
   initialDrivers: Driver[];
   total: number;
@@ -44,11 +51,19 @@ export default function DriversClientPage({
 }: ClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const limit = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
 
   const { drivers, total, isError, isLoading, mutateDrivers } = useFetchDrivers(
     page,
     limit,
+    searchTerm,
+    statusFilter,
     {
       drivers: initialDrivers,
       total: initialTotal,
@@ -124,7 +139,7 @@ export default function DriversClientPage({
     e.stopPropagation();
   };
 
-  if (isLoading) return <DriversSkeleton />;
+  if (isLoading && !drivers.length) return <DriversSkeleton />;
 
   if (isError) {
     return (
@@ -154,6 +169,13 @@ export default function DriversClientPage({
         </button>
       </div>
 
+      <FilterBar 
+        searchPlaceholder="Buscar por nome..."
+        filterOptions={statusOptions}
+        onSearchChange={setSearchTerm}
+        onFilterChange={setStatusFilter}
+      />
+
       <div className="hidden lg:block">
         <DataTable
           columns={columns}
@@ -164,6 +186,7 @@ export default function DriversClientPage({
         />
       </div>
 
+      {/* ... [resto do código para mobile view, modais, etc. que permanece o mesmo] ... */}
       <div className="lg:hidden grid grid-cols-1 gap-4">
         {(drivers || []).map((driver) => (
           <div

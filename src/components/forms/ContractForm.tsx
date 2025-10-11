@@ -37,9 +37,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
     .filter((v) => v.status === "Disponível" || v.id === formData.vehicleId)
     .map((v) => ({ value: v.id, label: `${v.plate} - ${v.model}` }));
 
-  const activeDriversOptions: SelectOption[] = drivers
-    .filter((d) => d.status === "Ativo" || d.id === formData.driverId)
-    .map((d) => ({ value: d.id, label: d.name }));
+  const activeDriversOptions: SelectOption[] = drivers.map((d) => ({ value: d.id, label: d.name }));
 
   const paymentDayOptions: SelectOption[] = [
     { value: "Segunda-feira", label: "Segunda-feira" },

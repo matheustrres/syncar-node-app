@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Contract, Vehicle, Driver, WithoutBaseItem } from "@/types";
 import {
@@ -14,6 +14,7 @@ import ContractForm from "@/components/forms/ContractForm";
 import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
+import FilterBar from "@/components/ui/FilterBar";
 
 interface ContractsClientPageProps {
   initialContracts: ContractWithRelations[];
@@ -21,6 +22,44 @@ interface ContractsClientPageProps {
   initialDrivers: Driver[];
   initialVehicles: Vehicle[];
 }
+
+const columns: Column<ContractWithRelations>[] = [
+  {
+    header: "Motorista",
+    accessor: (contract) => contract.driver.name,
+    className: "font-medium text-gray-900",
+  },
+  {
+    header: "Veículo",
+    accessor: (contract) =>
+      `${contract.vehicle.plate} - ${contract.vehicle.model}`,
+  },
+  {
+    header: "Valor Semanal",
+    accessor: (contract) => `R$ ${contract.weeklyValue.toFixed(2)}`,
+    className: "font-semibold text-green-600",
+  },
+  {
+    header: "Status",
+    accessor: (contract) => (
+      <span
+        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+          contract.status === "Ativo"
+            ? "bg-green-100 text-green-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {contract.status}
+      </span>
+    ),
+  },
+];
+
+const statusOptions = [
+  { value: "", label: "Todos os status" },
+  { value: "Ativo", label: "Ativo" },
+  { value: "Finalizado", label: "Finalizado" },
+];
 
 export default function ContractsClientPage({
   initialContracts,
@@ -30,13 +69,20 @@ export default function ContractsClientPage({
 }: ContractsClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const limit = 10;
 
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
   const { contracts, total, isLoading, isError, mutateContracts } =
-    useFetchContracts(page, limit, {
+    useFetchContracts(page, limit, searchTerm, statusFilter, {
       contracts: initialContracts,
       total: initialTotal,
     });
+
   const { drivers: allDrivers } = useAllDrivers(initialDrivers);
   const { vehicles: allVehicles } = useAllVehicles(initialVehicles);
 
@@ -95,38 +141,6 @@ export default function ContractsClientPage({
     e.stopPropagation();
   };
 
-  const columns: Column<ContractWithRelations>[] = [
-    {
-      header: "Motorista",
-      accessor: (contract) => contract.driver.name,
-      className: "font-medium text-gray-900",
-    },
-    {
-      header: "Veículo",
-      accessor: (contract) =>
-        `${contract.vehicle.plate} - ${contract.vehicle.model}`,
-    },
-    {
-      header: "Valor Semanal",
-      accessor: (contract) => `R$ ${contract.weeklyValue.toFixed(2)}`,
-      className: "font-semibold text-green-600",
-    },
-    {
-      header: "Status",
-      accessor: (contract) => (
-        <span
-          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-            contract.status === "Ativo"
-              ? "bg-green-100 text-green-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {contract.status}
-        </span>
-      ),
-    },
-  ];
-
   if (isLoading) return <ContractsSkeleton />;
 
   if (isError) {
@@ -151,11 +165,18 @@ export default function ContractsClientPage({
         >
           <Plus size={20} />
           <span className="hidden sm:inline whitespace-nowrap">
-            Novo Contrato
+            Novo contrato
           </span>
           <span className="sm:hidden">Adicionar</span>
         </button>
       </div>
+
+      <FilterBar 
+        searchPlaceholder="Buscar por motorista ou placa..."
+        filterOptions={statusOptions}
+        onSearchChange={setSearchTerm}
+        onFilterChange={setStatusFilter}
+      />
 
       <div className="hidden lg:block">
         <DataTable
@@ -247,7 +268,7 @@ export default function ContractsClientPage({
       <Modal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
-        title={editingItem ? "Editar Contrato" : "Novo Contrato"}
+        title={editingItem ? "Editar contrato" : "Novo contrato"}
         size="4xl"
       >
         <ContractForm
@@ -268,7 +289,7 @@ export default function ContractsClientPage({
         <div className="text-center p-4">
           <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
           <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir Contrato
+            Excluir contrato
           </h3>
           <p className="mt-2 text-sm text-gray-500">
             Tem certeza que quer excluir o contrato do motorista{" "}
@@ -285,7 +306,7 @@ export default function ContractsClientPage({
               onClick={handleConfirmDelete}
               className="px-6 py-2 bg-red-600 text-white rounded-lg"
             >
-              Sim, Excluir
+              Confirmar
             </button>
           </div>
         </div>

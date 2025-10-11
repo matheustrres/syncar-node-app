@@ -100,7 +100,7 @@ export const getAllVehicles = cache(async () => {
   if (!session?.user?.id) return [];
   return prisma.vehicle.findMany({
     where: { userId: session.user.id },
-    select: { id: true, plate: true, brand: true, model: true },
+    select: { id: true, plate: true, brand: true, model: true, status: true },
     orderBy: { model: "asc" },
   }) as unknown as Vehicle[];
 });

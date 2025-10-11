@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicles } from "@/hooks/useData";
@@ -10,6 +10,7 @@ import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import FilterBar from "@/components/ui/FilterBar";
 
 const columns: Column<Vehicle>[] = [
   {
@@ -29,14 +30,21 @@ const columns: Column<Vehicle>[] = [
           vehicle.status === "Alugado"
             ? "bg-green-100 text-green-800"
             : vehicle.status === "Manutenção"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-blue-100 text-blue-800"
+            ? "bg-yellow-100 text-yellow-800"
+            : "bg-blue-100 text-blue-800"
         }`}
       >
         {vehicle.status}
       </span>
     ),
   },
+];
+
+const statusOptions = [
+  { value: "", label: "Todos os status" },
+  { value: "Disponível", label: "Disponível" },
+  { value: "Alugado", label: "Alugado" },
+  { value: "Manutenção", label: "Manutenção" },
 ];
 
 interface ClientPageProps {
@@ -52,13 +60,21 @@ export default function VehiclesClientPage({
 }: ClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const limit = 10;
 
-  const { vehicles, total, isError, isLoading, mutateVehicles } =
-    useFetchVehicles(page, limit, {
-      vehicles: initialVehicles,
-      total: initialTotal,
-    });
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter]);
+
+  const { vehicles, total, isError, isLoading, mutateVehicles } = useFetchVehicles(
+    page,
+    limit,
+    searchTerm,
+    statusFilter,
+    { vehicles: initialVehicles, total: initialTotal }
+  );
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -90,16 +106,19 @@ export default function VehiclesClientPage({
     const url = editingItem
       ? `/api/vehicles/${editingItem.id}`
       : "/api/vehicles";
+
     const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
+
     if (!response.ok) {
       const { error } = await response.json();
       alert(error);
       return;
     }
+
     handleCloseFormModal();
     mutateVehicles();
   };
@@ -158,6 +177,13 @@ export default function VehiclesClientPage({
         </button>
       </div>
 
+      <FilterBar 
+        searchPlaceholder="Buscar por placa..."
+        filterOptions={statusOptions}
+        onSearchChange={setSearchTerm}
+        onFilterChange={setStatusFilter}
+      />
+
       <div className="hidden lg:block">
         <DataTable
           columns={columns}
@@ -187,8 +213,8 @@ export default function VehiclesClientPage({
                   vehicle.status === "Alugado"
                     ? "bg-green-100 text-green-800"
                     : vehicle.status === "Manutenção"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-blue-100 text-blue-800"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-blue-100 text-blue-800"
                 }`}
               >
                 {vehicle.status}
@@ -294,7 +320,7 @@ export default function VehiclesClientPage({
         </div>
       </Modal>
 
-      <UpgradeModal
+      <UpgradeModal 
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         resourceName="veículos"
