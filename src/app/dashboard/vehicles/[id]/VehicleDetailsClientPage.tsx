@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicleById } from "@/hooks/useData";
-import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import VehicleDetailsSkeleton from "./VehicleDetailsSkeleton";
@@ -43,36 +44,46 @@ export default function VehicleDetailsClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
     setIsSaving(true);
-    setFormApiError(null);
-    const response = await fetch(`/api/vehicles/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    if (!response.ok) {
-      const { error } = await response.json();
-      setFormApiError(error);
-      setIsSaving(false);
-      return;
+    try {
+      const response = await fetch(`/api/vehicles/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      const updatedVehicle = { ...vehicle, ...formData } as Vehicle;
+      mutateVehicle(updatedVehicle, false);
+      showToast("Veículo atualizado com sucesso!", "success");
+      setIsFormModalOpen(false);
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
     }
-    const updatedVehicle = { ...vehicle, ...formData } as Vehicle;
-    mutateVehicle(updatedVehicle, false);
     setIsSaving(false);
-    setIsFormModalOpen(false);
   };
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
-    await fetch(`/api/vehicles/${id}`, { method: "DELETE" });
+    try {
+      await fetch(`/api/vehicles/${id}`, { method: "DELETE" });
+      showToast("Veículo excluído com sucesso!", "success");
+      setIsDeleteModalOpen(false);
+      router.push("/dashboard/vehicles");
+    } catch {
+      showToast("Falha ao excluir veículo.", "error");
+    }
     setIsDeleting(false);
-    setIsDeleteModalOpen(false);
-    router.push("/dashboard/vehicles");
   };
 
   if (isError) {
@@ -163,7 +174,6 @@ export default function VehicleDetailsClientPage({
         <VehicleForm
           initialData={vehicle}
           isSaving={isSaving}
-          apiError={formApiError}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}
         />

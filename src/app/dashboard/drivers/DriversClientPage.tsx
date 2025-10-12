@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 import { Driver, WithoutBaseItem } from "@/types";
 import { useFetchDrivers } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
@@ -77,14 +78,13 @@ export default function DriversClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
-  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
 
   const handleOpenFormModal = (item: Driver | null = null) => {
     setEditingItem(item);
-    setFormApiError(null);
     setIsFormModalOpen(true);
   };
 
@@ -98,7 +98,6 @@ export default function DriversClientPage({
 
   const handleCloseFormModal = () => {
     setEditingItem(null);
-    setFormApiError(null);
     setIsFormModalOpen(false);
   };
 
@@ -106,23 +105,32 @@ export default function DriversClientPage({
 
   const handleSave = async (formData: WithoutBaseItem<Driver>) => {
     setIsSaving(true);
-    setFormApiError(null);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem ? `/api/drivers/${editingItem.id}` : "/api/drivers";
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    if (!response.ok) {
-      const { error } = await response.json();
-      setFormApiError(error);
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast(
+        `Motorista ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
+        "success"
+      );
       setIsSaving(false);
-      return;
+      handleCloseFormModal();
+      mutateDrivers();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
+      setIsSaving(false);
     }
-    setIsSaving(false);
-    handleCloseFormModal();
-    mutateDrivers();
   };
 
   const handleDeleteClick = (item: Driver) => {
@@ -136,10 +144,15 @@ export default function DriversClientPage({
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
       setIsDeleting(true);
-      await fetch(`/api/drivers/${itemToDelete.id}`, { method: "DELETE" });
+      try {
+        await fetch(`/api/drivers/${itemToDelete.id}`, { method: "DELETE" });
+        showToast("Motorista excluído com sucesso!", "success");
+        setItemToDelete(null);
+        mutateDrivers();
+      } catch {
+        showToast("Falha ao excluir motorista.", "error");
+      }
       setIsDeleting(false);
-      setItemToDelete(null);
-      mutateDrivers();
     }
   };
 
@@ -155,7 +168,7 @@ export default function DriversClientPage({
 
   if (isError) {
     return (
-      <ErrorDisplay 
+      <ErrorDisplay
         errorMessage="Falha ao carregar os motoristas."
         onRetry={mutateDrivers}
       />
@@ -177,7 +190,7 @@ export default function DriversClientPage({
   if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
     return (
       <>
-        <EmptyState 
+        <EmptyState
           Icon={User}
           title="Nenhum motorista cadastrado"
           description="Comece cadastrando o primeiro motorista da sua frota para poder gerenciá-los."
@@ -191,7 +204,6 @@ export default function DriversClientPage({
         >
           <DriverForm
             initialData={editingItem}
-            apiError={formApiError}
             isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCloseFormModal}
@@ -318,7 +330,6 @@ export default function DriversClientPage({
       >
         <DriverForm
           initialData={editingItem}
-          apiError={formApiError}
           isSaving={isSaving}
           onSave={handleSave}
           onCancel={handleCloseFormModal}

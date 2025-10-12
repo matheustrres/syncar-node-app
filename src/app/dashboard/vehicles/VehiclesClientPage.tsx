@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicles } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
@@ -81,7 +82,7 @@ export default function VehiclesClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Vehicle | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Vehicle | null>(null);
-  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -89,7 +90,6 @@ export default function VehiclesClientPage({
 
   const handleOpenFormModal = (item: Vehicle | null = null) => {
     setEditingItem(item);
-    setFormApiError(null);
     setIsFormModalOpen(true);
   };
 
@@ -103,31 +103,39 @@ export default function VehiclesClientPage({
 
   const handleCloseFormModal = () => {
     setEditingItem(null);
-    setFormApiError(null);
     setIsFormModalOpen(false);
   };
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
     setIsSaving(true);
-    setFormApiError(null);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem
       ? `/api/vehicles/${editingItem.id}`
       : "/api/vehicles";
-    const response = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    if (!response.ok) {
-      const { error } = await response.json();
-      setFormApiError(error);
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast(
+        `Veículo ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
+        "success"
+      );
       setIsSaving(false);
-      return;
+      handleCloseFormModal();
+      mutateVehicles();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
+      setIsSaving(false);
     }
-    setIsSaving(false);
-    handleCloseFormModal();
-    mutateVehicles();
   };
 
   const handleDeleteClick = (item: Vehicle) => {
@@ -141,10 +149,15 @@ export default function VehiclesClientPage({
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
       setIsDeleting(true);
-      await fetch(`/api/vehicles/${itemToDelete.id}`, { method: "DELETE" });
+      try {
+        await fetch(`/api/vehicles/${itemToDelete.id}`, { method: "DELETE" });
+        showToast("Veículo excluído com sucesso!", "success");
+        setItemToDelete(null);
+        mutateVehicles();
+      } catch {
+        showToast("Falha ao excluir veículo.", "error");
+      }
       setIsDeleting(false);
-      setItemToDelete(null);
-      mutateVehicles();
     }
   };
 
@@ -196,7 +209,6 @@ export default function VehiclesClientPage({
         >
           <VehicleForm
             initialData={editingItem}
-            apiError={formApiError}
             isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCloseFormModal}
@@ -325,7 +337,6 @@ export default function VehiclesClientPage({
       >
         <VehicleForm
           initialData={editingItem}
-          apiError={formApiError}
           isSaving={isSaving}
           onSave={handleSave}
           onCancel={handleCloseFormModal}

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
+import { useSWRConfig } from "swr";
 import { Contract, Vehicle, Driver, WithoutBaseItem } from "@/types";
 import {
   useFetchContracts,
@@ -95,7 +97,10 @@ export default function ContractsClientPage({
   );
   const [itemToDelete, setItemToDelete] =
     useState<ContractWithRelations | null>(null);
+  const { showToast } = useToast();
+  const { mutate } = useSWRConfig();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleOpenFormModal = (item: ContractWithRelations | null = null) => {
     setEditingItem(item);
@@ -108,17 +113,35 @@ export default function ContractsClientPage({
   };
 
   const handleSave = async (formData: WithoutBaseItem<Contract>) => {
+    setIsSaving(true);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem
       ? `/api/contracts/${editingItem.id}`
       : "/api/contracts";
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    handleCloseFormModal();
-    mutateContracts();
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast(
+        `Contrato ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
+        "success"
+      );
+      handleCloseFormModal();
+      mutateContracts();
+      mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
+    }
+    setIsSaving(false);
   };
 
   const handleDeleteClick = (item: ContractWithRelations) => {
@@ -132,10 +155,15 @@ export default function ContractsClientPage({
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
       setIsDeleting(true);
-      await fetch(`/api/contracts/${itemToDelete.id}`, { method: "DELETE" });
+      try {
+        await fetch(`/api/contracts/${itemToDelete.id}`, { method: "DELETE" });
+        showToast("Contrato excluído com sucesso!", "success");
+        setItemToDelete(null);
+        mutateContracts();
+      } catch {
+        showToast("Falha ao excluir contrato.", "error");
+      }
       setIsDeleting(false);
-      setItemToDelete(null);
-      mutateContracts();
     }
   };
 
@@ -189,6 +217,7 @@ export default function ContractsClientPage({
             initialData={editingItem}
             vehicles={allVehicles || []}
             drivers={allDrivers || []}
+            isSaving={isSaving}
             onSave={handleSave}
             onCancel={handleCloseFormModal}
           />

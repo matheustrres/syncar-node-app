@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useToast } from "@/context/ToastContext";
 import { Contract, Vehicle, Driver } from "@/types";
 import {
   useAllContracts,
@@ -15,7 +16,14 @@ import {
 import Modal from "@/components/ui/Modal";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
-import { Plus, CheckCircle, Clock, TrendingDown, Edit, Trash2, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  CheckCircle,
+  Clock,
+  TrendingDown,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import FinancialSkeleton from "./FinancialSkeleton";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
@@ -64,9 +72,12 @@ export default function FinancialClientPage({
   const [modalType, setModalType] = useState<"payment" | "expense" | null>(
     null
   );
-  const [editingExpense, setEditingExpense] = useState<ExpenseWithRelations | null>(null);
-  const [expenseToDelete, setExpenseToDelete] = useState<ExpenseWithRelations | null>(null);
+  const [editingExpense, setEditingExpense] =
+    useState<ExpenseWithRelations | null>(null);
+  const [expenseToDelete, setExpenseToDelete] =
+    useState<ExpenseWithRelations | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenEditExpenseModal = (expense: ExpenseWithRelations) => {
@@ -85,10 +96,17 @@ export default function FinancialClientPage({
   const handleConfirmDeleteExpense = async () => {
     if (expenseToDelete) {
       setIsDeleting(true);
-      await fetch(`/api/expenses/${expenseToDelete.id}`, { method: "DELETE" });
+      try {
+        await fetch(`/api/expenses/${expenseToDelete.id}`, {
+          method: "DELETE",
+        });
+        showToast("Despesa excluída com sucesso!", "success");
+        setExpenseToDelete(null);
+        mutateExpenses();
+      } catch {
+        showToast("Falha ao excluir despesa.", "error");
+      }
       setIsDeleting(false);
-      setExpenseToDelete(null);
-      mutateExpenses();
     }
   };
 
@@ -102,32 +120,49 @@ export default function FinancialClientPage({
     const method = editingExpense ? "PUT" : "POST";
     const url = editingExpense ? `${apiPath}/${editingExpense.id}` : apiPath;
 
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    setIsSaving(false);
-    handleCloseModal();
-    if (apiPath.includes("payments")) {
-      mutatePending();
-      mutatePaid();
-    } else if (apiPath.includes("expenses")) {
-      mutateExpenses();
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast(`Operação realizada com sucesso!`, "success");
+      handleCloseModal();
+      if (apiPath.includes("payments")) {
+        mutatePending();
+        mutatePaid();
+      } else if (apiPath.includes("expenses")) {
+        mutateExpenses();
+      }
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
     }
+    setIsSaving(false);
   };
 
   const handleMarkAsPaid = async (paymentId: string) => {
-    await fetch(`/api/payments/${paymentId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: "Pago",
-        paymentDate: new Date().toISOString(),
-      }),
-    });
-    mutatePending();
-    mutatePaid();
+    try {
+      await fetch(`/api/payments/${paymentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "Pago",
+          paymentDate: new Date().toISOString(),
+        }),
+      });
+      showToast("Pagamento marcado como pago!", "success");
+      mutatePending();
+      mutatePaid();
+    } catch {
+      showToast("Falha ao marcar como pago.", "error");
+    }
   };
 
   if (pendingLoading || paidLoading || expensesLoading) {
@@ -177,12 +212,12 @@ export default function FinancialClientPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                {/* Pending Payments */}
-                <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col h-[75vh]">
-                  <h3 className="text-lg font-semibold mb-4 text-orange-700 flex items-center gap-2 flex-shrink-0">
-                    <Clock size={20} /> Pagamentos pendentes
-                  </h3>
-                  <div className="space-y-3 overflow-y-auto flex-grow">
+        {/* Pending Payments */}
+        <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col h-[75vh]">
+          <h3 className="text-lg font-semibold mb-4 text-orange-700 flex items-center gap-2 flex-shrink-0">
+            <Clock size={20} /> Pagamentos pendentes
+          </h3>
+          <div className="space-y-3 overflow-y-auto flex-grow">
             {pendingPayments.length > 0 ? (
               pendingPayments.map((payment) => {
                 const isOverdue = new Date(payment.dueDate) < new Date();
@@ -254,7 +289,8 @@ export default function FinancialClientPage({
                     <div>
                       <p className="font-semibold">{expense.type}</p>
                       <p className="text-sm text-gray-500">
-                        {expense.description} ({expense.vehicle?.plate || "N/A"})
+                        {expense.description} ({expense.vehicle?.plate || "N/A"}
+                        )
                       </p>
                     </div>
                     <p className="font-bold text-red-600">

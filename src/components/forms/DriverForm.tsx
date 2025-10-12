@@ -18,7 +18,6 @@ import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 interface DriverFormProps {
   initialData?: Driver | null;
-  apiError?: string | null;
   isSaving?: boolean;
   onSave: (
     data: Omit<Driver, "id" | "userId" | "createdAt" | "updatedAt">
@@ -28,7 +27,6 @@ interface DriverFormProps {
 
 const DriverForm: React.FC<DriverFormProps> = ({
   initialData,
-  apiError,
   isSaving,
   onSave,
   onCancel,
@@ -466,12 +464,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
       </div>
 
-      {apiError && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
-          <AlertCircle size={16} />
-          <span>{apiError}</span>
-        </div>
-      )}
 
       <div className="flex justify-end gap-4 pt-4">
         <button

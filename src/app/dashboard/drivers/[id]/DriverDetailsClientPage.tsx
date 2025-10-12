@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
 import { Driver, WithoutBaseItem } from "@/types";
 import { useFetchDriverById } from "@/hooks/useData";
-import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
 import DriverDetailsSkeleton from "./DriverDetailsSkeleton";
@@ -43,35 +44,45 @@ export default function DriverDetailsClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (data: WithoutBaseItem<Driver>) => {
     setIsSaving(true);
-    setFormApiError(null);
-    const response = await fetch(`/api/drivers/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const { error } = await response.json();
-      setFormApiError(error);
-      setIsSaving(false);
-      return;
+    try {
+      const response = await fetch(`/api/drivers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast("Motorista atualizado com sucesso!", "success");
+      setIsFormModalOpen(false);
+      mutateDriver();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
     }
     setIsSaving(false);
-    setIsFormModalOpen(false);
-    mutateDriver();
   };
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
-    await fetch(`/api/drivers/${id}`, { method: "DELETE" });
+    try {
+      await fetch(`/api/drivers/${id}`, { method: "DELETE" });
+      showToast("Motorista excluído com sucesso!", "success");
+      setIsDeleteModalOpen(false);
+      router.push("/dashboard/drivers");
+    } catch {
+      showToast("Falha ao excluir motorista.", "error");
+    }
     setIsDeleting(false);
-    setIsDeleteModalOpen(false);
-    router.push("/dashboard/drivers");
   };
 
   if (isError) {
@@ -167,7 +178,6 @@ export default function DriverDetailsClientPage({
       >
         <DriverForm
           initialData={driver}
-          apiError={formApiError}
           isSaving={isSaving}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}

@@ -9,6 +9,7 @@ import {
   Vehicle,
   WithoutBaseItem,
 } from "@/types";
+import { useToast } from "@/context/ToastContext";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
@@ -55,35 +56,45 @@ export default function ContractDetailsClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (data: WithoutBaseItem<Contract>) => {
     setIsSaving(true);
-    setFormApiError(null);
-    const response = await fetch(`/api/contracts/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      const { error } = await response.json();
-      setFormApiError(error);
-      setIsSaving(false);
-      return;
+    try {
+      const response = await fetch(`/api/contracts/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast("Contrato atualizado com sucesso!", "success");
+      setIsFormModalOpen(false);
+      mutateContract();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
     }
     setIsSaving(false);
-    setIsFormModalOpen(false);
-    mutateContract();
   };
 
   const handleConfirmDelete = async () => {
     setIsDeleting(true);
-    await fetch(`/api/contracts/${id}`, { method: "DELETE" });
+    try {
+      await fetch(`/api/contracts/${id}`, { method: "DELETE" });
+      showToast("Contrato excluído com sucesso!", "success");
+      setIsDeleteModalOpen(false);
+      router.push("/dashboard/contracts");
+    } catch {
+      showToast("Falha ao excluir contrato.", "error");
+    }
     setIsDeleting(false);
-    setIsDeleteModalOpen(false);
-    router.push("/dashboard/contracts");
   };
 
   if (!contract && !isContractError) return <ContractDetailsSkeleton />;
@@ -175,7 +186,6 @@ export default function ContractDetailsClientPage({
           vehicles={initialVehicles}
           drivers={initialDrivers}
           isSaving={isSaving}
-          apiError={formApiError}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}
         />
