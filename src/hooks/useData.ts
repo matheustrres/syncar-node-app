@@ -38,13 +38,15 @@ export function useFetchContracts(
   limit: number,
   search: string,
   status: string,
+  sortColumn: string,
+  sortDirection: "asc" | "desc",
   fallbackData?: { contracts: ContractWithRelations[]; total: number }
 ) {
   const { data, error, isLoading, mutate } = useSWR<{
     contracts: ContractWithRelations[];
     total: number;
   }>(
-    `/api/contracts?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+    `/api/contracts?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
     fetcher,
     { fallbackData, revalidateOnMount: false }
   );
@@ -62,13 +64,15 @@ export function useFetchDrivers(
   limit: number,
   search: string,
   status: string,
+  sortColumn: string,
+  sortDirection: "asc" | "desc",
   fallbackData?: { drivers: Driver[]; total: number }
 ) {
   const { data, error, isLoading, mutate } = useSWR<{
     drivers: Driver[];
     total: number;
   }>(
-    `/api/drivers?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+    `/api/drivers?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
     fetcher,
     { fallbackData, revalidateOnMount: false }
   );
@@ -86,13 +90,15 @@ export function useFetchVehicles(
   limit: number,
   search: string,
   status: string,
+  sortColumn: string,
+  sortDirection: "asc" | "desc",
   fallbackData?: { vehicles: Vehicle[]; total: number }
 ) {
   const { data, error, isLoading, mutate } = useSWR<{
     vehicles: Vehicle[];
     total: number;
   }>(
-    `/api/vehicles?page=${page}&limit=${limit}&search=${search}&status=${status}`,
+    `/api/vehicles?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
     fetcher,
     { fallbackData, revalidateOnMount: false }
   );

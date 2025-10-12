@@ -21,10 +21,12 @@ const columns: Column<Vehicle>[] = [
     header: "Placa",
     accessor: "plate",
     className: "font-medium text-gray-900",
+    sortable: true,
   },
   {
     header: "Modelo",
     accessor: (vehicle) => `${vehicle.brand} ${vehicle.model}`,
+    sortable: true,
   },
   {
     header: "Status",
@@ -41,6 +43,7 @@ const columns: Column<Vehicle>[] = [
         {vehicle.status}
       </span>
     ),
+    sortable: true,
   },
 ];
 
@@ -66,6 +69,8 @@ export default function VehiclesClientPage({
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortColumn, setSortColumn] = useState("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
   useEffect(() => {
@@ -73,10 +78,18 @@ export default function VehiclesClientPage({
   }, [searchTerm, statusFilter]);
 
   const { vehicles, total, isError, isLoading, mutateVehicles } =
-    useFetchVehicles(page, limit, searchTerm, statusFilter, {
-      vehicles: initialVehicles,
-      total: initialTotal,
-    });
+    useFetchVehicles(
+      page,
+      limit,
+      searchTerm,
+      statusFilter,
+      sortColumn,
+      sortDirection,
+      {
+        vehicles: initialVehicles,
+        total: initialTotal,
+      }
+    );
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -192,6 +205,11 @@ export default function VehiclesClientPage({
     </button>
   );
 
+  const handleSort = (column: string, direction: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortDirection(direction);
+  };
+
   if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
     return (
       <>
@@ -250,6 +268,9 @@ export default function VehiclesClientPage({
           onRowClick={handleRowClick}
           onEdit={handleOpenFormModal}
           onDelete={handleDeleteClick}
+          onSort={handleSort}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
         />
       </div>
 

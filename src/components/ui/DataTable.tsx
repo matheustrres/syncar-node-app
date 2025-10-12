@@ -1,12 +1,13 @@
 "use client";
 
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, ArrowUp, ArrowDown } from "lucide-react";
 import React from "react";
 
 export interface Column<T> {
   header: string;
   accessor: keyof T | ((item: T) => React.ReactNode);
   className?: string;
+  sortable?: boolean;
 }
 
 interface DataTableProps<T extends { id: string }> {
@@ -15,6 +16,9 @@ interface DataTableProps<T extends { id: string }> {
   onRowClick: (itemId: string) => void;
   onEdit: (item: T) => void;
   onDelete: (item: T) => void;
+  onSort: (column: string, direction: "asc" | "desc") => void;
+  sortColumn: string;
+  sortDirection: "asc" | "desc";
 }
 
 export default function DataTable<T extends { id: string }>({
@@ -23,9 +27,20 @@ export default function DataTable<T extends { id: string }>({
   onRowClick,
   onEdit,
   onDelete,
+  onSort,
+  sortColumn,
+  sortDirection,
 }: DataTableProps<T>) {
   const handleActionClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+  };
+
+  const handleHeaderClick = (columnAccessor: string) => {
+    if (sortColumn === columnAccessor) {
+      onSort(columnAccessor, sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      onSort(columnAccessor, "asc");
+    }
   };
 
   return (
@@ -36,9 +51,23 @@ export default function DataTable<T extends { id: string }>({
             {columns.map((col) => (
               <th
                 key={String(col.header)}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
+                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase ${col.sortable ? "cursor-pointer select-none" : ""}`}
+                onClick={
+                  col.sortable
+                    ? () => handleHeaderClick(String(col.accessor))
+                    : undefined
+                }
               >
-                {col.header}
+                <div className="flex items-center gap-1">
+                  {col.header}
+                  {col.sortable &&
+                    sortColumn === col.accessor &&
+                    (sortDirection === "asc" ? (
+                      <ArrowUp size={14} />
+                    ) : (
+                      <ArrowDown size={14} />
+                    ))}
+                </div>
               </th>
             ))}
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">

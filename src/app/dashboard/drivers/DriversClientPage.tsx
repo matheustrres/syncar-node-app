@@ -17,9 +17,14 @@ import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import EmptyState from "@/components/ui/EmptyState";
 
 const columns: Column<Driver>[] = [
-  { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
-  { header: "CPF", accessor: "cpf" },
-  { header: "Telefone", accessor: "phone" },
+  {
+    header: "Nome",
+    accessor: "name",
+    className: "font-medium text-gray-900",
+    sortable: true,
+  },
+  { header: "CPF", accessor: "cpf", sortable: true },
+  { header: "Telefone", accessor: "phone", sortable: true },
   {
     header: "Status",
     accessor: (driver) => (
@@ -33,6 +38,7 @@ const columns: Column<Driver>[] = [
         {driver.status}
       </span>
     ),
+    sortable: true,
   },
 ];
 
@@ -57,6 +63,8 @@ export default function DriversClientPage({
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortColumn, setSortColumn] = useState("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
   useEffect(() => {
@@ -68,6 +76,8 @@ export default function DriversClientPage({
     limit,
     searchTerm,
     statusFilter,
+    sortColumn,
+    sortDirection,
     {
       drivers: initialDrivers,
       total: initialTotal,
@@ -187,6 +197,11 @@ export default function DriversClientPage({
     </button>
   );
 
+  const handleSort = (column: string, direction: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortDirection(direction);
+  };
+
   if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
     return (
       <>
@@ -245,7 +260,10 @@ export default function DriversClientPage({
           onRowClick={handleRowClick}
           onEdit={handleOpenFormModal}
           onDelete={handleDeleteClick}
-        />
+          onSort={handleSort}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
+        />{" "}
       </div>
 
       {/* ... [resto do código para mobile view, modais, etc. que permanece o mesmo] ... */}

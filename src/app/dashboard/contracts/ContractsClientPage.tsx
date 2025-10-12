@@ -33,16 +33,19 @@ const columns: Column<ContractWithRelations>[] = [
     header: "Motorista",
     accessor: (contract) => contract.driver.name,
     className: "font-medium text-gray-900",
+    sortable: true,
   },
   {
     header: "Veículo",
     accessor: (contract) =>
       `${contract.vehicle.plate} - ${contract.vehicle.model}`,
+    sortable: true,
   },
   {
     header: "Valor Semanal",
     accessor: (contract) => `R$ ${contract.weeklyValue.toFixed(2)}`,
     className: "font-semibold text-green-600",
+    sortable: true,
   },
   {
     header: "Status",
@@ -57,6 +60,7 @@ const columns: Column<ContractWithRelations>[] = [
         {contract.status}
       </span>
     ),
+    sortable: true,
   },
 ];
 
@@ -76,6 +80,8 @@ export default function ContractsClientPage({
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [sortColumn, setSortColumn] = useState("createdAt");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
   useEffect(() => {
@@ -83,10 +89,18 @@ export default function ContractsClientPage({
   }, [searchTerm, statusFilter]);
 
   const { contracts, total, isLoading, isError, mutateContracts } =
-    useFetchContracts(page, limit, searchTerm, statusFilter, {
-      contracts: initialContracts,
-      total: initialTotal,
-    });
+    useFetchContracts(
+      page,
+      limit,
+      searchTerm,
+      statusFilter,
+      sortColumn,
+      sortDirection,
+      {
+        contracts: initialContracts,
+        total: initialTotal,
+      }
+    );
 
   const { drivers: allDrivers } = useAllDrivers(initialDrivers);
   const { vehicles: allVehicles } = useAllVehicles(initialVehicles);
@@ -134,7 +148,9 @@ export default function ContractsClientPage({
       );
       handleCloseFormModal();
       mutateContracts();
-      mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
+      mutate(
+        (key) => typeof key === "string" && key.startsWith("/api/vehicles")
+      );
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Ocorreu um erro",
@@ -198,6 +214,11 @@ export default function ContractsClientPage({
     </button>
   );
 
+  const handleSort = (column: string, direction: "asc" | "desc") => {
+    setSortColumn(column);
+    setSortDirection(direction);
+  };
+
   if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
     return (
       <>
@@ -258,6 +279,9 @@ export default function ContractsClientPage({
           onRowClick={handleRowClick}
           onEdit={handleOpenFormModal}
           onDelete={handleDeleteClick}
+          onSort={handleSort}
+          sortColumn={sortColumn}
+          sortDirection={sortDirection}
         />
       </div>
 

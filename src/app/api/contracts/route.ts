@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const search = searchParams.get("search") || "";
   const status = searchParams.get("status") || "";
+  const sortColumn = searchParams.get("sortColumn") || "createdAt";
+  const sortDirection = searchParams.get("sortDirection") || "desc";
   const skip = (page - 1) * limit;
   const where: { [key: string]: unknown } = { userId: session.user.id };
   if (status) {
@@ -38,6 +40,18 @@ export async function GET(request: NextRequest) {
       },
     ];
   }
+
+  let orderBy: { [key: string]: any } = { createdAt: "desc" };
+  if (sortColumn === "driver.name") {
+    orderBy = { driver: { name: sortDirection } };
+  } else if (sortColumn === "vehicle.plate") {
+    orderBy = { vehicle: { plate: sortDirection } };
+  } else if (sortColumn === "vehicle.model") {
+    orderBy = { vehicle: { model: sortDirection } };
+  } else {
+    orderBy = { [sortColumn]: sortDirection };
+  }
+
   const [contracts, total] = await prisma.$transaction([
     prisma.contract.findMany({
       where,
@@ -51,7 +65,7 @@ export async function GET(request: NextRequest) {
       },
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy,
     }),
     prisma.contract.count({ where }),
   ]);

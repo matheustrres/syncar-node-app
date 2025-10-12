@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const search = searchParams.get("search") || "";
   const status = searchParams.get("status") || "";
+  const sortColumn = searchParams.get("sortColumn") || "createdAt";
+  const sortDirection = searchParams.get("sortDirection") || "desc";
   const skip = (page - 1) * limit;
   const where: { [key: string]: unknown } = { userId: session.user.id };
   if (search) {
@@ -48,9 +50,7 @@ export async function GET(request: NextRequest) {
       },
       skip,
       take: limit,
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { [sortColumn]: sortDirection },
     }),
     prisma.driver.count({ where }),
   ]);
