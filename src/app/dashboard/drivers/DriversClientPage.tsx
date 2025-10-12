@@ -6,13 +6,14 @@ import { Driver, WithoutBaseItem } from "@/types";
 import { useFetchDrivers } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
-import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, User } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import FilterBar from "@/components/ui/FilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import EmptyState from "@/components/ui/EmptyState";
 
 const columns: Column<Driver>[] = [
   { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
@@ -162,6 +163,43 @@ export default function DriversClientPage({
   }
 
   const totalPages = Math.ceil(total / limit);
+
+  const addButton = (
+    <button
+      onClick={handleAddClick}
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
+    >
+      <Plus size={20} />
+      <span>Adicionar motorista</span>
+    </button>
+  );
+
+  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
+    return (
+      <>
+        <EmptyState 
+          Icon={User}
+          title="Nenhum motorista cadastrado"
+          description="Comece cadastrando o primeiro motorista da sua frota para poder gerenciá-los."
+          actionButton={addButton}
+        />
+        <Modal
+          isOpen={isFormModalOpen}
+          onClose={handleCloseFormModal}
+          title={editingItem ? "Editar motorista" : "Adicionar motorista"}
+          size="4xl"
+        >
+          <DriverForm
+            initialData={editingItem}
+            apiError={formApiError}
+            isSaving={isSaving}
+            onSave={handleSave}
+            onCancel={handleCloseFormModal}
+          />
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <div>

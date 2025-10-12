@@ -6,13 +6,14 @@ import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicles } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
-import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Car } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import FilterBar from "@/components/ui/FilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import EmptyState from "@/components/ui/EmptyState";
 
 const columns: Column<Vehicle>[] = [
   {
@@ -167,6 +168,43 @@ export default function VehiclesClientPage({
   }
 
   const totalPages = Math.ceil(total / limit);
+
+  const addButton = (
+    <button
+      onClick={handleAddClick}
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
+    >
+      <Plus size={20} />
+      <span>Adicionar veículo</span>
+    </button>
+  );
+
+  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
+    return (
+      <>
+        <EmptyState
+          Icon={Car}
+          title="Nenhum veículo cadastrado"
+          description="Comece cadastrando o primeiro veículo da sua frota para poder gerenciá-los."
+          actionButton={addButton}
+        />
+        <Modal
+          isOpen={isFormModalOpen}
+          onClose={handleCloseFormModal}
+          title={editingItem ? "Editar veículo" : "Adicionar veículo"}
+          size="4xl"
+        >
+          <VehicleForm
+            initialData={editingItem}
+            apiError={formApiError}
+            isSaving={isSaving}
+            onSave={handleSave}
+            onCancel={handleCloseFormModal}
+          />
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <div>

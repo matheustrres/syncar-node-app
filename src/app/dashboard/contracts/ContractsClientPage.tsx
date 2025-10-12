@@ -11,12 +11,13 @@ import {
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, FileText } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
 import FilterBar from "@/components/ui/FilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface ContractsClientPageProps {
   initialContracts: ContractWithRelations[];
@@ -158,6 +159,43 @@ export default function ContractsClientPage({
   }
 
   const totalPages = Math.ceil(total / limit);
+
+  const addButton = (
+    <button
+      onClick={() => handleOpenFormModal()}
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
+    >
+      <Plus size={20} />
+      <span>Novo contrato</span>
+    </button>
+  );
+
+  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
+    return (
+      <>
+        <EmptyState
+          Icon={FileText}
+          title="Nenhum contrato cadastrado"
+          description="Comece cadastrando o primeiro contrato para poder gerenciá-los."
+          actionButton={addButton}
+        />
+        <Modal
+          isOpen={isFormModalOpen}
+          onClose={handleCloseFormModal}
+          title={editingItem ? "Editar contrato" : "Novo contrato"}
+          size="4xl"
+        >
+          <ContractForm
+            initialData={editingItem}
+            vehicles={allVehicles || []}
+            drivers={allDrivers || []}
+            onSave={handleSave}
+            onCancel={handleCloseFormModal}
+          />
+        </Modal>
+      </>
+    );
+  }
 
   return (
     <div>
