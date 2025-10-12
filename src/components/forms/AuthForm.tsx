@@ -17,6 +17,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import Modal from "../ui/Modal";
+import ForgotPasswordForm from "./ForgotPasswordForm";
 
 type FormErrors = {
   name?: string;
@@ -50,6 +51,8 @@ const AuthForm = () => {
   });
   const router = useRouter();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] =
+    useState(false);
 
   const validatePassword = (password: string) => {
     const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
@@ -59,8 +62,8 @@ const AuthForm = () => {
       hasUpperCase: /[A-Z]/.test(password),
       hasNumber: /\d/.test(password),
       hasTwoSpecialChars:
-        (password.match(new RegExp(specialCharRegex.source, "g")) || []).length >=
-        2,
+        (password.match(new RegExp(specialCharRegex.source, "g")) || [])
+          .length >= 2,
     };
   };
 
@@ -97,7 +100,10 @@ const AuthForm = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (formData.password !== formData.confirmPassword) {
-        setErrors((prev) => ({ ...prev, confirmPassword: "As senhas não coincidem" }));
+        setErrors((prev) => ({
+          ...prev,
+          confirmPassword: "As senhas não coincidem",
+        }));
       } else {
         setErrors((prev) => {
           const newErrors = { ...prev };
@@ -360,32 +366,48 @@ const AuthForm = () => {
               {!isLogin && (
                 <div className="mt-2 text-sm">
                   <p
-                    className={passwordStrength.minLength ? "text-green-500" : "text-red-500"}
+                    className={
+                      passwordStrength.minLength
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }
                   >
                     Pelo menos 9 caracteres
                   </p>
                   <p
                     className={
-                      passwordStrength.hasTwoSpecialChars ? "text-green-500" : "text-red-500"
+                      passwordStrength.hasTwoSpecialChars
+                        ? "text-green-500"
+                        : "text-red-500"
                     }
                   >
                     Pelo menos 2 caracteres especiais
                   </p>
                   <p
                     className={
-                      passwordStrength.hasLowerCase ? "text-green-500" : "text-red-500"
+                      passwordStrength.hasLowerCase
+                        ? "text-green-500"
+                        : "text-red-500"
                     }
                   >
                     Pelo menos 1 letra minúscula
                   </p>
                   <p
                     className={
-                      passwordStrength.hasUpperCase ? "text-green-500" : "text-red-500"
+                      passwordStrength.hasUpperCase
+                        ? "text-green-500"
+                        : "text-red-500"
                     }
                   >
                     Pelo menos 1 letra maiúscula
                   </p>
-                  <p className={passwordStrength.hasNumber ? "text-green-500" : "text-red-500"}>
+                  <p
+                    className={
+                      passwordStrength.hasNumber
+                        ? "text-green-500"
+                        : "text-red-500"
+                    }
+                  >
                     Pelo menos 1 número
                   </p>
                 </div>
@@ -421,6 +443,7 @@ const AuthForm = () => {
                 <div className="flex justify-end">
                   <button
                     type="button"
+                    onClick={() => setIsForgotPasswordModalOpen(true)}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Esqueceu a senha?
@@ -491,6 +514,17 @@ const AuthForm = () => {
             </button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={isForgotPasswordModalOpen}
+        onClose={() => setIsForgotPasswordModalOpen(false)}
+        title="Recuperar Senha"
+        size="md"
+      >
+        <ForgotPasswordForm
+          onClose={() => setIsForgotPasswordModalOpen(false)}
+        />
       </Modal>
     </>
   );

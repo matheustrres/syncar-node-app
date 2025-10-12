@@ -8,21 +8,33 @@ datasource db {
 }
 
 model User {
-  id          String     @id @default(cuid())
+  id          String               @id @default(cuid())
   name        String
-  email       String     @unique
+  email       String               @unique
   password    String
-  companyName String     @map("company_name")
+  companyName String               @map("company_name")
   phone       String
-  plan        String     @default("BASIC")
+  plan        String               @default("BASIC")
   vehicles    Vehicle[]
   drivers     Driver[]
   contracts   Contract[]
   expenses    Expense[]
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  resetTokens PasswordResetToken[]
+  createdAt   DateTime             @default(now()) @map("created_at")
+  updatedAt   DateTime             @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires   DateTime
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("password_reset_tokens")
 }
 
 model Vehicle {

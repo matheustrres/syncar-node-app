@@ -103,7 +103,7 @@ export default function LandingPage() {
               priceDescription="Para sempre"
               features={[
                 "Até 3 veículos",
-                "Até 5 motoristas",
+                "Até 3 motoristas",
                 "Gestão de contratos",
                 "Controle financeiro",
               ]}

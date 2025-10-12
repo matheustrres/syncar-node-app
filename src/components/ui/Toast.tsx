@@ -23,7 +23,7 @@ export default function Toast({
   }, [isVisible]);
 
   const baseClasses =
-    'fixed top-5 right-5 w-full max-w-sm p-4 rounded-lg shadow-lg flex items-center gap-4 transition-transform duration-300 ease-in-out z-50';
+    "fixed top-5 right-5 w-full max-w-sm p-4 rounded-lg shadow-lg flex items-center gap-4 transition-transform duration-300 ease-in-out z-[9999]";
   const typeClasses = {
     success: "bg-green-50 text-green-800",
     error: "bg-red-50 text-red-800",
