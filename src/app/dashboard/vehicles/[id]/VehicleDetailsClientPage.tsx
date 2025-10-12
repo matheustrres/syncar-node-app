@@ -9,6 +9,7 @@ import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import VehicleDetailsSkeleton from "./VehicleDetailsSkeleton";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 const DetailItem = ({
   label,
@@ -44,6 +45,7 @@ export default function VehicleDetailsClientPage({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [formApiError, setFormApiError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
     setIsSaving(true);
@@ -66,7 +68,9 @@ export default function VehicleDetailsClientPage({
   };
 
   const handleConfirmDelete = async () => {
+    setIsDeleting(true);
     await fetch(`/api/vehicles/${id}`, { method: "DELETE" });
+    setIsDeleting(false);
     setIsDeleteModalOpen(false);
     router.push("/dashboard/vehicles");
   };
@@ -164,37 +168,14 @@ export default function VehicleDetailsClientPage({
           onCancel={() => setIsFormModalOpen(false)}
         />
       </Modal>
-      <Modal
+      <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirmar Exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir veículo
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Tem certeza que quer excluir o veículo{" "}
-            <span className="font-bold">{vehicle.plate}</span>?
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        resourceName="veículo"
+        resourceIdentifier={vehicle.plate}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

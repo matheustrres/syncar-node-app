@@ -9,12 +9,13 @@ import {
   Vehicle,
   WithoutBaseItem,
 } from "@/types";
-import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
 import ContractDetailsSkeleton from "./ContractDetailsSkeleton";
 import { useFetchContractById } from "@/hooks/useData";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 const DetailItem = ({
   label,
@@ -54,19 +55,33 @@ export default function ContractDetailsClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (data: WithoutBaseItem<Contract>) => {
-    await fetch(`/api/contracts/${id}`, {
+    setIsSaving(true);
+    setFormApiError(null);
+    const response = await fetch(`/api/contracts/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      const { error } = await response.json();
+      setFormApiError(error);
+      setIsSaving(false);
+      return;
+    }
+    setIsSaving(false);
     setIsFormModalOpen(false);
     mutateContract();
   };
 
   const handleConfirmDelete = async () => {
+    setIsDeleting(true);
     await fetch(`/api/contracts/${id}`, { method: "DELETE" });
+    setIsDeleting(false);
     setIsDeleteModalOpen(false);
     router.push("/dashboard/contracts");
   };
@@ -74,7 +89,7 @@ export default function ContractDetailsClientPage({
   if (!contract && !isContractError) return <ContractDetailsSkeleton />;
   if (isContractError) {
     return (
-      <ErrorDisplay 
+      <ErrorDisplay
         errorMessage="Falha ao carregar o contrato."
         onRetry={mutateContract}
       />
@@ -159,40 +174,20 @@ export default function ContractDetailsClientPage({
           initialData={contract}
           vehicles={initialVehicles}
           drivers={initialDrivers}
+          isSaving={isSaving}
+          apiError={formApiError}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}
         />
       </Modal>
-      <Modal
+      <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirmar exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir contrato
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Tem certeza que quer excluir este contrato?
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        resourceName="contrato"
+        resourceIdentifier={`do motorista ${contract.driver.name}`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

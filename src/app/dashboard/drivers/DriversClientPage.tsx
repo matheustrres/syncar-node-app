@@ -12,6 +12,7 @@ import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import FilterBar from "@/components/ui/FilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 const columns: Column<Driver>[] = [
   { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
@@ -76,6 +77,7 @@ export default function DriversClientPage({
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
   const [formApiError, setFormApiError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
 
@@ -132,7 +134,9 @@ export default function DriversClientPage({
 
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
+      setIsDeleting(true);
       await fetch(`/api/drivers/${itemToDelete.id}`, { method: "DELETE" });
+      setIsDeleting(false);
       setItemToDelete(null);
       mutateDrivers();
     }
@@ -283,40 +287,14 @@ export default function DriversClientPage({
         />
       </Modal>
 
-      <Modal
+      <DeleteConfirmationModal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteModal}
-        title="Confirmar Exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mt-3">
-            Excluir Motorista
-          </h3>
-          <div className="mt-2 px-7 py-3">
-            <p className="text-sm text-gray-500">
-              Você tem certeza que deseja excluir o motorista{" "}
-              <span className="font-bold">{itemToDelete?.name}</span>? Esta ação
-              não poderá ser desfeita.
-            </p>
-          </div>
-          <div className="items-center px-4 py-3 gap-4 flex justify-center">
-            <button
-              onClick={handleCloseDeleteModal}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold"
-            >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        resourceName="motorista"
+        resourceIdentifier={itemToDelete?.name}
+        isDeleting={isDeleting}
+      />
 
       <UpgradeModal
         isOpen={isUpgradeModalOpen}

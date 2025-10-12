@@ -8,6 +8,8 @@ import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
 import DriverDetailsSkeleton from "./DriverDetailsSkeleton";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 const DetailItem = ({
   label,
@@ -27,7 +29,7 @@ interface ClientPageProps {
   initialDriver: Driver;
 }
 
-export default function DriverDetailClientPage({
+export default function DriverDetailsClientPage({
   id,
   initialDriver,
 }: ClientPageProps) {
@@ -41,25 +43,47 @@ export default function DriverDetailClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleSave = async (data: WithoutBaseItem<Driver>) => {
-    await fetch(`/api/drivers/${id}`, {
+    setIsSaving(true);
+    setFormApiError(null);
+    const response = await fetch(`/api/drivers/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      const { error } = await response.json();
+      setFormApiError(error);
+      setIsSaving(false);
+      return;
+    }
+    setIsSaving(false);
     setIsFormModalOpen(false);
     mutateDriver();
   };
 
   const handleConfirmDelete = async () => {
+    setIsDeleting(true);
     await fetch(`/api/drivers/${id}`, { method: "DELETE" });
+    setIsDeleting(false);
     setIsDeleteModalOpen(false);
     router.push("/dashboard/drivers");
   };
 
+  if (isError) {
+    return (
+      <ErrorDisplay
+        errorMessage="Falha ao carregar dados do motorista."
+        onRetry={mutateDriver}
+      />
+    );
+  }
+
   if (!driver && !isError) return <DriverDetailsSkeleton />;
-  if (isError) return <div>Falha ao carregar dados do motorista.</div>;
   if (!driver) return <div>Motorista não encontrado.</div>;
 
   const fullAddress = [
@@ -143,41 +167,20 @@ export default function DriverDetailClientPage({
       >
         <DriverForm
           initialData={driver}
+          apiError={formApiError}
+          isSaving={isSaving}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}
         />
       </Modal>
-      <Modal
+      <DeleteConfirmationModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
-        title="Confirmar Exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir Motorista
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Tem certeza que quer excluir o motorista{" "}
-            <span className="font-bold">{driver.name}</span>?
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={() => setIsDeleteModalOpen(false)}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Sim, Excluir
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        resourceName="motorista"
+        resourceIdentifier={driver.name}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

@@ -17,6 +17,7 @@ import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
 import { Plus, CheckCircle, Clock, TrendingDown, Edit, Trash2, AlertTriangle } from "lucide-react";
 import FinancialSkeleton from "./FinancialSkeleton";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 interface ClientPageProps {
   initialPendingPayments: { payments: PaymentWithRelations[]; total: number };
@@ -66,6 +67,7 @@ export default function FinancialClientPage({
   const [editingExpense, setEditingExpense] = useState<ExpenseWithRelations | null>(null);
   const [expenseToDelete, setExpenseToDelete] = useState<ExpenseWithRelations | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenEditExpenseModal = (expense: ExpenseWithRelations) => {
     setEditingExpense(expense);
@@ -82,7 +84,9 @@ export default function FinancialClientPage({
 
   const handleConfirmDeleteExpense = async () => {
     if (expenseToDelete) {
+      setIsDeleting(true);
       await fetch(`/api/expenses/${expenseToDelete.id}`, { method: "DELETE" });
+      setIsDeleting(false);
       setExpenseToDelete(null);
       mutateExpenses();
     }
@@ -370,37 +374,14 @@ export default function FinancialClientPage({
         />
       </Modal>
 
-      <Modal
+      <DeleteConfirmationModal
         isOpen={!!expenseToDelete}
         onClose={handleCloseDeleteExpenseModal}
-        title="Confirmar Exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir Despesa
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Tem certeza que quer excluir a despesa "
-            <span className="font-bold">{expenseToDelete?.description}</span>"?
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={handleCloseDeleteExpenseModal}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDeleteExpense}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Sim, Excluir
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDeleteExpense}
+        resourceName="despesa"
+        resourceIdentifier={expenseToDelete?.description}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

@@ -11,11 +11,12 @@ import {
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
-import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
 import FilterBar from "@/components/ui/FilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 
 interface ContractsClientPageProps {
   initialContracts: ContractWithRelations[];
@@ -93,6 +94,7 @@ export default function ContractsClientPage({
   );
   const [itemToDelete, setItemToDelete] =
     useState<ContractWithRelations | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleOpenFormModal = (item: ContractWithRelations | null = null) => {
     setEditingItem(item);
@@ -128,7 +130,9 @@ export default function ContractsClientPage({
 
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
+      setIsDeleting(true);
       await fetch(`/api/contracts/${itemToDelete.id}`, { method: "DELETE" });
+      setIsDeleting(false);
       setItemToDelete(null);
       mutateContracts();
     }
@@ -146,7 +150,7 @@ export default function ContractsClientPage({
 
   if (isError) {
     return (
-      <ErrorDisplay 
+      <ErrorDisplay
         errorMessage="Falha ao carregar os dados."
         onRetry={mutateContracts}
       />
@@ -173,7 +177,7 @@ export default function ContractsClientPage({
         </button>
       </div>
 
-      <FilterBar 
+      <FilterBar
         searchPlaceholder="Buscar por motorista ou placa..."
         filterOptions={statusOptions}
         onSearchChange={setSearchTerm}
@@ -282,37 +286,14 @@ export default function ContractsClientPage({
         />
       </Modal>
 
-      <Modal
+      <DeleteConfirmationModal
         isOpen={!!itemToDelete}
         onClose={handleCloseDeleteModal}
-        title="Confirmar Exclusão"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
-          <h3 className="text-lg font-medium text-gray-900 mt-2">
-            Excluir contrato
-          </h3>
-          <p className="mt-2 text-sm text-gray-500">
-            Tem certeza que quer excluir o contrato do motorista{" "}
-            <span className="font-bold">{itemToDelete?.driver.name}</span>?
-          </p>
-          <div className="mt-6 flex justify-center gap-4">
-            <button
-              onClick={handleCloseDeleteModal}
-              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleConfirmDelete}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg"
-            >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onConfirm={handleConfirmDelete}
+        resourceName="contrato"
+        resourceIdentifier={`do motorista ${itemToDelete?.driver.name}`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

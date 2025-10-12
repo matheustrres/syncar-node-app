@@ -2,7 +2,7 @@
 
 import { Contract, Vehicle, Driver } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
-import { Car, User, DollarSign, Calendar, Shield, Hash } from "lucide-react";
+import { Car, User, DollarSign, Calendar, Shield, Hash, AlertCircle } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
@@ -10,6 +10,8 @@ interface ContractFormProps {
   initialData?: Contract | null;
   vehicles: Vehicle[];
   drivers: Driver[];
+  isSaving?: boolean;
+  apiError?: string | null;
   onSave: (
     data: Omit<Contract, "id" | "userId" | "createdAt" | "updatedAt">
   ) => void;
@@ -20,6 +22,8 @@ const ContractForm: React.FC<ContractFormProps> = ({
   initialData,
   vehicles,
   drivers,
+  isSaving,
+  apiError,
   onSave,
   onCancel,
 }) => {
@@ -178,19 +182,27 @@ const ContractForm: React.FC<ContractFormProps> = ({
           />
         </div>
       </div>
+      {apiError && (
+        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+          <AlertCircle size={16} />
+          <span>{apiError}</span>
+        </div>
+      )}
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
         >
-          Salvar
+          {isSaving ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>
