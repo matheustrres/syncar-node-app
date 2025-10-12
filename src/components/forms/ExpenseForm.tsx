@@ -8,6 +8,7 @@ import CurrencyInput from "../ui/CurrencyInput";
 interface ExpenseFormProps {
   initialData?: Expense | null;
   vehicles: Vehicle[];
+  isSaving?: boolean;
   onSave: (
     data: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">
   ) => void;
@@ -17,6 +18,7 @@ interface ExpenseFormProps {
 const ExpenseForm: React.FC<ExpenseFormProps> = ({
   initialData,
   vehicles,
+  isSaving,
   onSave,
   onCancel,
 }) => {
@@ -77,11 +79,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
           </label>
           <Car className="absolute left-3 top-9 text-gray-400" size={20} />
           <select
-            name="vehicleId"
-            value={formData.vehicleId}
-            onChange={handleChange}
-            required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Selecione um veículo</option>
             {vehicles.map((v) => (
@@ -102,7 +100,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             value={formData.type}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Manutenção">Manutenção</option>
             <option value="IPVA">IPVA</option>
@@ -124,7 +122,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             value={formData.date}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -143,7 +141,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
             onChange={handleChange}
             required
             placeholder="Ex: Troca de óleo e filtros"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -162,15 +160,17 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
         >
-          Salvar
+          {isSaving ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>

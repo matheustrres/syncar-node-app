@@ -15,7 +15,7 @@ import {
 import Modal from "@/components/ui/Modal";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
-import { Plus, CheckCircle, Clock, TrendingDown } from "lucide-react";
+import { Plus, CheckCircle, Clock, TrendingDown, Edit, Trash2, AlertTriangle } from "lucide-react";
 import FinancialSkeleton from "./FinancialSkeleton";
 
 interface ClientPageProps {
@@ -63,15 +63,47 @@ export default function FinancialClientPage({
   const [modalType, setModalType] = useState<"payment" | "expense" | null>(
     null
   );
+  const [editingExpense, setEditingExpense] = useState<ExpenseWithRelations | null>(null);
+  const [expenseToDelete, setExpenseToDelete] = useState<ExpenseWithRelations | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleCloseModal = () => setModalType(null);
+  const handleOpenEditExpenseModal = (expense: ExpenseWithRelations) => {
+    setEditingExpense(expense);
+    setModalType("expense");
+  };
+
+  const handleDeleteExpenseClick = (expense: ExpenseWithRelations) => {
+    setExpenseToDelete(expense);
+  };
+
+  const handleCloseDeleteExpenseModal = () => {
+    setExpenseToDelete(null);
+  };
+
+  const handleConfirmDeleteExpense = async () => {
+    if (expenseToDelete) {
+      await fetch(`/api/expenses/${expenseToDelete.id}`, { method: "DELETE" });
+      setExpenseToDelete(null);
+      mutateExpenses();
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalType(null);
+    setEditingExpense(null);
+  };
 
   const handleSave = async (apiPath: string, data: object) => {
-    await fetch(apiPath, {
-      method: "POST",
+    setIsSaving(true);
+    const method = editingExpense ? "PUT" : "POST";
+    const url = editingExpense ? `${apiPath}/${editingExpense.id}` : apiPath;
+
+    await fetch(url, {
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    setIsSaving(false);
     handleCloseModal();
     if (apiPath.includes("payments")) {
       mutatePending();
@@ -141,19 +173,23 @@ export default function FinancialClientPage({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Pending Payments */}
-        <div className="bg-white p-6 rounded-lg shadow-md w-full">
-          <h3 className="h-8 text-lg font-semibold mb-4 text-orange-700 flex items-center gap-2">
-            <Clock size={20} /> Pagamentos pendentes
-          </h3>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+                {/* Pending Payments */}
+                <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col h-[75vh]">
+                  <h3 className="text-lg font-semibold mb-4 text-orange-700 flex items-center gap-2 flex-shrink-0">
+                    <Clock size={20} /> Pagamentos pendentes
+                  </h3>
+                  <div className="space-y-3 overflow-y-auto flex-grow">
             {pendingPayments.length > 0 ? (
               pendingPayments.map((payment) => {
                 const isOverdue = new Date(payment.dueDate) < new Date();
                 return (
                   <div
                     key={payment.id}
-                    className={`p-4 rounded-lg border-l-4 ${isOverdue ? "bg-red-50 border-red-500" : "bg-yellow-50 border-yellow-500"}`}
+                    className={`p-4 rounded-lg border-l-4 min-h-[120px] flex flex-col justify-between ${
+                      isOverdue
+                        ? "bg-red-50 border-red-500"
+                        : "bg-yellow-50 border-yellow-500"
+                    }`}
                   >
                     <div className="flex justify-between items-start">
                       <div>
@@ -167,17 +203,17 @@ export default function FinancialClientPage({
                           )}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-bold text-lg text-gray-800">
-                          R$ {payment.value.toFixed(2)}
-                        </p>
-                        <button
-                          onClick={() => handleMarkAsPaid(payment.id)}
-                          className="text-sm text-green-600 hover:text-green-800 font-medium mt-1"
-                        >
-                          Marcar como pago
-                        </button>
-                      </div>
+                      <p className="font-bold text-lg text-gray-800">
+                        R$ {payment.value.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex justify-end items-center pt-2 border-t mt-2 h-10">
+                      <button
+                        onClick={() => handleMarkAsPaid(payment.id)}
+                        className="text-sm text-green-600 hover:text-green-800 font-medium"
+                      >
+                        Marcar como pago
+                      </button>
                     </div>
                   </div>
                 );
@@ -199,26 +235,46 @@ export default function FinancialClientPage({
         </div>
 
         {/* Recent Expenses */}
-        <div className="bg-white p-6 rounded-lg shadow-md w-full">
-          <h3 className="h-8 text-lg font-semibold mb-4 text-red-700 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col h-[75vh]">
+          <h3 className="text-lg font-semibold mb-4 text-red-700 flex items-center gap-2 flex-shrink-0">
             <TrendingDown size={20} /> Despesas recentes
           </h3>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-3 overflow-y-auto flex-grow">
             {recentExpenses.length > 0 ? (
               recentExpenses.map((expense) => (
                 <div
                   key={expense.id}
-                  className="p-3 bg-red-50 rounded-lg border-l-4 border-red-500 flex justify-between items-center"
+                  className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500 min-h-[120px] flex flex-col justify-between"
                 >
-                  <div>
-                    <p className="font-semibold">{expense.type}</p>
-                    <p className="text-sm text-gray-500">
-                      {expense.description} ({expense.vehicle?.plate || "N/A"})
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold">{expense.type}</p>
+                      <p className="text-sm text-gray-500">
+                        {expense.description} ({expense.vehicle?.plate || "N/A"})
+                      </p>
+                    </div>
+                    <p className="font-bold text-red-600">
+                      R$ {expense.value.toFixed(2)}
                     </p>
                   </div>
-                  <p className="font-bold text-red-600">
-                    R$ {expense.value.toFixed(2)}
-                  </p>
+                  <div className="border-t pt-2 mt-2 flex justify-end items-center h-10">
+                    <div className="flex gap-2">
+                      <button
+                        title="Editar Despesa"
+                        onClick={() => handleOpenEditExpenseModal(expense)}
+                        className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button
+                        title="Excluir Despesa"
+                        onClick={() => handleDeleteExpenseClick(expense)}
+                        className="text-red-600 p-2 rounded-full hover:bg-gray-100"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))
             ) : (
@@ -238,33 +294,36 @@ export default function FinancialClientPage({
         </div>
 
         {/* Paid Payments History */}
-        <div className="bg-white p-6 rounded-lg shadow-md w-full">
-          <h3 className="h-8 text-lg font-semibold mb-4 text-green-700 flex items-center gap-2">
+        <div className="bg-white p-6 rounded-lg shadow-md w-full flex flex-col h-[75vh]">
+          <h3 className="text-lg font-semibold mb-4 text-green-700 flex items-center gap-2 flex-shrink-0">
             <CheckCircle size={20} /> Histórico de pagamentos
           </h3>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto">
+          <div className="space-y-3 overflow-y-auto flex-grow">
             {paidPayments.length > 0 ? (
               paidPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="p-3 bg-green-50 rounded-lg border-l-4 border-green-500 flex justify-between items-center"
+                  className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 min-h-[120px] flex flex-col justify-between"
                 >
-                  <div>
-                    <p className="font-semibold">
-                      {payment.contract.driver.name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Pago em:{" "}
-                      {payment.paymentDate
-                        ? new Date(payment.paymentDate).toLocaleDateString(
-                            "pt-BR"
-                          )
-                        : "N/A"}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-semibold">
+                        {payment.contract.driver.name}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Pago em:{" "}
+                        {payment.paymentDate
+                          ? new Date(payment.paymentDate).toLocaleDateString(
+                              "pt-BR"
+                            )
+                          : "N/A"}
+                      </p>
+                    </div>
+                    <p className="font-bold text-green-600">
+                      R$ {payment.value.toFixed(2)}
                     </p>
                   </div>
-                  <p className="font-bold text-green-600">
-                    R$ {payment.value.toFixed(2)}
-                  </p>
+                  <div className="h-10 border-t border-transparent mt-2"></div>
                 </div>
               ))
             ) : (
@@ -300,13 +359,47 @@ export default function FinancialClientPage({
       <Modal
         isOpen={modalType === "expense"}
         onClose={handleCloseModal}
-        title="Adicionar Despesa"
+        title={editingExpense ? "Editar Despesa" : "Adicionar Despesa"}
       >
         <ExpenseForm
+          initialData={editingExpense}
+          isSaving={isSaving}
           vehicles={vehicles || []}
           onSave={(data) => handleSave("/api/expenses", data)}
           onCancel={handleCloseModal}
         />
+      </Modal>
+
+      <Modal
+        isOpen={!!expenseToDelete}
+        onClose={handleCloseDeleteExpenseModal}
+        title="Confirmar Exclusão"
+        size="md"
+      >
+        <div className="text-center p-4">
+          <AlertTriangle className="mx-auto h-12 w-12 text-red-400" />
+          <h3 className="text-lg font-medium text-gray-900 mt-2">
+            Excluir Despesa
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">
+            Tem certeza que quer excluir a despesa "
+            <span className="font-bold">{expenseToDelete?.description}</span>"?
+          </p>
+          <div className="mt-6 flex justify-center gap-4">
+            <button
+              onClick={handleCloseDeleteExpenseModal}
+              className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleConfirmDeleteExpense}
+              className="px-6 py-2 bg-red-600 text-white rounded-lg"
+            >
+              Sim, Excluir
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -18,6 +18,8 @@ import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 interface DriverFormProps {
   initialData?: Driver | null;
+  apiError?: string | null;
+  isSaving?: boolean;
   onSave: (
     data: Omit<Driver, "id" | "userId" | "createdAt" | "updatedAt">
   ) => void;
@@ -26,6 +28,8 @@ interface DriverFormProps {
 
 const DriverForm: React.FC<DriverFormProps> = ({
   initialData,
+  apiError,
+  isSaving,
   onSave,
   onCancel,
 }) => {
@@ -59,12 +63,14 @@ const DriverForm: React.FC<DriverFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        name: initialData.name,
-        cpf: initialData.cpf,
-        phone: initialData.phone,
-        email: initialData.email,
-        cnh: initialData.cnh,
-        cnhValidity: initialData.cnhValidity.split("T")[0],
+        name: initialData.name || "",
+        cpf: initialData.cpf || "",
+        phone: initialData.phone || "",
+        email: initialData.email || "",
+        cnh: initialData.cnh || "",
+        cnhValidity: initialData.cnhValidity
+          ? initialData.cnhValidity.split("T")[0]
+          : "",
         cep: initialData.cep || "",
         logradouro: initialData.logradouro || "",
         numero: initialData.numero || "",
@@ -72,7 +78,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
         bairro: initialData.bairro || "",
         cidade: initialData.cidade || "",
         uf: initialData.uf || "",
-        status: initialData.status,
+        status: initialData.status || "Ativo",
       });
       if (initialData.cep) {
         setAddressFieldsEnabled(true);
@@ -460,19 +466,28 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
       </div>
 
+      {apiError && (
+        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+          <AlertCircle size={16} />
+          <span>{apiError}</span>
+        </div>
+      )}
+
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
         >
-          Salvar
+          {isSaving ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>

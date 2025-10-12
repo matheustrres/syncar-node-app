@@ -44,7 +44,7 @@ export default function CustomSelect({
           )}
 
           <Listbox.Button
-            className={`relative w-full cursor-default rounded-lg border border-gray-300 bg-white py-2 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 sm:text-sm h-11 ${Icon ? "pl-11" : "pl-4"}`}
+            className={`relative w-full cursor-default rounded-lg border border-gray-300 bg-gray-100 py-2 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 sm:text-sm h-11 ${Icon ? "pl-11" : "pl-4"}`}
           >
             <span
               className={`block truncate ${selectedOption ? "text-gray-900" : "text-gray-500"}`}

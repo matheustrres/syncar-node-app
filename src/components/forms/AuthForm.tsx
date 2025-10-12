@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -46,18 +46,21 @@ const AuthForm = () => {
     hasLowerCase: false,
     hasUpperCase: false,
     hasNumber: false,
-    hasSpecialChar: false,
+    hasTwoSpecialChars: false,
   });
   const router = useRouter();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const validatePassword = (password: string) => {
+    const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
     return {
-      minLength: password.length >= 8,
+      minLength: password.length >= 9,
       hasLowerCase: /[a-z]/.test(password),
       hasUpperCase: /[A-Z]/.test(password),
       hasNumber: /\d/.test(password),
-      hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      hasTwoSpecialChars:
+        (password.match(new RegExp(specialCharRegex.source, "g")) || []).length >=
+        2,
     };
   };
 
@@ -86,10 +89,26 @@ const AuthForm = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (name === "password") setPasswordStrength(validatePassword(value));
-    if (errors[name as keyof FormErrors])
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    if (name === "password") {
+      setPasswordStrength(validatePassword(value));
+    }
   };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (formData.password !== formData.confirmPassword) {
+        setErrors((prev) => ({ ...prev, confirmPassword: "As senhas não coincidem" }));
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.confirmPassword;
+          return newErrors;
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [formData.password, formData.confirmPassword]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -339,6 +358,39 @@ const AuthForm = () => {
                 )}
               </div>
               {!isLogin && (
+                <div className="mt-2 text-sm">
+                  <p
+                    className={passwordStrength.minLength ? "text-green-500" : "text-red-500"}
+                  >
+                    Pelo menos 9 caracteres
+                  </p>
+                  <p
+                    className={
+                      passwordStrength.hasTwoSpecialChars ? "text-green-500" : "text-red-500"
+                    }
+                  >
+                    Pelo menos 2 caracteres especiais
+                  </p>
+                  <p
+                    className={
+                      passwordStrength.hasLowerCase ? "text-green-500" : "text-red-500"
+                    }
+                  >
+                    Pelo menos 1 letra minúscula
+                  </p>
+                  <p
+                    className={
+                      passwordStrength.hasUpperCase ? "text-green-500" : "text-red-500"
+                    }
+                  >
+                    Pelo menos 1 letra maiúscula
+                  </p>
+                  <p className={passwordStrength.hasNumber ? "text-green-500" : "text-red-500"}>
+                    Pelo menos 1 número
+                  </p>
+                </div>
+              )}
+              {!isLogin && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Confirmar Senha *
@@ -353,6 +405,7 @@ const AuthForm = () => {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
+                      onPaste={(e) => e.preventDefault()}
                       className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
                       placeholder="••••••••"
                     />

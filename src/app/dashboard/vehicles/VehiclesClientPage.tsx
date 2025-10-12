@@ -27,7 +27,7 @@ const columns: Column<Vehicle>[] = [
     accessor: (vehicle) => (
       <span
         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          vehicle.status === "Alugado"
+          vehicle.status === "Disponível"
             ? "bg-green-100 text-green-800"
             : vehicle.status === "Manutenção"
             ? "bg-yellow-100 text-yellow-800"
@@ -80,11 +80,14 @@ export default function VehiclesClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Vehicle | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Vehicle | null>(null);
+  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
 
   const handleOpenFormModal = (item: Vehicle | null = null) => {
     setEditingItem(item);
+    setFormApiError(null);
     setIsFormModalOpen(true);
   };
 
@@ -98,10 +101,14 @@ export default function VehiclesClientPage({
 
   const handleCloseFormModal = () => {
     setEditingItem(null);
+    setFormApiError(null);
     setIsFormModalOpen(false);
   };
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
+    setIsSaving(true);
+    setFormApiError(null);
+
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem
       ? `/api/vehicles/${editingItem.id}`
@@ -115,10 +122,12 @@ export default function VehiclesClientPage({
 
     if (!response.ok) {
       const { error } = await response.json();
-      alert(error);
+      setFormApiError(error);
+      setIsSaving(false);
       return;
     }
 
+    setIsSaving(false);
     handleCloseFormModal();
     mutateVehicles();
   };
@@ -210,7 +219,7 @@ export default function VehiclesClientPage({
               </div>
               <span
                 className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  vehicle.status === "Alugado"
+                  vehicle.status === "Disponível"
                     ? "bg-green-100 text-green-800"
                     : vehicle.status === "Manutenção"
                     ? "bg-yellow-100 text-yellow-800"
@@ -278,6 +287,8 @@ export default function VehiclesClientPage({
       >
         <VehicleForm
           initialData={editingItem}
+          apiError={formApiError}
+          isSaving={isSaving}
           onSave={handleSave}
           onCancel={handleCloseFormModal}
         />

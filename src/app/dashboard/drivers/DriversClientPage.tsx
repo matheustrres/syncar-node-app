@@ -74,11 +74,13 @@ export default function DriversClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
+  const [formApiError, setFormApiError] = useState<string | null>(null);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
 
   const handleOpenFormModal = (item: Driver | null = null) => {
     setEditingItem(item);
+    setFormApiError(null);
     setIsFormModalOpen(true);
   };
 
@@ -92,25 +94,29 @@ export default function DriversClientPage({
 
   const handleCloseFormModal = () => {
     setEditingItem(null);
+    setFormApiError(null);
     setIsFormModalOpen(false);
   };
 
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSave = async (formData: WithoutBaseItem<Driver>) => {
+    setIsSaving(true);
+    setFormApiError(null);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem ? `/api/drivers/${editingItem.id}` : "/api/drivers";
-
     const response = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
-
     if (!response.ok) {
       const { error } = await response.json();
-      alert(error);
+      setFormApiError(error);
+      setIsSaving(false);
       return;
     }
-
+    setIsSaving(false);
     handleCloseFormModal();
     mutateDrivers();
   };
@@ -169,7 +175,7 @@ export default function DriversClientPage({
         </button>
       </div>
 
-      <FilterBar 
+      <FilterBar
         searchPlaceholder="Buscar por nome..."
         filterOptions={statusOptions}
         onSearchChange={setSearchTerm}
@@ -268,6 +274,8 @@ export default function DriversClientPage({
       >
         <DriverForm
           initialData={editingItem}
+          apiError={formApiError}
+          isSaving={isSaving}
           onSave={handleSave}
           onCancel={handleCloseFormModal}
         />
@@ -308,7 +316,7 @@ export default function DriversClientPage({
         </div>
       </Modal>
 
-      <UpgradeModal 
+      <UpgradeModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         resourceName="motoristas"

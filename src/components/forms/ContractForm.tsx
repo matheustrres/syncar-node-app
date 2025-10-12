@@ -57,13 +57,16 @@ const ContractForm: React.FC<ContractFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        vehicleId: initialData.vehicleId,
-        driverId: initialData.driverId,
-        weeklyValue: String(initialData.weeklyValue),
-        paymentDay: initialData.paymentDay,
-        startDate: initialData.startDate.split("T")[0],
-        deposit: String(initialData.deposit),
-        status: initialData.status,
+        vehicleId: initialData.vehicleId || "",
+        driverId: initialData.driverId || "",
+        weeklyValue: String(initialData.weeklyValue) || undefined,
+        paymentDay: initialData.paymentDay || "Segunda-feira",
+        startDate:
+          typeof initialData.startDate === "string"
+            ? initialData.startDate.split("T")[0]
+            : new Date().toISOString().split("T")[0],
+        deposit: String(initialData.deposit) || undefined,
+        status: initialData.status || "Ativo",
       });
     }
   }, [initialData]);
@@ -150,7 +153,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
             value={formData.startDate}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100"
           />
         </div>
 

@@ -38,7 +38,13 @@ export const getAllContracts = cache(async () => {
   if (!session?.user?.id) return [];
   return prisma.contract.findMany({
     where: { userId: session.user.id, status: "Ativo" },
-    select: { id: true, driverId: true, vehicleId: true },
+    select: {
+      id: true,
+      driverId: true,
+      vehicleId: true,
+      status: true,
+      weeklyValue: true,
+    },
   }) as unknown as Contract[];
 });
 

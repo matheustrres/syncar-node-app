@@ -3,32 +3,50 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+async function getExpense(id: string, userId: string) {
+  return await prisma.expense.findFirst({
+    where: { id, userId },
+  });
+}
+
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const { id } = await context.params;
+  const expense = await getExpense(params.id, session.user.id);
+  if (!expense) {
+    return NextResponse.json(
+      { error: "Despesa não encontrada" },
+      { status: 404 }
+    );
+  }
   const data = await request.json();
   const updatedExpense = await prisma.expense.update({
-    where: { id, userId: session.user.id },
+    where: { id: params.id },
     data,
   });
   return NextResponse.json(updatedExpense);
 }
 
 export async function DELETE(
-  _: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const { id } = await context.params;
-  await prisma.expense.delete({ where: { id, userId: session.user.id } });
-  return NextResponse.json({ message: "Despesa deletada" }, { status: 200 });
+  const expense = await getExpense(params.id, session.user.id);
+  if (!expense) {
+    return NextResponse.json(
+      { error: "Despesa não encontrada" },
+      { status: 404 }
+    );
+  }
+  await prisma.expense.delete({ where: { id: params.id } });
+  return NextResponse.json({ message: "Despesa excluída com sucesso" });
 }

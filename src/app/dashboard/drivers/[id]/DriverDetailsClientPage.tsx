@@ -98,7 +98,7 @@ export default function DriverDetailClientPage({
             <button
               onClick={() => setIsFormModalOpen(true)}
               title="Editar Motorista"
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full hover:bg-gray-100 text-indigo-600"
             >
               <Edit size={20} />
             </button>

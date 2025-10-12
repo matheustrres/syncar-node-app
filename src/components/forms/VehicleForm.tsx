@@ -2,6 +2,7 @@
 
 import { Vehicle } from "@/types";
 import { useState, useEffect, FormEvent, FocusEvent } from "react";
+import { IMaskInput } from "react-imask";
 import {
   CheckSquare,
   Hash,
@@ -11,11 +12,14 @@ import {
   Milestone,
   Calendar,
   Car,
+  AlertCircle,
 } from "lucide-react";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 interface VehicleFormProps {
   initialData?: Vehicle | null;
+  apiError?: string | null;
+  isSaving?: boolean;
   onSave: (
     data: Omit<Vehicle, "id" | "userId" | "createdAt" | "updatedAt">
   ) => void;
@@ -24,6 +28,8 @@ interface VehicleFormProps {
 
 const VehicleForm: React.FC<VehicleFormProps> = ({
   initialData,
+  apiError,
+  isSaving,
   onSave,
   onCancel,
 }) => {
@@ -48,21 +54,25 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        plate: initialData.plate,
-        brand: initialData.brand,
-        model: initialData.model,
-        year: initialData.year,
-        color: initialData.color,
-        renavam: initialData.renavam,
-        chassis: initialData.chassis,
-        km: initialData.km,
-        status: initialData.status,
+        plate: initialData.plate || "",
+        brand: initialData.brand || "",
+        model: initialData.model || "",
+        year: initialData.year || new Date().getFullYear(),
+        color: initialData.color || "",
+        renavam: initialData.renavam || "",
+        chassis: initialData.chassis || "",
+        km: initialData.km || 0,
+        status: initialData.status || "Disponível",
       });
     }
   }, [initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleMaskedInputChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -83,9 +93,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     onSave({
       ...formData,
       year: parseInt(String(formData.year)) || new Date().getFullYear(),
-      km: parseInt(String(formData.km)) || 0,
+      km: parseInt(String(formData.km).replace(/\./g, "")) || 0,
     });
   };
+
+  const inputStyle =
+    "pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +115,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="ABC-1234"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -118,7 +131,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="Ex: Toyota"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -134,7 +147,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="Ex: Corolla"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -152,7 +165,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onBlur={handleNumberFieldBlur}
             required
             placeholder="2025"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -168,7 +181,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="Ex: Branco"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -177,16 +190,17 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             Quilometragem (km) *
           </label>
           <Gauge className="absolute left-3 top-9 text-gray-400" size={20} />
-          <input
-            type="number"
+          <IMaskInput
+            mask={Number}
+            thousandsSeparator="."
             name="km"
-            value={formData.km}
-            onChange={handleChange}
+            value={String(formData.km)}
+            onAccept={(value) => handleMaskedInputChange("km", String(value))}
             onFocus={handleFocus}
             onBlur={handleNumberFieldBlur}
             required
-            placeholder="25000"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            placeholder="25.000"
+            className={inputStyle}
           />
         </div>
 
@@ -209,7 +223,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="00000000000"
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -225,7 +239,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onChange={handleChange}
             required
             placeholder="9BW..."
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            className={inputStyle}
           />
         </div>
 
@@ -241,19 +255,27 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           />
         </div>
       </div>
+      {apiError && (
+        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+          <AlertCircle size={16} />
+          <span>{apiError}</span>
+        </div>
+      )}
       <div className="flex justify-end gap-4 pt-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          disabled={isSaving}
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
         >
-          Salvar
+          {isSaving ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </form>

@@ -42,14 +42,28 @@ export default function VehicleDetailClientPage({
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const handleSave = async (data: WithoutBaseItem<Vehicle>) => {
-    await fetch(`/api/vehicles/${id}`, {
+  const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
+    setIsSaving(true);
+    setFormApiError(null);
+
+    const response = await fetch(`/api/vehicles/${vehicleId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(formData),
     });
-    setIsFormModalOpen(false);
-    mutateVehicle();
+
+    if (!response.ok) {
+      const { error } = await response.json();
+      setFormApiError(error);
+      setIsSaving(false);
+      return;
+    }
+
+    const updatedVehicle = { ...vehicle, ...formData } as Vehicle;
+
+    mutate(updatedVehicle, false);
+    setIsSaving(false);
+    handleCloseFormModal();
   };
 
   const handleConfirmDelete = async () => {
@@ -81,21 +95,21 @@ export default function VehicleDetailClientPage({
             <p className="text-lg text-gray-600">{vehicle.plate}</p>
           </div>
           <div className="flex items-center gap-2">
-            <span
-              className={`px-3 py-1 text-sm font-semibold rounded-full ${
-                vehicle.status === "Alugado"
-                  ? "bg-green-100 text-green-800"
-                  : vehicle.status === "Manutenção"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-blue-100 text-blue-800"
-              }`}
+        <span
+          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+            vehicle.status === "Disponível"
+              ? "bg-green-100 text-green-800"
+              : vehicle.status === "Manutenção"
+              ? "bg-yellow-100 text-yellow-800"
+              : "bg-blue-100 text-blue-800"
+          }`}
             >
               {vehicle.status}
             </span>
             <button
               onClick={() => setIsFormModalOpen(true)}
               title="Editar Veículo"
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full text-indigo-600 hover:bg-gray-100"
             >
               <Edit size={20} />
             </button>

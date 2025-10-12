@@ -104,7 +104,7 @@ export default function ContractDetailsClientPage({
             <button
               onClick={() => setIsFormModalOpen(true)}
               title="Editar contrato"
-              className="p-2 rounded-full hover:bg-gray-100"
+              className="p-2 rounded-full hover:bg-gray-100 text-indigo-600"
             >
               <Edit size={20} />
             </button>
