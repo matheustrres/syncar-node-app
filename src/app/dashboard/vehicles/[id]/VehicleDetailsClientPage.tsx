@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, Trash2, AlertTriangle } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import VehicleDetailsSkeleton from "./VehicleDetailsSkeleton";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 const DetailItem = ({
   label,
@@ -27,7 +28,7 @@ interface ClientPageProps {
   initialVehicle: Vehicle;
 }
 
-export default function VehicleDetailClientPage({
+export default function VehicleDetailsClientPage({
   id,
   initialVehicle,
 }: ClientPageProps) {
@@ -41,29 +42,27 @@ export default function VehicleDetailClientPage({
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [formApiError, setFormApiError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
     setIsSaving(true);
     setFormApiError(null);
-
-    const response = await fetch(`/api/vehicles/${vehicleId}`, {
+    const response = await fetch(`/api/vehicles/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
-
     if (!response.ok) {
       const { error } = await response.json();
       setFormApiError(error);
       setIsSaving(false);
       return;
     }
-
     const updatedVehicle = { ...vehicle, ...formData } as Vehicle;
-
-    mutate(updatedVehicle, false);
+    mutateVehicle(updatedVehicle, false);
     setIsSaving(false);
-    handleCloseFormModal();
+    setIsFormModalOpen(false);
   };
 
   const handleConfirmDelete = async () => {
@@ -72,8 +71,16 @@ export default function VehicleDetailClientPage({
     router.push("/dashboard/vehicles");
   };
 
+  if (isError) {
+    return (
+      <ErrorDisplay
+        errorMessage="Falha ao carregar dados do veículo."
+        onRetry={mutateVehicle}
+      />
+    );
+  }
+
   if (!vehicle && !isError) return <VehicleDetailsSkeleton />;
-  if (isError) return <div>Falha ao carregar dados do veículo.</div>;
   if (!vehicle) return <div>Veículo não encontrado.</div>;
 
   return (
@@ -95,14 +102,14 @@ export default function VehicleDetailClientPage({
             <p className="text-lg text-gray-600">{vehicle.plate}</p>
           </div>
           <div className="flex items-center gap-2">
-        <span
-          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-            vehicle.status === "Disponível"
-              ? "bg-green-100 text-green-800"
-              : vehicle.status === "Manutenção"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-blue-100 text-blue-800"
-          }`}
+            <span
+              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                vehicle.status === "Disponível"
+                  ? "bg-green-100 text-green-800"
+                  : vehicle.status === "Manutenção"
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-blue-100 text-blue-800"
+              }`}
             >
               {vehicle.status}
             </span>
@@ -151,6 +158,8 @@ export default function VehicleDetailClientPage({
       >
         <VehicleForm
           initialData={vehicle}
+          isSaving={isSaving}
+          apiError={formApiError}
           onSave={handleSave}
           onCancel={() => setIsFormModalOpen(false)}
         />

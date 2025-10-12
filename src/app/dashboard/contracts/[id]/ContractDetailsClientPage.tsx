@@ -14,6 +14,7 @@ import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
 import ContractDetailsSkeleton from "./ContractDetailsSkeleton";
 import { useFetchContractById } from "@/hooks/useData";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 const DetailItem = ({
   label,
@@ -71,7 +72,14 @@ export default function ContractDetailsClientPage({
   };
 
   if (!contract && !isContractError) return <ContractDetailsSkeleton />;
-  if (isContractError) return <div>Falha ao carregar o contrato.</div>;
+  if (isContractError) {
+    return (
+      <ErrorDisplay 
+        errorMessage="Falha ao carregar o contrato."
+        onRetry={mutateContract}
+      />
+    );
+  }
   if (!contract) return <div>Contrato não encontrado.</div>;
 
   return (

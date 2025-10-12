@@ -11,6 +11,7 @@ import DataTable, { Column } from "@/components/ui/DataTable";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import FilterBar from "@/components/ui/FilterBar";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 const columns: Column<Driver>[] = [
   { header: "Nome", accessor: "name", className: "font-medium text-gray-900" },
@@ -149,9 +150,10 @@ export default function DriversClientPage({
 
   if (isError) {
     return (
-      <div className="text-center text-red-500 mt-10">
-        Falha ao carregar os motoristas.
-      </div>
+      <ErrorDisplay 
+        errorMessage="Falha ao carregar os motoristas."
+        onRetry={mutateDrivers}
+      />
     );
   }
 

@@ -15,6 +15,7 @@ import { Plus, Edit, Trash2, AlertTriangle } from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
 import FilterBar from "@/components/ui/FilterBar";
+import ErrorDisplay from "@/components/ui/ErrorDisplay";
 
 interface ContractsClientPageProps {
   initialContracts: ContractWithRelations[];
@@ -145,9 +146,10 @@ export default function ContractsClientPage({
 
   if (isError) {
     return (
-      <div className="text-center text-red-500 mt-10">
-        Falha ao carregar os dados.
-      </div>
+      <ErrorDisplay 
+        errorMessage="Falha ao carregar os dados."
+        onRetry={mutateContracts}
+      />
     );
   }
 
