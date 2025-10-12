@@ -37,7 +37,9 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
         type: initialData.type,
         description: initialData.description,
         value: String(initialData.value),
-        date: initialData.date.split("T")[0],
+        date: initialData.date
+          ? new Date(initialData.date).toISOString().split("T")[0]
+          : "",
       });
     }
   }, [initialData]);

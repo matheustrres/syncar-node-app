@@ -69,7 +69,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
         email: initialData.email || "",
         cnh: initialData.cnh || "",
         cnhValidity: initialData.cnhValidity
-          ? initialData.cnhValidity.split("T")[0]
+          ? new Date(initialData.cnhValidity).toISOString().split("T")[0]
           : "",
         cep: initialData.cep || "",
         logradouro: initialData.logradouro || "",

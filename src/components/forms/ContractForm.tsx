@@ -62,8 +62,8 @@ const ContractForm: React.FC<ContractFormProps> = ({
         weeklyValue: String(initialData.weeklyValue) || undefined,
         paymentDay: initialData.paymentDay || "Segunda-feira",
         startDate:
-          typeof initialData.startDate === "string"
-            ? initialData.startDate.split("T")[0]
+          initialData.startDate
+            ? new Date(initialData.startDate).toISOString().split("T")[0]
             : new Date().toISOString().split("T")[0],
         deposit: String(initialData.deposit) || undefined,
         status: initialData.status || "Ativo",

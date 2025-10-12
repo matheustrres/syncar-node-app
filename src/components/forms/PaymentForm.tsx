@@ -60,12 +60,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     if (initialData) {
       setFormData({
         contractId: initialData.contractId,
-        weekStart: initialData.weekStart.split("T")[0],
-        weekEnd: initialData.weekEnd.split("T")[0],
+        weekStart: initialData.weekStart
+          ? new Date(initialData.weekStart).toISOString().split("T")[0]
+          : "",
+        weekEnd: initialData.weekEnd
+          ? new Date(initialData.weekEnd).toISOString().split("T")[0]
+          : "",
         value: String(initialData.value),
-        dueDate: initialData.dueDate.split("T")[0],
+        dueDate: initialData.dueDate
+          ? new Date(initialData.dueDate).toISOString().split("T")[0]
+          : "",
         paymentDate: initialData.paymentDate
-          ? initialData.paymentDate.split("T")[0]
+          ? new Date(initialData.paymentDate).toISOString().split("T")[0]
           : "",
         status: initialData.status as "Pago" | "Pendente",
       });
