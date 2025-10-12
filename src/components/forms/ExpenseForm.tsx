@@ -4,6 +4,7 @@ import { Expense, Vehicle } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
 import { DollarSign, Car, List, Calendar, MessageSquare } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
+import CustomSelect from "../ui/CustomSelect";
 
 interface ExpenseFormProps {
   initialData?: Expense | null;
@@ -29,6 +30,15 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
     value: undefined as string | undefined,
     date: new Date().toISOString().split("T")[0],
   });
+
+  const typeOptions = [
+    { value: "Manutenção", label: "Manutenção" },
+    { value: "IPVA", label: "IPVA" },
+    { value: "Seguro", label: "Seguro" },
+    { value: "Documentação", label: "Documentação" },
+    { value: "Multa", label: "Multa" },
+    { value: "Outros", label: "Outros" },
+  ];
 
   useEffect(() => {
     if (initialData) {
@@ -75,43 +85,24 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-        <div className="md:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Veículo *
-          </label>
-          <Car className="absolute left-3 top-9 text-gray-400" size={20} />
-          <select
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Selecione um veículo</option>
-            {vehicles.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.plate} - {v.brand} {v.model}
-              </option>
-            ))}
-          </select>
+        <div className="md:col-span-2">
+          <CustomSelect
+            label="Veículo *"
+            value={formData.vehicleId}
+            onChange={(value) => setFormData((prev) => ({ ...prev, vehicleId: value }))}
+            options={vehicles.map((v) => ({ value: v.id, label: `${v.plate} - ${v.brand} ${v.model}` }))}
+            placeholder="Selecione um veículo"
+            Icon={Car}
+          />
         </div>
 
-        <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Tipo *
-          </label>
-          <List className="absolute left-3 top-9 text-gray-400" size={20} />
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg appearance-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="Manutenção">Manutenção</option>
-            <option value="IPVA">IPVA</option>
-            <option value="Seguro">Seguro</option>
-            <option value="Documentação">Documentação</option>
-            <option value="Multa">Multa</option>
-            <option value="Outros">Outros</option>
-          </select>
-        </div>
+        <CustomSelect
+          label="Tipo *"
+          value={formData.type}
+          onChange={(value) => setFormData((prev) => ({ ...prev, type: value }))}
+          options={typeOptions}
+          Icon={List}
+        />
 
         <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">

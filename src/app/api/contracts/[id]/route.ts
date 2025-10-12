@@ -52,6 +52,21 @@ export async function PUT(
   const data = await request.json();
   const updatedContract = await prisma.contract.update({ where: { id }, data });
   if (
+    data.weeklyValue &&
+    data.weeklyValue !== contractBeforeUpdate.weeklyValue
+  ) {
+    await prisma.payment.updateMany({
+      where: {
+        contractId: id,
+        status: "Pendente",
+        dueDate: { gte: new Date() },
+      },
+      data: {
+        value: data.weeklyValue,
+      },
+    });
+  }
+  if (
     contractBeforeUpdate.status === "Ativo" &&
     updatedContract.status === "Encerrado"
   ) {

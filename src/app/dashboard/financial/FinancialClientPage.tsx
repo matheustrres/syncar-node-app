@@ -230,9 +230,9 @@ export default function FinancialClientPage({
                         : "bg-yellow-50 border-yellow-500"
                     }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">
+                    <div className="flex justify-between items-start gap-4">
+                      <div className="flex-shrink min-w-0">
+                        <p className="font-semibold truncate">
                           {payment.contract.driver.name}
                         </p>
                         <p className="text-sm text-gray-500">
@@ -242,7 +242,7 @@ export default function FinancialClientPage({
                           )}
                         </p>
                       </div>
-                      <p className="font-bold text-lg text-gray-800">
+                      <p className="font-bold text-lg text-gray-800 whitespace-nowrap">
                         R$ {payment.value.toFixed(2)}
                       </p>
                     </div>
@@ -285,15 +285,15 @@ export default function FinancialClientPage({
                   key={expense.id}
                   className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500 min-h-[120px] flex flex-col justify-between"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold">{expense.type}</p>
-                      <p className="text-sm text-gray-500">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-shrink min-w-0">
+                      <p className="font-semibold truncate">{expense.type}</p>
+                      <p className="text-sm text-gray-500 truncate">
                         {expense.description} ({expense.vehicle?.plate || "N/A"}
                         )
                       </p>
                     </div>
-                    <p className="font-bold text-red-600">
+                    <p className="font-bold text-red-600 whitespace-nowrap">
                       R$ {expense.value.toFixed(2)}
                     </p>
                   </div>
@@ -345,9 +345,9 @@ export default function FinancialClientPage({
                   key={payment.id}
                   className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 min-h-[120px] flex flex-col justify-between"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="flex-shrink min-w-0">
+                      <p className="font-semibold truncate">
                         {payment.contract.driver.name}
                       </p>
                       <p className="text-sm text-gray-500">
@@ -359,7 +359,7 @@ export default function FinancialClientPage({
                           : "N/A"}
                       </p>
                     </div>
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-green-600 whitespace-nowrap">
                       R$ {payment.value.toFixed(2)}
                     </p>
                   </div>

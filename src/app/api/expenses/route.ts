@@ -21,6 +21,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const data = await request.json();
+  if (!data.vehicleId) {
+    return NextResponse.json(
+      { error: "O campo veículo é obrigatório." },
+      { status: 400 }
+    );
+  }
   const newExpense = await prisma.expense.create({
     data: { ...data, userId: session.user.id },
   });
