@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
+import { handlePrismaError } from "@/lib/api-utils";
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -9,15 +11,6 @@ export async function POST(request: Request) {
     if (!name || !email || !password || !companyName || !phone) {
       return NextResponse.json(
         { message: "Dados incompletos" },
-        { status: 400 }
-      );
-    }
-    const exist = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (exist) {
-      return NextResponse.json(
-        { message: "Email já cadastrado" },
         { status: 400 }
       );
     }
@@ -32,10 +25,11 @@ export async function POST(request: Request) {
       },
     });
     return NextResponse.json(user);
-  } catch {
-    return NextResponse.json(
-      { message: "Ocorreu um erro interno." },
-      { status: 500 }
+  } catch (error: unknown) {
+    return handlePrismaError(
+      error,
+      { email: "Este email já está em uso." },
+      "Ocorreu um erro interno."
     );
   }
 }

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+import { handlePrismaError } from "@/lib/api-utils";
+
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -72,8 +74,20 @@ export async function POST(request: Request) {
     }
   }
   const data = await request.json();
-  const newVehicle = await prisma.vehicle.create({
-    data: { ...data, userId: session.user.id },
-  });
-  return NextResponse.json(newVehicle, { status: 201 });
+  try {
+    const newVehicle = await prisma.vehicle.create({
+      data: { ...data, userId: session.user.id },
+    });
+    return NextResponse.json(newVehicle, { status: 201 });
+  } catch (error: unknown) {
+    return handlePrismaError(
+      error,
+      {
+        plate: "A placa informada já está em uso.",
+        renavam: "O RENAVAM informado já está em uso.",
+        chassis: "O chassi informado já está em uso.",
+      },
+      "Ocorreu um erro ao criar o veículo."
+    );
+  }
 }
