@@ -10,6 +10,7 @@ interface PricingCardProps {
   buttonText: string;
   isFeatured?: boolean;
   disabled?: boolean;
+  savings?: string;
 }
 
 export default function PricingCard({
@@ -20,8 +21,13 @@ export default function PricingCard({
   buttonText,
   isFeatured = false,
   disabled = false,
+  savings,
 }: PricingCardProps) {
-  const cardClasses = `bg-white p-8 rounded-2xl shadow-lg flex flex-col h-full ${isFeatured ? "border-4 border-blue-600 relative" : "border-4 border-transparent"}`;
+  const cardClasses = `bg-white p-8 rounded-2xl shadow-lg flex flex-col h-full ${
+    isFeatured
+      ? "border-4 border-blue-600 relative"
+      : "border-4 border-transparent"
+  }`;
   const buttonClasses = `w-full mt-auto px-6 py-3 rounded-lg font-semibold transition-colors ${
     disabled
       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
@@ -32,14 +38,23 @@ export default function PricingCard({
 
   return (
     <div className={cardClasses}>
-      {isFeatured && (
-        <div className="absolute top-0 -translate-y-1/2 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
-          Mais Popular
-        </div>
-      )}
-      <h3 className="text-2xl font-bold text-gray-800 mb-2">{planName}</h3>
-      <p className="text-4xl font-extrabold text-gray-900 mb-2">{price}</p>
-      <p className="text-gray-500 mb-6">{priceDescription}</p>
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-2xl font-bold text-gray-800">{planName}</h3>
+        {isFeatured && (
+          <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+            Mais popular
+          </div>
+        )}
+      </div>
+      <div className="flex flex-wrap items-baseline gap-x-2 mb-6">
+        <p className="text-4xl font-extrabold text-gray-900">{price}</p>
+        <p className="text-gray-500">{priceDescription}</p>
+        {savings && (
+          <div className="bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">
+            {savings}
+          </div>
+        )}
+      </div>
 
       <ul className="space-y-4 mb-8">
         {features.map((feature, index) => (
@@ -51,7 +66,7 @@ export default function PricingCard({
       </ul>
 
       <button className={buttonClasses} disabled={disabled}>
-        {disabled ? "Em Breve" : buttonText}
+        {disabled ? "Em breve" : buttonText}
       </button>
     </div>
   );

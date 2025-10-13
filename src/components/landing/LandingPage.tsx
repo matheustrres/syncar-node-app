@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import Header from "./Header";
 import Image from "next/image";
-import PricingCard from "./PricingCard"; // Importando o novo componente
+import PricingCard from "./PricingCard";
+import { useState } from "react";
 
 const Feature = ({
   icon: Icon,
@@ -32,7 +33,90 @@ const Feature = ({
   </div>
 );
 
+interface PriceInfo {
+  price: string;
+  priceDescription: string;
+  savings?: string;
+}
+
+interface Plan {
+  planName: string;
+  monthly: PriceInfo;
+  annual: PriceInfo;
+  features: string[];
+  buttonText: string;
+  isFeatured?: boolean;
+  disabled?: boolean;
+}
+
+const pricingPlans: Plan[] = [
+  {
+    planName: "Básico",
+    monthly: {
+      price: "Grátis",
+      priceDescription: "Para sempre",
+    },
+    annual: {
+      price: "Grátis",
+      priceDescription: "Para sempre",
+    },
+    features: [
+      "Até 3 veículos",
+      "Até 3 motoristas",
+      "Gestão de contratos",
+      "Controle financeiro",
+    ],
+    buttonText: "Começar agora",
+  },
+  {
+    planName: "Profissional",
+    monthly: {
+      price: "R$ 49,90",
+      priceDescription: "/mês",
+    },
+    annual: {
+      price: "R$ 499",
+      priceDescription: "/ano",
+      savings: "Economize R$ 99,80",
+    },
+    features: [
+      "Veículos ilimitados",
+      "Motoristas ilimitados",
+      "Múltiplos usuários e permissões",
+      "Alertas e notificações",
+      "Relatórios avançados",
+      "Exportação de dados",
+    ],
+    buttonText: "Escolher plano",
+    isFeatured: true,
+  },
+  {
+    planName: "Empresarial",
+    monthly: {
+      price: "Sob consulta",
+      priceDescription: "",
+    },
+    annual: {
+      price: "Sob consulta",
+      priceDescription: "",
+    },
+    features: [
+      "Tudo do Profissional",
+      "Integração com GPS/Telemetria",
+      "Integração com contabilidade",
+      "Acesso via API",
+      "Suporte prioritário",
+    ],
+    buttonText: "Entrar em contato",
+    disabled: true,
+  },
+];
+
 export default function LandingPage() {
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    "monthly"
+  );
+
   return (
     <div className="bg-gray-50 min-h-screen text-gray-700">
       <Header />
@@ -93,53 +177,77 @@ export default function LandingPage() {
       <section id="pricing" className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-800">Planos que cabem no seu bolso</h2>
-            <p className="text-gray-500 mt-2">Comece pequeno, cresça sem limites.</p>
+            <h2 className="text-4xl font-bold text-gray-800">
+              Planos que cabem no seu bolso
+            </h2>
+            <p className="text-gray-500 mt-2">
+              Comece pequeno, cresça sem limites.
+            </p>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-            <PricingCard
-              planName="Básico"
-              price="Grátis"
-              priceDescription="Para sempre"
-              features={[
-                "Até 3 veículos",
-                "Até 3 motoristas",
-                "Gestão de contratos",
-                "Controle financeiro",
-              ]}
-              buttonText="Começar agora"
-            />
-            <PricingCard
-              planName="Profissional"
-              price="R$ 49,90"
-              priceDescription="/mês"
-              features={[
-                "Veículos ilimitados",
-                "Motoristas ilimitados",
-                "Múltiplos usuários e permissões",
-                "Alertas e notificações",
-                "Relatórios avançados",
-                "Exportação de dados",
-              ]}
-              buttonText="Escolher plano"
-              isFeatured
-            />
-            <div className="opacity-50 grayscale">
-              <PricingCard
-                planName="Empresarial"
-                price="Sob consulta"
-                priceDescription=""
-                features={[
-                  "Tudo do Profissional",
-                  "Integração com GPS/Telemetria",
-                  "Integração com contabilidade",
-                  "Acesso via API",
-                  "Suporte prioritário",
-                ]}
-                buttonText="Entrar em contato"
-                disabled
+
+          {/* Seletor de Período */}
+          <div className="flex justify-center items-center gap-4 mb-10">
+            <span
+              className={`font-semibold ${
+                billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"
+              }`}
+            >
+              Mensal
+            </span>
+            <button
+              onClick={() =>
+                setBillingCycle(
+                  billingCycle === "monthly" ? "annual" : "monthly"
+                )
+              }
+              className="relative w-14 h-8 bg-gray-200 rounded-full p-1 transition-colors duration-300 ease-in-out"
+            >
+              <span
+                className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                  billingCycle === "annual" ? "translate-x-6" : ""
+                }`}
               />
-            </div>
+              <span
+                className={`absolute right-1 top-1 w-6 h-6 bg-transparent rounded-full ${
+                  billingCycle === "monthly" ? "bg-blue-500" : "bg-transparent"
+                }`}
+              />
+            </button>
+            <span
+              className={`font-semibold ${
+                billingCycle === "annual" ? "text-blue-600" : "text-gray-500"
+              }`}
+            >
+              Anual
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
+            {pricingPlans.map((plan) => {
+              const priceInfo = plan[billingCycle];
+              const card = (
+                <PricingCard
+                  key={plan.planName}
+                  planName={plan.planName}
+                  price={priceInfo.price}
+                  priceDescription={priceInfo.priceDescription}
+                  savings={priceInfo.savings}
+                  features={plan.features}
+                  buttonText={plan.buttonText}
+                  isFeatured={plan.isFeatured}
+                  disabled={plan.disabled}
+                />
+              );
+
+              if (plan.disabled) {
+                return (
+                  <div key={plan.planName} className="opacity-50 grayscale">
+                    {card}
+                  </div>
+                );
+              }
+              return card;
+            })}
           </div>
         </div>
       </section>
