@@ -3,14 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
-import { Vehicle, WithoutBaseItem } from "@/types";
-import { useFetchVehicleById } from "@/hooks/useData";
+import { Expense, Vehicle, WithoutBaseItem } from "@/types";
+import { useFetchVehicleById, useFetchVehicleExpenses } from "@/hooks/useData";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import VehicleDetailsSkeleton from "./VehicleDetailsSkeleton";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import DataTable, { Column } from "@/components/ui/DataTable";
+import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
+import ExpenseForm from "@/components/forms/ExpenseForm";
 
 const DetailItem = ({
   label,
@@ -42,11 +45,59 @@ export default function VehicleDetailsClientPage({
     mutate: mutateVehicle,
   } = useFetchVehicleById(id, initialVehicle);
 
+  const {
+    expenses,
+    isLoading: isLoadingExpenses,
+    mutate: mutateExpenses,
+  } = useFetchVehicleExpenses(id);
+
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for expense modals
+  const [isExpenseFormModalOpen, setIsExpenseFormModalOpen] = useState(false);
+  const [isDeleteExpenseModalOpen, setIsDeleteExpenseModalOpen] =
+    useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const [isSavingExpense, setIsSavingExpense] = useState(false);
+  const [isDeletingExpense, setIsDeletingExpense] = useState(false);
+
+  const handleOpenEditExpenseModal = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsExpenseFormModalOpen(true);
+  };
+
+  const handleOpenDeleteExpenseModal = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsDeleteExpenseModalOpen(true);
+  };
+
+  // TODO: Implementar a lógica de ordenação e edição/exclusão de despesas se necessário.
+  const expenseColumns: Column<Expense>[] = [
+    {
+      header: "Data",
+      accessor: (item) => new Date(item.date).toLocaleDateString("pt-BR"),
+    },
+    {
+      header: "Tipo",
+      accessor: "type",
+    },
+    {
+      header: "Descrição",
+      accessor: "description",
+    },
+    {
+      header: "Valor",
+      accessor: (item) =>
+        item.value.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }),
+    },
+  ];
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
     setIsSaving(true);
@@ -71,6 +122,47 @@ export default function VehicleDetailsClientPage({
       );
     }
     setIsSaving(false);
+  };
+
+  const handleSaveExpense = async (
+    expenseData: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">
+  ) => {
+    if (!selectedExpense) return;
+    setIsSavingExpense(true);
+    try {
+      const response = await fetch(`/api/expenses/${selectedExpense.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(expenseData),
+      });
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      showToast("Despesa atualizada com sucesso!", "success");
+      setIsExpenseFormModalOpen(false);
+      mutateExpenses();
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Ocorreu um erro",
+        "error"
+      );
+    }
+    setIsSavingExpense(false);
+  };
+
+  const handleConfirmDeleteExpense = async () => {
+    if (!selectedExpense) return;
+    setIsDeletingExpense(true);
+    try {
+      await fetch(`/api/expenses/${selectedExpense.id}`, { method: "DELETE" });
+      showToast("Despesa excluída com sucesso!", "success");
+      setIsDeleteExpenseModalOpen(false);
+      mutateExpenses();
+    } catch {
+      showToast("Falha ao excluir despesa.", "error");
+    }
+    setIsDeletingExpense(false);
   };
 
   const handleConfirmDelete = async () => {
@@ -186,6 +278,58 @@ export default function VehicleDetailsClientPage({
         resourceIdentifier={vehicle.plate}
         isDeleting={isDeleting}
       />
+
+      {selectedExpense && (
+        <>
+          <Modal
+            isOpen={isExpenseFormModalOpen}
+            onClose={() => setIsExpenseFormModalOpen(false)}
+            title="Editar Despesa"
+            size="4xl"
+          >
+            <ExpenseForm
+              initialData={selectedExpense}
+              vehicles={[vehicle]} // Pass only the current vehicle
+              isSaving={isSavingExpense}
+              onSave={handleSaveExpense}
+              onCancel={() => setIsExpenseFormModalOpen(false)}
+              isVehicleLocked={true}
+            />
+          </Modal>
+          <DeleteConfirmationModal
+            isOpen={isDeleteExpenseModalOpen}
+            onClose={() => setIsDeleteExpenseModalOpen(false)}
+            onConfirm={handleConfirmDeleteExpense}
+            resourceName="despesa"
+            resourceIdentifier={selectedExpense.description}
+            isDeleting={isDeletingExpense}
+          />
+        </>
+      )}
+
+      <div className="mt-10">
+        <h3 className="text-xl font-semibold mb-4 text-gray-700">
+          Histórico de Despesas
+        </h3>
+        {isLoadingExpenses ? (
+          <DataTableSkeleton columns={4} />
+        ) : expenses.length > 0 ? (
+          <DataTable
+            columns={expenseColumns}
+            data={expenses}
+            onRowClick={() => {}}
+            onEdit={handleOpenEditExpenseModal}
+            onDelete={handleOpenDeleteExpenseModal}
+            sortColumn="date"
+            sortDirection="desc"
+            onSort={() => {}}
+          />
+        ) : (
+          <div className="bg-white p-8 rounded-lg shadow-md text-center text-gray-500">
+            Nenhuma despesa registrada para este veículo.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

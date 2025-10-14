@@ -6,16 +6,16 @@ import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
 
 interface ContractDetailsPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default async function ContractDetailsPage({
-  params,
-}: ContractDetailsPageProps) {
+export default async function ContractDetailsPage(
+  props: ContractDetailsPageProps
+) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound();
-
+  const params = await props.params;
   const contract = await prisma.contract.findUnique({
     where: {
       id: params.id,
@@ -23,14 +23,11 @@ export default async function ContractDetailsPage({
     },
     include: { driver: true, vehicle: true },
   });
-
   if (!contract) notFound();
-
   const [vehicles, drivers] = await Promise.all([
     getAllVehicles(),
     getAllDrivers(),
   ]);
-
   return (
     <ContractDetailsClientPage
       id={params.id}

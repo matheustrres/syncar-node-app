@@ -23,6 +23,7 @@ import {
   TrendingDown,
   Edit,
   Trash2,
+  Check,
 } from "lucide-react";
 import FinancialSkeleton from "./FinancialSkeleton";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
@@ -224,36 +225,25 @@ export default function FinancialClientPage({
                 return (
                   <div
                     key={payment.id}
-                    className={`p-4 rounded-lg border-l-4 min-h-[120px] flex flex-col justify-between ${
+                    className={`p-4 rounded-lg border-l-4 h-[120px] flex flex-col ${
                       isOverdue
                         ? "bg-red-50 border-red-500"
                         : "bg-yellow-50 border-yellow-500"
                     }`}
                   >
-                    <div className="flex justify-between items-start gap-4">
+                    <div className="flex-grow flex justify-between items-start gap-4">
                       <div className="flex-shrink min-w-0 overflow-hidden">
                         <p
-                          className="font-semibold"
+                          className="font-semibold truncate"
                           title={payment.contract.driver.name}
                         >
-                          {payment.contract.driver.name.length > 20
-                            ? `${payment.contract.driver.name.substring(
-                                0,
-                                20
-                              )}...`
-                            : payment.contract.driver.name}
+                          {payment.contract.driver.name}
                         </p>
                         <p
-                          className="text-sm text-gray-500"
+                          className="text-sm text-gray-500 truncate"
                           title={`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`}
                         >
-                          {`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`
-                            .length > 20
-                            ? `${`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`.substring(
-                                0,
-                                20
-                              )}...`
-                            : `${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`}
+                          {`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`}
                         </p>
                         <p className="text-sm text-gray-500">
                           Venc.:{" "}
@@ -266,13 +256,16 @@ export default function FinancialClientPage({
                         R$ {payment.value.toFixed(2)}
                       </p>
                     </div>
-                    <div className="flex justify-end items-center pt-2 border-t mt-2 h-10">
-                      <button
-                        onClick={() => handleMarkAsPaid(payment.id)}
-                        className="text-sm text-green-600 hover:text-green-800 font-medium"
-                      >
-                        Marcar como pago
-                      </button>
+                    <div className="border-t mt-2 flex justify-end items-center h-10">
+                      <div className="flex">
+                        <button
+                          onClick={() => handleMarkAsPaid(payment.id)}
+                          className="text-sm text-green-600 hover:text-green-800 font-semibold flex items-center gap-2"
+                        >
+                          <Check size={16} />
+                          <span className="hidden md:inline">Marcar como Pago</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -303,35 +296,35 @@ export default function FinancialClientPage({
               recentExpenses.map((expense) => (
                 <div
                   key={expense.id}
-                  className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500 min-h-[120px] flex flex-col justify-between"
+                  className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500 h-[120px] flex flex-col"
                 >
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex-grow flex justify-between items-start gap-4">
                     <div className="flex-shrink min-w-0">
                       <p className="font-semibold truncate">{expense.type}</p>
                       <p className="text-sm text-gray-500 truncate">
-                        {expense.description} ({expense.vehicle?.plate || "N/A"}
-                        )
+                        {expense.description} ({expense.vehicle?.plate || "N/A"})
                       </p>
+                      <p className="text-sm text-gray-500">&nbsp;</p>
                     </div>
                     <p className="font-bold text-red-600 whitespace-nowrap">
                       R$ {expense.value.toFixed(2)}
                     </p>
                   </div>
-                  <div className="border-t pt-2 mt-2 flex justify-end items-center h-10">
-                    <div className="flex gap-2">
+                  <div className="border-t mt-2 flex justify-end items-center h-10">
+                    <div className="flex gap-4">
                       <button
-                        title="Editar Despesa"
                         onClick={() => handleOpenEditExpenseModal(expense)}
-                        className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                        className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-2"
                       >
-                        <Edit size={18} />
+                        <Edit size={16} />
+                        <span className="hidden md:inline">Editar</span>
                       </button>
                       <button
-                        title="Excluir Despesa"
                         onClick={() => handleDeleteExpenseClick(expense)}
-                        className="text-red-600 p-2 rounded-full hover:bg-gray-100"
+                        className="text-sm text-red-600 hover:text-red-800 font-semibold flex items-center gap-2"
                       >
-                        <Trash2 size={18} />
+                        <Trash2 size={16} />
+                        <span className="hidden md:inline">Excluir</span>
                       </button>
                     </div>
                   </div>
@@ -363,9 +356,9 @@ export default function FinancialClientPage({
               paidPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 min-h-[120px] flex flex-col justify-between"
+                  className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 h-[120px] flex flex-col"
                 >
-                  <div className="flex justify-between items-start gap-4">
+                  <div className="flex-grow flex justify-between items-start gap-4">
                     <div className="flex-shrink min-w-0">
                       <p className="font-semibold truncate">
                         {payment.contract.driver.name}
@@ -378,6 +371,7 @@ export default function FinancialClientPage({
                             )
                           : "N/A"}
                       </p>
+                      <p className="text-sm text-gray-500">&nbsp;</p>
                     </div>
                     <p className="font-bold text-green-600 whitespace-nowrap">
                       R$ {payment.value.toFixed(2)}

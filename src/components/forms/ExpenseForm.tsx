@@ -10,6 +10,7 @@ interface ExpenseFormProps {
   initialData?: Expense | null;
   vehicles: Vehicle[];
   isSaving?: boolean;
+  isVehicleLocked?: boolean;
   onSave: (
     data: Omit<Expense, "id" | "userId" | "createdAt" | "updatedAt">
   ) => void;
@@ -20,6 +21,7 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
   initialData,
   vehicles,
   isSaving,
+  isVehicleLocked = false,
   onSave,
   onCancel,
 }) => {
@@ -86,14 +88,42 @@ const ExpenseForm: React.FC<ExpenseFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div className="md:col-span-2">
-          <CustomSelect
-            label="Veículo *"
-            value={formData.vehicleId}
-            onChange={(value) => setFormData((prev) => ({ ...prev, vehicleId: value }))}
-            options={vehicles.map((v) => ({ value: v.id, label: `${v.plate} - ${v.brand} ${v.model}` }))}
-            placeholder="Selecione um veículo"
-            Icon={Car}
-          />
+          {isVehicleLocked && initialData ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Veículo
+              </label>
+              <div className="relative">
+                <Car
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  type="text"
+                  disabled
+                  value={
+                    vehicles.find((v) => v.id === initialData.vehicleId)
+                      ?.plate || ""
+                  }
+                  className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed"
+                />
+              </div>
+            </div>
+          ) : (
+            <CustomSelect
+              label="Veículo *"
+              value={formData.vehicleId}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, vehicleId: value }))
+              }
+              options={vehicles.map((v) => ({
+                value: v.id,
+                label: `${v.plate} - ${v.brand} ${v.model}`,
+              }))}
+              placeholder="Selecione um veículo"
+              Icon={Car}
+            />
+          )}
         </div>
 
         <CustomSelect

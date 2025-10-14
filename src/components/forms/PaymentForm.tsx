@@ -20,6 +20,7 @@ interface PaymentFormProps {
   vehicles: Vehicle[];
   onSave: (data: WithoutBaseItem<Payment>) => void;
   onCancel: () => void;
+  isContractLocked?: boolean;
 }
 
 const PaymentForm: React.FC<PaymentFormProps> = ({
@@ -29,6 +30,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   vehicles,
   onSave,
   onCancel,
+  isContractLocked = false,
 }) => {
   const [formData, setFormData] = useState({
     contractId: "",
@@ -126,19 +128,43 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
         <div className="md:col-span-2">
-          <CustomSelect
-            label="Contrato *"
-            value={formData.contractId}
-            onChange={(value) => {
-              const event = {
-                target: { name: "contractId", value },
-              } as React.ChangeEvent<HTMLSelectElement>;
-              handleChange(event);
-            }}
-            options={contractOptions}
-            placeholder="Selecione um contrato"
-            Icon={List}
-          />
+          {isContractLocked && initialData ? (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Contrato
+              </label>
+              <div className="relative">
+                <List
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
+                <input
+                  type="text"
+                  disabled
+                  value={
+                    contractOptions.find(
+                      (c) => c.value === initialData.contractId
+                    )?.label || ""
+                  }
+                  className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed"
+                />
+              </div>
+            </div>
+          ) : (
+            <CustomSelect
+              label="Contrato *"
+              value={formData.contractId}
+              onChange={(value) => {
+                const event = {
+                  target: { name: "contractId", value },
+                } as React.ChangeEvent<HTMLSelectElement>;
+                handleChange(event);
+              }}
+              options={contractOptions}
+              placeholder="Selecione um contrato"
+              Icon={List}
+            />
+          )}
         </div>
 
         <div className="relative">

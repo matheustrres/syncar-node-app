@@ -11,6 +11,7 @@ import {
   CashFlowReportItem,
   OverduePaymentReportItem,
   DriverSummaryReportItem,
+  Notification,
 } from "@/types";
 import useSWR from "swr";
 
@@ -288,4 +289,49 @@ export function useFetchDriverSummary(
     { fallbackData, revalidateOnMount: false }
   );
   return { data, isLoading, isError: error, mutate };
+}
+
+// --- Notifications ---
+
+export function useFetchNotifications() {
+  const { data, error, isLoading, mutate } = useSWR<Notification[]>(
+    `/api/notifications`,
+    fetcher,
+    { revalidateOnFocus: true } // Re-fetch when user focuses the window
+  );
+
+  return {
+    notifications: data || [],
+    isLoading,
+    isError: error,
+    mutateNotifications: mutate,
+  };
+}
+
+// --- Histórico de Ativos ---
+
+export function useFetchVehicleExpenses(vehicleId?: string) {
+  const { data, error, isLoading, mutate } = useSWR<Expense[]>(
+    vehicleId ? `/api/vehicles/${vehicleId}/expenses` : null,
+    fetcher
+  );
+  return {
+    expenses: data || [],
+    isLoading,
+    isError: error,
+    mutate,
+  };
+}
+
+export function useFetchDriverPayments(driverId?: string) {
+  const { data, error, isLoading, mutate } = useSWR<PaymentWithRelations[]>(
+    driverId ? `/api/drivers/${driverId}/payments` : null,
+    fetcher
+  );
+  return {
+    payments: data || [],
+    isLoading,
+    isError: error,
+    mutate,
+  };
 }
