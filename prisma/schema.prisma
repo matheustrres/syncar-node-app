@@ -15,6 +15,7 @@ model User {
   companyName String               @map("company_name")
   phone       String
   plan        String               @default("BASIC")
+  stripeCustomerId String?            @unique @map("stripe_customer_id")
   vehicles    Vehicle[]
   drivers     Driver[]
   contracts   Contract[]

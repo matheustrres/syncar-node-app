@@ -1,11 +1,14 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, ChangeEvent } from "react";
 import { User as UserType } from "@/types";
 import { useFetchProfile } from "@/hooks/useData";
-import { User, Mail, Lock, Building } from "lucide-react";
+import { User, Mail, Lock, Building, Star, ExternalLink } from "lucide-react";
 import ProfileSkeleton from "./ProfileSkeleton";
+import UpgradeModal from "@/components/ui/UpgradeModal";
+import { useToast } from "@/context/ToastContext";
 
 const ProfileForm = ({
   profile,
@@ -34,7 +37,7 @@ const ProfileForm = ({
     }
   }, [profile]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -134,7 +137,7 @@ const PasswordForm = () => {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswords((prev) => ({ ...prev, [name]: value }));
   };
@@ -161,9 +164,7 @@ const PasswordForm = () => {
         newPassword: passwords.newPassword,
       }),
     });
-
     setIsSubmitting(false);
-
     if (res.ok) {
       setMessage("Senha alterada com sucesso!");
       setError("");
@@ -244,7 +245,11 @@ export default function ProfileClientPage({
 }: {
   initialProfile: UserType | null;
 }) {
+  const { data: session, status: sessionStatus } = useSession();
   const { profile, isError, mutateProfile } = useFetchProfile(initialProfile);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const { showToast } = useToast();
 
   if (!profile && !isError) return <ProfileSkeleton />;
   if (isError || !profile) {
@@ -253,9 +258,95 @@ export default function ProfileClientPage({
     );
   }
 
+  const handleManageSubscription = async () => {
+    setIsPortalLoading(true);
+    try {
+      const response = await fetch("/api/stripe/create-portal-session", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Falha ao abrir o portal de gerenciamento.");
+      }
+
+      const { url } = await response.json();
+      window.location.href = url;
+    } catch (error) {
+      showToast("Erro ao acessar o portal. Tente novamente.", "error");
+      setIsPortalLoading(false);
+    }
+  };
+
+  const userPlan = session?.user?.plan || "BÁSICO";
+  const isBasicPlan = userPlan === "BÁSICO";
+
+  const planNames: { [key: string]: string } = {
+    BASIC: "Básico",
+    PROFESSIONAL: "Profissional",
+  };
+
+  const translatedPlan = planNames[userPlan] || userPlan;
+
+  const PlanSection = () => {
+    if (sessionStatus === "loading") {
+      return (
+        <div className="h-10 bg-gray-200 rounded-md animate-pulse w-1/3"></div>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-between">
+        <div>
+          <span className="text-gray-600 mr-2">Seu plano atual:</span>
+          <span
+            className={`font-bold text-lg px-3 py-1 rounded-full ${
+              isBasicPlan
+                ? "bg-gray-200 text-gray-800"
+                : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
+            }`}
+          >
+            {translatedPlan}
+          </span>
+        </div>
+        <div>
+          {isBasicPlan ? (
+            <button
+              onClick={() => setIsUpgradeModalOpen(true)}
+              className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold inline-flex items-center gap-2 transition-colors"
+            >
+              <Star size={16} />
+              Fazer upgrade
+            </button>
+          ) : (
+            <button
+              onClick={handleManageSubscription}
+              disabled={isPortalLoading}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-semibold inline-flex items-center gap-2 transition-colors disabled:opacity-50"
+            >
+              {isPortalLoading ? "Carregando..." : "Gerenciar Assinatura"}
+              {!isPortalLoading && <ExternalLink size={16} />}
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div>
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        resourceName="seu plano atual"
+      />
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Meu Perfil</h2>
+
+      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        <h3 className="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-4 mb-6">
+          Plano e assinatura
+        </h3>
+        <PlanSection />
+      </div>
 
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <h3 className="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-4 mb-6">

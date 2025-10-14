@@ -24,7 +24,10 @@ export type ContractWithRelations = Contract & {
 };
 
 export type PaymentWithRelations = Payment & {
-  contract: { driver: { name: string } };
+  contract: {
+    driver: { name: string };
+    vehicle: { plate: string; model: string };
+  };
 };
 
 export type ExpenseWithRelations = Expense & {

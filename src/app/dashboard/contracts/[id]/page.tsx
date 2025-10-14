@@ -10,7 +10,9 @@ interface ContractDetailsPageProps {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default async function ContractDetailsPage({ params }: ContractDetailsPageProps) {
+export default async function ContractDetailsPage({
+  params,
+}: ContractDetailsPageProps) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound();
 
@@ -24,7 +26,10 @@ export default async function ContractDetailsPage({ params }: ContractDetailsPag
 
   if (!contract) notFound();
 
-  const [vehicles, drivers] = await Promise.all([getAllVehicles(), getAllDrivers()]);
+  const [vehicles, drivers] = await Promise.all([
+    getAllVehicles(),
+    getAllDrivers(),
+  ]);
 
   return (
     <ContractDetailsClientPage

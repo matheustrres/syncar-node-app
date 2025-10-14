@@ -231,9 +231,29 @@ export default function FinancialClientPage({
                     }`}
                   >
                     <div className="flex justify-between items-start gap-4">
-                      <div className="flex-shrink min-w-0">
-                        <p className="font-semibold truncate">
-                          {payment.contract.driver.name}
+                      <div className="flex-shrink min-w-0 overflow-hidden">
+                        <p
+                          className="font-semibold"
+                          title={payment.contract.driver.name}
+                        >
+                          {payment.contract.driver.name.length > 20
+                            ? `${payment.contract.driver.name.substring(
+                                0,
+                                20
+                              )}...`
+                            : payment.contract.driver.name}
+                        </p>
+                        <p
+                          className="text-sm text-gray-500"
+                          title={`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`}
+                        >
+                          {`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`
+                            .length > 20
+                            ? `${`${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`.substring(
+                                0,
+                                20
+                              )}...`
+                            : `${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`}
                         </p>
                         <p className="text-sm text-gray-500">
                           Venc.:{" "}

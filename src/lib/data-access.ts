@@ -140,7 +140,14 @@ export const getPendingPayments = cache(async (page = 1, limit = 10) => {
   const [payments, total] = await prisma.$transaction([
     prisma.payment.findMany({
       where,
-      include: { contract: { select: { driver: { select: { name: true } } } } },
+      include: {
+        contract: {
+          select: {
+            driver: { select: { name: true } },
+            vehicle: { select: { plate: true, model: true } },
+          },
+        },
+      },
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { dueDate: "asc" },

@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           companyName: user.companyName,
+          plan: user.plan,
         };
       },
     }),
@@ -38,14 +39,24 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
+      if (user) {
+        token.id = user.id;
+      }
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+        });
+        if (dbUser) {
+          token.name = dbUser.name;
+          token.email = dbUser.email;
+          token.plan = dbUser.plan;
+          token.companyName = dbUser.companyName;
+        }
+      }
       if (trigger === "update" && session?.user) {
         token.name = session.user.name;
         token.email = session.user.email;
         token.companyName = session.user.companyName;
-      }
-      if (user) {
-        token.id = user.id;
-        token.companyName = user.companyName;
       }
       return token;
     },
@@ -54,7 +65,8 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.name = token.name;
         session.user.email = token.email;
-        session.user.companyName = token.companyName as string | undefined;
+        session.user.companyName = token.companyName;
+        session.user.plan = token.plan as string;
       }
       return session;
     },

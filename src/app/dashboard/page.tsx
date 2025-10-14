@@ -71,19 +71,25 @@ export default async function DashboardPage() {
                     key={payment.id}
                     className={`p-4 rounded-lg border-l-4 ${isOverdue ? "bg-red-50 border-red-500" : "bg-yellow-50 border-yellow-500"}`}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">{payment.driverName}</p>
-                        <p className="text-sm text-gray-600">
-                          {payment.vehicleInfo}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Vencimento:{" "}
-                          {new Date(payment.dueDate).toLocaleDateString(
-                            "pt-BR"
-                          )}
-                        </p>
-                      </div>
+                    <div className="flex justify-between items-start gap-4">
+                                            <div className="min-w-0 flex-shrink overflow-hidden">
+                                              <p className="font-semibold" title={payment.driverName}>
+                                                {payment.driverName.length > 40
+                                                  ? `${payment.driverName.substring(0, 40)}...`
+                                                  : payment.driverName}
+                                              </p>
+                                              <p className="text-sm text-gray-600" title={payment.vehicleInfo}>
+                                                {payment.vehicleInfo.length > 40
+                                                  ? `${payment.vehicleInfo.substring(0, 40)}...`
+                                                  : payment.vehicleInfo}
+                                              </p>
+                                              <p className="text-xs text-gray-500 mt-1">
+                                                Vencimento:{" "}
+                                                {new Date(payment.dueDate).toLocaleDateString(
+                                                  "pt-BR"
+                                                )}
+                                              </p>
+                                            </div>
                       <div className="text-right">
                         <p className="font-bold text-lg">
                           R$ {payment.value.toFixed(2)}
