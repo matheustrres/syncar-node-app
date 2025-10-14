@@ -6,9 +6,7 @@ import Stripe from "stripe";
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature") as string;
-
   let event: Stripe.Event;
-
   try {
     event = stripe.webhooks.constructEvent(
       body,
@@ -20,9 +18,7 @@ export async function POST(req: Request) {
       status: 400,
     });
   }
-
   const session = event.data.object as Stripe.Checkout.Session;
-
   if (event.type === "checkout.session.completed") {
     if (!session?.client_reference_id) {
       return new NextResponse("Webhook Error: Missing client_reference_id", {
@@ -43,7 +39,20 @@ export async function POST(req: Request) {
       return new NextResponse("Webhook database error", { status: 500 });
     }
   }
-
+  if (event.type === "customer.subscription.created") {
+    const subscription = event.data.object as Stripe.Subscription;
+    const user = await prisma.user.findUnique({
+      where: {
+        stripeCustomerId: subscription.customer as string,
+      },
+    });
+    if (user && user.plan !== "PROFESSIONAL") {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { plan: "PROFESSIONAL" },
+      });
+    }
+  }
   if (
     event.type === "customer.subscription.updated" ||
     event.type === "customer.subscription.deleted"
@@ -69,6 +78,5 @@ export async function POST(req: Request) {
       });
     }
   }
-
   return new NextResponse(null, { status: 200 });
 }

@@ -11,13 +11,14 @@ async function getExpense(id: string, userId: string) {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const expense = await getExpense(params.id, session.user.id);
+  const { id } = await params;
+  const expense = await getExpense(id, session.user.id);
   if (!expense) {
     return NextResponse.json(
       { error: "Despesa não encontrada" },
@@ -26,27 +27,28 @@ export async function PUT(
   }
   const data = await request.json();
   const updatedExpense = await prisma.expense.update({
-    where: { id: params.id },
+    where: { id },
     data,
   });
   return NextResponse.json(updatedExpense);
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const expense = await getExpense(params.id, session.user.id);
+  const { id } = await params;
+  const expense = await getExpense(id, session.user.id);
   if (!expense) {
     return NextResponse.json(
       { error: "Despesa não encontrada" },
       { status: 404 }
     );
   }
-  await prisma.expense.delete({ where: { id: params.id } });
+  await prisma.expense.delete({ where: { id } });
   return NextResponse.json({ message: "Despesa excluída com sucesso" });
 }

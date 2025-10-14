@@ -5,13 +5,13 @@ import { authOptions } from "@/lib/authOptions";
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const vehicleId = params.id;
+  const { id: vehicleId } = await params;
   const vehicle = await prisma.vehicle.findFirst({
     where: {
       id: vehicleId,

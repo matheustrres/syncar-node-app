@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
-import { Expense, Vehicle, WithoutBaseItem } from "@/types";
+import { Vehicle, Expense, WithoutBaseItem } from "@/types";
 import { useFetchVehicleById, useFetchVehicleExpenses } from "@/hooks/useData";
 import { ArrowLeft, Edit, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
@@ -14,6 +15,7 @@ import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
 import ExpenseForm from "@/components/forms/ExpenseForm";
+import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 
 const DetailItem = ({
   label,
@@ -38,6 +40,7 @@ export default function VehicleDetailsClientPage({
   initialVehicle,
 }: ClientPageProps) {
   const router = useRouter();
+  const { data: session } = useSession();
 
   const {
     data: vehicle,
@@ -309,9 +312,13 @@ export default function VehicleDetailsClientPage({
 
       <div className="mt-10">
         <h3 className="text-xl font-semibold mb-4 text-gray-700">
-          Histórico de Despesas
+          Histórico de despesas
         </h3>
-        {isLoadingExpenses ? (
+        {session?.user?.plan === "BASIC" ? (
+          <UpgradePlaceholder featureName="Histórico de despesas">
+            <DataTableSkeleton columns={4} />
+          </UpgradePlaceholder>
+        ) : isLoadingExpenses ? (
           <DataTableSkeleton columns={4} />
         ) : expenses.length > 0 ? (
           <DataTable

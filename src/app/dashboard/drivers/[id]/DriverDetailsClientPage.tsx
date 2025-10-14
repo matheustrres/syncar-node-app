@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
-import { Driver, WithoutBaseItem } from "@/types";
+import { Driver, Payment, WithoutBaseItem } from "@/types";
 import {
   useFetchDriverById,
   useFetchDriverPayments,
@@ -20,8 +21,8 @@ import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import { PaymentWithRelations } from "@/hooks/useData";
 import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
-import { Payment } from "@/types";
 import PaymentForm from "@/components/forms/PaymentForm";
+import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 
 const DetailItem = ({
   label,
@@ -46,6 +47,7 @@ export default function DriverDetailsClientPage({
   initialDriver,
 }: ClientPageProps) {
   const router = useRouter();
+  const { data: session } = useSession();
   const {
     data: driver,
     isError,
@@ -342,7 +344,11 @@ export default function DriverDetailsClientPage({
         <h3 className="text-xl font-semibold mb-4 text-gray-700">
           Histórico de pagamentos
         </h3>
-        {isLoadingPayments ? (
+        {session?.user?.plan === "BASIC" ? (
+          <UpgradePlaceholder featureName="Histórico de pagamentos">
+            <DataTableSkeleton columns={5} />
+          </UpgradePlaceholder>
+        ) : isLoadingPayments ? (
           <DataTableSkeleton columns={5} />
         ) : payments.length > 0 ? (
           <DataTable

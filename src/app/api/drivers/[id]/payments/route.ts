@@ -5,13 +5,14 @@ import { authOptions } from "@/lib/authOptions";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const driverId = params.id;
+  const { id: driverId } = await params;
   const driver = await prisma.driver.findFirst({
     where: {
       id: driverId,

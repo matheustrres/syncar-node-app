@@ -1,11 +1,11 @@
 "use client";
 
 const Shimmer = () => (
-  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
 );
 
 const SkeletonCell = () => (
-  <div className="h-5 bg-gray-100 rounded-md relative overflow-hidden">
+  <div className="h-5 bg-gray-200 rounded-md relative overflow-hidden">
     <Shimmer />
   </div>
 );
@@ -26,13 +26,13 @@ export default function DataTableSkeleton({
           <tr>
             {Array.from({ length: columns }).map((_, i) => (
               <th key={i} className="px-6 py-3">
-                <div className="h-4 w-20 bg-gray-100 rounded-md relative overflow-hidden">
+                <div className="h-4 w-20 bg-gray-200 rounded-md relative overflow-hidden">
                   <Shimmer />
                 </div>
               </th>
             ))}
             <th className="px-6 py-3">
-              <div className="h-4 w-12 bg-gray-100 rounded-md ml-auto relative overflow-hidden">
+              <div className="h-4 w-12 bg-gray-200 rounded-md ml-auto relative overflow-hidden">
                 <Shimmer />
               </div>
             </th>
@@ -48,10 +48,10 @@ export default function DataTableSkeleton({
               ))}
               <td className="px-6 py-4">
                 <div className="flex justify-end gap-4">
-                  <div className="h-5 w-5 bg-gray-100 rounded-md relative overflow-hidden">
+                  <div className="h-5 w-5 bg-gray-200 rounded-md relative overflow-hidden">
                     <Shimmer />
                   </div>
-                  <div className="h-5 w-5 bg-gray-100 rounded-md relative overflow-hidden">
+                  <div className="h-5 w-5 bg-gray-200 rounded-md relative overflow-hidden">
                     <Shimmer />
                   </div>
                 </div>
