@@ -1,17 +1,19 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
+import Link from "next/link";
 import {
   Car,
   ShieldCheck,
   DollarSign,
   BarChart2,
   ArrowRight,
-} from 'lucide-react';
-import Header from './Header';
-import Image from 'next/image';
-import PricingCard from './PricingCard';
-import { useState } from 'react';
+} from "lucide-react";
+import Header from "./Header";
+import Image from "next/image";
+import PricingCard from "./PricingCard";
+import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 // Componente de features simplificado e moderno
 const Feature = ({
@@ -48,75 +50,113 @@ interface Plan {
   buttonText: string;
   isFeatured?: boolean;
   disabled?: boolean;
+  action?: () => void;
 }
 
-const pricingPlans: Plan[] = [
-  {
-    planName: 'Básico',
-    monthly: {
-      price: 'Grátis',
-      priceDescription: 'Para sempre',
-    },
-    annual: {
-      price: 'Grátis',
-      priceDescription: 'Para sempre',
-    },
-    features: [
-      'Até 3 veículos',
-      'Até 3 motoristas',
-      'Gestão de contratos',
-      'Controle financeiro',
-    ],
-    buttonText: 'Começar agora',
-  },
-  {
-    planName: 'Profissional',
-    monthly: {
-      price: 'R$ 49,90',
-      priceDescription: '/mês',
-    },
-    annual: {
-      price: 'R$ 499',
-      priceDescription: '/ano',
-      savings: 'Economize R$ 99,80',
-    },
-    features: [
-      'Veículos ilimitados',
-      'Motoristas ilimitados',
-      'Múltiplos usuários e permissões',
-      'Alertas e notificações',
-      'Relatórios avançados',
-      'Exportação de dados',
-    ],
-    buttonText: 'Escolher plano',
-    isFeatured: true,
-  },
-  {
-    planName: 'Empresarial',
-    monthly: {
-      price: 'Sob consulta',
-      priceDescription: '',
-    },
-    annual: {
-      price: 'Sob consulta',
-      priceDescription: '',
-    },
-    features: [
-      'Tudo do Profissional',
-      'Integração com GPS/Telemetria',
-      'Integração com contabilidade',
-      'Acesso via API',
-      'Suporte prioritário',
-    ],
-    buttonText: 'Entrar em contato',
-    disabled: true,
-  },
-];
-
 export default function LandingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>(
-    'monthly'
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    "monthly"
   );
+  const [isLoading, setIsLoading] = useState(false);
+  const { status } = useSession();
+  const router = useRouter();
+
+  const handleUpgradeClick = async () => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    if (status === "authenticated") {
+      setIsLoading(true);
+      try {
+        const priceId =
+          billingCycle === "monthly"
+            ? process.env.NEXT_PUBLIC_STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID
+            : process.env.NEXT_PUBLIC_STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID;
+        const response = await fetch("/api/stripe/checkout-sessions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ priceId }),
+        });
+        if (!response.ok) {
+          throw new Error("Failed to create checkout session");
+        }
+        const { url } = await response.json();
+        window.location.href = url;
+      } catch (error) {
+        console.error(error);
+        alert("Ocorreu um erro. Tente novamente.");
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const pricingPlans: Plan[] = [
+    {
+      planName: "Básico",
+      monthly: {
+        price: "Grátis",
+        priceDescription: "Para sempre",
+      },
+      annual: {
+        price: "Grátis",
+        priceDescription: "Para sempre",
+      },
+      features: [
+        "Até 3 veículos",
+        "Até 3 motoristas",
+        "Gestão de contratos",
+        "Controle financeiro",
+      ],
+      buttonText: "Começar agora",
+      action: () => router.push("/login"),
+    },
+    {
+      planName: "Profissional",
+      monthly: {
+        price: "R$ 49,90",
+        priceDescription: "/mês",
+      },
+      annual: {
+        price: "R$ 499",
+        priceDescription: "/ano",
+        savings: "Economize R$ 99,80",
+      },
+      features: [
+        "Veículos ilimitados",
+        "Motoristas ilimitados",
+        "Múltiplos usuários e permissões",
+        "Alertas e notificações",
+        "Relatórios avançados",
+        "Exportação de dados",
+      ],
+      buttonText: "Escolher plano",
+      isFeatured: true,
+      action: handleUpgradeClick,
+    },
+    {
+      planName: "Empresarial",
+      monthly: {
+        price: "Sob consulta",
+        priceDescription: "",
+      },
+      annual: {
+        price: "Sob consulta",
+        priceDescription: "",
+      },
+      features: [
+        "Tudo do Profissional",
+        "Integração com GPS/Telemetria",
+        "Integração com contabilidade",
+        "Acesso via API",
+        "Suporte prioritário",
+      ],
+      buttonText: "Entrar em contato",
+      disabled: true,
+    },
+  ];
 
   return (
     <div className="bg-white min-h-screen text-gray-700">
@@ -176,8 +216,8 @@ export default function LandingPage() {
               manutenções.
             </Feature>
             <Feature icon={ShieldCheck} title="Gestão de contratos">
-              Crie e gerencie contratos de aluguel de forma simples, com
-              geração automática de pagamentos.
+              Crie e gerencie contratos de aluguel de forma simples, com geração
+              automática de pagamentos.
             </Feature>
             <Feature icon={DollarSign} title="Financeiro inteligente">
               Visualize pagamentos pendentes, recebidos e despesas. Tenha uma
@@ -207,9 +247,7 @@ export default function LandingPage() {
           <div className="flex justify-center items-center gap-4 mb-10">
             <span
               className={`font-semibold ${
-                billingCycle === 'monthly'
-                  ? 'text-blue-600'
-                  : 'text-gray-500'
+                billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"
               }`}
             >
               Mensal
@@ -217,20 +255,20 @@ export default function LandingPage() {
             <button
               onClick={() =>
                 setBillingCycle(
-                  billingCycle === 'monthly' ? 'annual' : 'monthly'
+                  billingCycle === "monthly" ? "annual" : "monthly"
                 )
               }
               className="relative w-14 h-8 bg-gray-200 rounded-full p-1 transition-colors duration-300 ease-in-out"
             >
               <span
                 className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
-                  billingCycle === 'annual' ? 'translate-x-6' : ''
+                  billingCycle === "annual" ? "translate-x-6" : ""
                 }`}
               />
             </button>
             <span
               className={`font-semibold ${
-                billingCycle === 'annual' ? 'text-blue-600' : 'text-gray-500'
+                billingCycle === "annual" ? "text-blue-600" : "text-gray-500"
               }`}
             >
               Anual
@@ -239,13 +277,13 @@ export default function LandingPage() {
 
           {/* Mobile Carousel (hidden on md and up) */}
           <div className="md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory pb-8 -mx-4 px-4 scrollbar-hide">
-            {pricingPlans.map(plan => {
+            {pricingPlans.map((plan) => {
               const priceInfo = plan[billingCycle];
               const wrapperClass =
-                'flex-shrink-0 w-[85%] sm:w-[70%] snap-center';
+                "flex-shrink-0 w-[85%] sm:w-[70%] snap-center";
               const card = (
                 <PricingCard
-                  key={plan.planName} // Added key here
+                  key={plan.planName}
                   planName={plan.planName}
                   price={priceInfo.price}
                   priceDescription={priceInfo.priceDescription}
@@ -254,6 +292,8 @@ export default function LandingPage() {
                   buttonText={plan.buttonText}
                   isFeatured={plan.isFeatured}
                   disabled={plan.disabled}
+                  isLoading={isLoading && plan.planName === "Profissional"}
+                  onButtonClick={plan.action}
                 />
               );
 
@@ -277,11 +317,11 @@ export default function LandingPage() {
 
           {/* Desktop Grid (hidden below md) */}
           <div className="hidden md:grid grid-cols-3 gap-8 max-w-5xl mx-auto items-stretch">
-            {pricingPlans.map(plan => {
+            {pricingPlans.map((plan) => {
               const priceInfo = plan[billingCycle];
               const card = (
                 <PricingCard
-                  key={plan.planName} // Added key here
+                  key={plan.planName}
                   planName={plan.planName}
                   price={priceInfo.price}
                   priceDescription={priceInfo.priceDescription}
@@ -290,6 +330,8 @@ export default function LandingPage() {
                   buttonText={plan.buttonText}
                   isFeatured={plan.isFeatured}
                   disabled={plan.disabled}
+                  isLoading={isLoading && plan.planName === "Profissional"}
+                  onButtonClick={plan.action}
                 />
               );
 

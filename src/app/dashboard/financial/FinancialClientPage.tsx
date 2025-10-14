@@ -262,7 +262,7 @@ export default function FinancialClientPage({
                           )}
                         </p>
                       </div>
-                      <p className="font-bold text-lg text-gray-800 whitespace-nowrap">
+                      <p className="font-bold text-gray-800 whitespace-nowrap">
                         R$ {payment.value.toFixed(2)}
                       </p>
                     </div>

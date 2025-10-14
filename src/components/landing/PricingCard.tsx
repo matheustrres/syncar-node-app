@@ -11,6 +11,8 @@ interface PricingCardProps {
   isFeatured?: boolean;
   disabled?: boolean;
   savings?: string;
+  isLoading?: boolean;
+  onButtonClick?: () => void;
 }
 
 export default function PricingCard({
@@ -22,6 +24,8 @@ export default function PricingCard({
   isFeatured = false,
   disabled = false,
   savings,
+  isLoading = false,
+  onButtonClick,
 }: PricingCardProps) {
   const cardClasses = `bg-white p-8 rounded-2xl shadow-lg flex flex-col h-full ${
     isFeatured
@@ -29,11 +33,11 @@ export default function PricingCard({
       : "border-4 border-transparent"
   }`;
   const buttonClasses = `w-full mt-auto px-6 py-3 rounded-lg font-semibold transition-colors ${
-    disabled
+    disabled || isLoading
       ? "bg-gray-100 text-gray-400 cursor-not-allowed"
       : isFeatured
-        ? "bg-blue-600 text-white hover:bg-blue-700"
-        : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+      ? "bg-blue-600 text-white hover:bg-blue-700"
+      : "bg-gray-200 text-gray-800 hover:bg-gray-300"
   }`;
 
   return (
@@ -65,8 +69,16 @@ export default function PricingCard({
         ))}
       </ul>
 
-      <button className={buttonClasses} disabled={disabled}>
-        {disabled ? "Em breve" : buttonText}
+      <button
+        className={buttonClasses}
+        disabled={disabled || isLoading}
+        onClick={onButtonClick}
+      >
+        {isLoading
+          ? "Redirecionando..."
+          : disabled
+          ? "Em breve"
+          : buttonText}
       </button>
     </div>
   );
