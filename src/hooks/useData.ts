@@ -12,6 +12,8 @@ import {
   OverduePaymentReportItem,
   DriverSummaryReportItem,
   Notification,
+  VehiclePerformanceReportItem,
+  ExpenseAnalysisReport,
 } from "@/types";
 import useSWR from "swr";
 
@@ -285,6 +287,29 @@ export function useFetchDriverSummary(
 ) {
   const { data, error, isLoading, mutate } = useSWR<DriverSummaryReportItem[]>(
     "/api/reports/driver-summary",
+    fetcher,
+    { fallbackData, revalidateOnMount: false }
+  );
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchVehiclePerformanceReport(
+  fallbackData?: VehiclePerformanceReportItem[]
+) {
+  const { data, error, isLoading, mutate } = useSWR<
+    VehiclePerformanceReportItem[]
+  >("/api/reports/vehicle-performance", fetcher, {
+    fallbackData,
+    revalidateOnMount: false,
+  });
+  return { data, isLoading, isError: error, mutate };
+}
+
+export function useFetchExpenseAnalysisReport(
+  fallbackData?: ExpenseAnalysisReport
+) {
+  const { data, error, isLoading, mutate } = useSWR<ExpenseAnalysisReport>(
+    "/api/reports/expense-analysis",
     fetcher,
     { fallbackData, revalidateOnMount: false }
   );

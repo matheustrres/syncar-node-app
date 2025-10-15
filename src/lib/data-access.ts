@@ -79,7 +79,7 @@ export const getDrivers = cache(async (page = 1, limit = 10) => {
     }),
     prisma.driver.count({ where }),
   ]);
-  return { drivers, total } as { drivers: Driver[]; total: number };
+  return { drivers, total } as unknown as { drivers: Driver[]; total: number };
 });
 
 export const getAllDrivers = cache(async () => {
@@ -201,6 +201,94 @@ export const getRecentExpenses = cache(async (page = 1, limit = 10) => {
 });
 
 // --- Reports --- //
+
+export const getReportVehiclePerformance = cache(async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return [];
+
+  const vehicles = await prisma.vehicle.findMany({
+    where: { userId: session.user.id },
+    include: {
+      contracts: {
+        include: {
+          payments: true,
+        },
+      },
+      expenses: true,
+    },
+  });
+
+  const report = vehicles.map((vehicle) => {
+    const totalRevenue = vehicle.contracts.reduce((sum, contract) => {
+      return (
+        sum +
+        contract.payments.reduce((paymentSum, payment) => {
+          return paymentSum + (payment.status === "Pago" ? payment.value : 0);
+        }, 0)
+      );
+    }, 0);
+
+    const totalExpenses = vehicle.expenses.reduce(
+      (sum, expense) => sum + expense.value,
+      0
+    );
+
+    return {
+      vehicleId: vehicle.id,
+      vehicleInfo: `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`,
+      totalRevenue,
+      totalExpenses,
+      profit: totalRevenue - totalExpenses,
+    };
+  });
+
+  return report;
+});
+
+export const getReportExpenseAnalysis = cache(async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { byType: [], byMonth: [] };
+
+  const expenses = await prisma.expense.findMany({
+    where: { userId: session.user.id },
+    orderBy: { date: "asc" },
+  });
+
+  const byType = expenses.reduce(
+    (acc, expense) => {
+      const type = expense.type;
+      if (!acc[type]) {
+        acc[type] = 0;
+      }
+      acc[type] += expense.value;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const byMonth = expenses.reduce(
+    (acc, expense) => {
+      const month = new Date(expense.date).toISOString().slice(0, 7); // YYYY-MM
+      if (!acc[month]) {
+        acc[month] = 0;
+      }
+      acc[month] += expense.value;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  return {
+    byType: Object.entries(byType).map(([name, value]) => ({
+      name,
+      value,
+    })),
+    byMonth: Object.entries(byMonth).map(([month, value]) => ({
+      month,
+      value,
+    })),
+  };
+});
 
 export const getReportCashFlow = cache(async () => {
   const session = await getServerSession(authOptions);

@@ -1,5 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./authOptions";
+import { prisma } from "./prisma";
 
 interface UniqueConstraintMessages {
   [key: string]: string;
@@ -23,4 +26,18 @@ export function handlePrismaError(
     }
   }
   return NextResponse.json({ error: defaultErrorMessage }, { status: 500 });
+}
+
+export async function checkSubscription() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return false;
+  }
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+  });
+  if (!user) {
+    return false;
+  }
+  return user.plan === "PROFESSIONAL";
 }

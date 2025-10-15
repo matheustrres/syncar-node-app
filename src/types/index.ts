@@ -54,3 +54,16 @@ export interface DriverSummaryReportItem {
   totalPaid: number;
   vehicleInfo: string;
 }
+
+export interface VehiclePerformanceReportItem {
+  vehicleId: string;
+  vehicleInfo: string;
+  totalRevenue: number;
+  totalExpenses: number;
+  profit: number;
+}
+
+export interface ExpenseAnalysisReport {
+  byType: { name: string; value: number }[];
+  byMonth: { month: string; value: number }[];
+}

@@ -41,15 +41,21 @@ export async function GET(request: NextRequest) {
     ];
   }
 
-  let orderBy: { [key: string]: any } = { createdAt: "desc" };
+  let orderBy:
+    | { [key: string]: "asc" | "desc" }
+    | { driver: { name: "asc" | "desc" } }
+    | { vehicle: { plate: "asc" | "desc" } }
+    | { vehicle: { model: "asc" | "desc" } } = {
+    createdAt: "desc",
+  };
   if (sortColumn === "driver.name") {
-    orderBy = { driver: { name: sortDirection } };
+    orderBy = { driver: { name: sortDirection as "asc" | "desc" } };
   } else if (sortColumn === "vehicle.plate") {
-    orderBy = { vehicle: { plate: sortDirection } };
+    orderBy = { vehicle: { plate: sortDirection as "asc" | "desc" } };
   } else if (sortColumn === "vehicle.model") {
-    orderBy = { vehicle: { model: sortDirection } };
+    orderBy = { vehicle: { model: sortDirection as "asc" | "desc" } };
   } else {
-    orderBy = { [sortColumn]: sortDirection };
+    orderBy = { [sortColumn]: sortDirection as "asc" | "desc" };
   }
 
   const [contracts, total] = await prisma.$transaction([
