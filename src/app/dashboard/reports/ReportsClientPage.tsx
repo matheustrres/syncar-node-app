@@ -5,6 +5,8 @@ import {
   CashFlowReportItem,
   DriverSummaryReportItem,
   OverduePaymentReportItem,
+  VehiclePerformanceReportItem,
+  ExpenseAnalysisReport,
 } from "@/types";
 import {
   useFetchCashFlow,
@@ -18,12 +20,16 @@ interface ClientPageProps {
   initialCashFlow: CashFlowReportItem[];
   initialOverduePayments: OverduePaymentReportItem[];
   initialDriverSummary: DriverSummaryReportItem[];
+  initialVehiclePerformance: VehiclePerformanceReportItem[];
+  initialExpenseAnalysis: ExpenseAnalysisReport;
 }
 
 export default function ReportsClientPage({
   initialCashFlow,
   initialOverduePayments,
   initialDriverSummary,
+  initialVehiclePerformance,
+  initialExpenseAnalysis,
 }: ClientPageProps) {
   const {
     data: monthlyCashFlow,
@@ -154,9 +160,9 @@ export default function ReportsClientPage({
                   <div className="flex-1">
                     <p className="font-semibold text-lg">{p.driverName}</p>
 
-                    <p className="text-sm text-gray-600">{p.vehicleInfo}</p>
+                    <p className="text-sm text-gray-500">{p.vehicleInfo}</p>
 
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-500">
                       Período:{" "}
                       {new Date(p.weekStart).toLocaleDateString("pt-BR")} -{" "}
                       {new Date(p.weekEnd).toLocaleDateString("pt-BR")}
@@ -206,11 +212,11 @@ export default function ReportsClientPage({
               <div>
                 <p className="font-semibold text-lg">{summary.driverName}</p>
 
-                <p className="text-sm text-gray-600">{summary.vehicleInfo}</p>
+                <p className="text-sm text-gray-500">{summary.vehicleInfo}</p>
               </div>
 
               <div className="text-right">
-                <p className="text-sm text-gray-600">Total pago</p>
+                <p className="text-sm text-gray-500">Total pago</p>
 
                 <p className="text-2xl font-bold text-blue-600">
                   R$ {summary.totalPaid.toFixed(2)}
@@ -226,7 +232,10 @@ export default function ReportsClientPage({
           Relatórios avançados
         </h2>
 
-        <AdvancedReports />
+        <AdvancedReports
+          initialVehiclePerformance={initialVehiclePerformance}
+          initialExpenseAnalysis={initialExpenseAnalysis}
+        />
       </div>
     </div>
   );

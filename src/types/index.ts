@@ -5,7 +5,6 @@ import {
   Payment as PaymentModel,
   Expense as ExpenseModel,
   User as UserModel,
-  Notification as NotificationModel,
 } from "@prisma/client";
 
 type ToJson<T> = {
@@ -18,7 +17,6 @@ export type Contract = ToJson<ContractModel>;
 export type Payment = ToJson<PaymentModel>;
 export type Expense = ToJson<ExpenseModel>;
 export type User = ToJson<UserModel>;
-export type Notification = ToJson<NotificationModel>;
 export type ContractWithDetails = Contract & {
   driver: Driver;
   vehicle: Vehicle;
@@ -39,9 +37,9 @@ export interface CashFlowReportItem {
 
 export interface OverduePaymentReportItem {
   id: string;
-  weekStart: string;
-  weekEnd: string;
-  dueDate: string;
+  weekStart: Date;
+  weekEnd: Date;
+  dueDate: Date;
   value: number;
   driverName: string;
   vehicleInfo: string;

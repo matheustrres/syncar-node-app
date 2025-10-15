@@ -10,6 +10,7 @@ import {
 } from "@/hooks/useData";
 import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 import AdvancedReportsSkeleton from "./AdvancedReportsSkeleton";
+import { VehiclePerformanceReportItem, ExpenseAnalysisReport } from "@/types";
 
 const theme = {
   axis: {
@@ -64,12 +65,20 @@ const CenteredMetric = ({
   );
 };
 
-export default function AdvancedReports() {
+interface AdvancedReportsProps {
+  initialVehiclePerformance: VehiclePerformanceReportItem[];
+  initialExpenseAnalysis: ExpenseAnalysisReport;
+}
+
+export default function AdvancedReports({
+  initialVehiclePerformance,
+  initialExpenseAnalysis,
+}: AdvancedReportsProps) {
   const { profile, isLoading: profileLoading } = useFetchProfile();
   const { data: vehiclePerformance, isLoading: vehicleLoading } =
-    useFetchVehiclePerformanceReport();
+    useFetchVehiclePerformanceReport(initialVehiclePerformance);
   const { data: expenseAnalysis, isLoading: expenseLoading } =
-    useFetchExpenseAnalysisReport();
+    useFetchExpenseAnalysisReport(initialExpenseAnalysis);
 
   if (profileLoading) return <AdvancedReportsSkeleton />;
 
@@ -111,10 +120,10 @@ export default function AdvancedReports() {
                   Veículo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Receita Total
+                  Receita total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Despesa Total
+                  Despesa total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Lucro
@@ -160,9 +169,9 @@ export default function AdvancedReports() {
         </h3>
         <div className="flex flex-wrap -mx-4" style={{ height: "auto" }}>
           <div className="w-full md:w-1/2 px-4 h-96">
-            <h4 className="text-md font-semibold mb-2 text-center">
+            {/* <h4 className="text-md font-semibold mb-2 text-center">
               Despesas por tipo
-            </h4>
+            </h4> */}
             <ResponsivePie
               data={pieData}
               margin={{ top: 20, right: 40, bottom: 40, left: 40 }}
@@ -191,9 +200,9 @@ export default function AdvancedReports() {
             />
           </div>
           <div className="w-full md:w-1/2 px-4 h-96">
-            <h4 className="text-md font-semibold mb-2 text-center">
+            {/* <h4 className="text-md font-semibold mb-2 text-center">
               Despesas por mês
-            </h4>
+            </h4> */}
             <ResponsiveBar
               data={barData}
               keys={["Despesa"]}
@@ -210,6 +219,7 @@ export default function AdvancedReports() {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: -45,
+                // legend: "Mês",
                 legendPosition: "middle",
                 legendOffset: 32,
               }}
@@ -217,6 +227,7 @@ export default function AdvancedReports() {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
+                // legend: "Valor (R$)",
                 legendPosition: "middle",
                 legendOffset: -40,
                 format: (value) =>
