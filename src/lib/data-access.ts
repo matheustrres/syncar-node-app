@@ -374,7 +374,7 @@ export const getReportDriverSummary = cache(async () => {
     }),
     prisma.payment.findMany({
       where: { contract: { userId }, status: "Pago" },
-      select: { contractId: true, value: true },
+      select: { contractId: true, value: true, paymentDate: true },
     }),
   ]);
   const vehicleIds = contracts
