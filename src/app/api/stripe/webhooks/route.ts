@@ -2,6 +2,7 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -34,6 +35,7 @@ export async function POST(req: Request) {
           plan: "PROFESSIONAL",
         },
       });
+      revalidatePath("/api/profile"); // Revalidate profile data
     } catch (error) {
       console.error("Error updating user plan:", error);
       return new NextResponse("Webhook database error", { status: 500 });
@@ -51,6 +53,7 @@ export async function POST(req: Request) {
         where: { id: user.id },
         data: { plan: "PROFESSIONAL" },
       });
+      revalidatePath("/api/profile"); // Revalidate profile data
     }
   }
   if (
@@ -76,6 +79,7 @@ export async function POST(req: Request) {
           plan: newPlan,
         },
       });
+      revalidatePath("/api/profile"); // Revalidate profile data
     }
   }
   return new NextResponse(null, { status: 200 });
