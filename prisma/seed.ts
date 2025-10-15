@@ -24,7 +24,7 @@ async function main() {
   await prisma.expense.deleteMany({ where: { userId: user.id } });
 
   const expenses = [];
-  const expenseTypes = ['Manutenção', 'Abastecimento', 'Seguro', 'Limpeza', 'Multa'];
+  const expenseTypes = ["Manutenção", "IPVA", "Seguro", "Documentação", "Multa", "Outros"];
 
   for (const vehicle of vehicles) {
     for (let i = 0; i < 10; i++) {

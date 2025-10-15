@@ -111,10 +111,10 @@ export default function AdvancedReports() {
                   Veículo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Receita total
+                  Receita Total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Despesa total
+                  Despesa Total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Lucro
@@ -158,14 +158,14 @@ export default function AdvancedReports() {
         <h3 className="text-2xl font-semibold leading-none tracking-tight mb-4">
           Análise de despesas
         </h3>
-        <div className="grid md:grid-cols-2 gap-8" style={{ height: "400px" }}>
-          <div>
+        <div className="flex flex-wrap -mx-4" style={{ height: "auto" }}>
+          <div className="w-full md:w-1/2 px-4 h-96">
             <h4 className="text-md font-semibold mb-2 text-center">
               Despesas por tipo
             </h4>
             <ResponsivePie
               data={pieData}
-              margin={{ top: 40, right: 80, bottom: 80, left: 80 }}
+              margin={{ top: 20, right: 40, bottom: 40, left: 40 }}
               innerRadius={0.6}
               padAngle={0.7}
               cornerRadius={3}
@@ -190,7 +190,7 @@ export default function AdvancedReports() {
               )}
             />
           </div>
-          <div>
+          <div className="w-full md:w-1/2 px-4 h-96">
             <h4 className="text-md font-semibold mb-2 text-center">
               Despesas por mês
             </h4>
@@ -209,8 +209,7 @@ export default function AdvancedReports() {
               axisBottom={{
                 tickSize: 5,
                 tickPadding: 5,
-                tickRotation: 0,
-                legend: "Mês",
+                tickRotation: -45,
                 legendPosition: "middle",
                 legendOffset: 32,
               }}
@@ -218,7 +217,6 @@ export default function AdvancedReports() {
                 tickSize: 5,
                 tickPadding: 5,
                 tickRotation: 0,
-                legend: "Valor (R$)",
                 legendPosition: "middle",
                 legendOffset: -40,
                 format: (value) =>
