@@ -250,7 +250,7 @@ export function useFetchProfile(fallbackData?: User | null) {
   const { data, error, isLoading, mutate } = useSWR<User | null>(
     "/api/profile",
     fetcher,
-    { fallbackData, revalidateOnMount: false }
+    { fallbackData, revalidateOnFocus: true }
   );
   return {
     profile: data ?? fallbackData,
