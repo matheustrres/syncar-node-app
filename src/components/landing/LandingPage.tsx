@@ -127,8 +127,8 @@ export default function LandingPage() {
       features: [
         "Veículos ilimitados",
         "Motoristas ilimitados",
-        "Múltiplos usuários e permissões",
-        "Alertas e notificações",
+        "Histórico de pagamentos",
+        "Histórico de despesas",
         "Relatórios avançados",
         "Exportação de dados",
       ],
