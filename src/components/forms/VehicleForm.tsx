@@ -1,6 +1,6 @@
 "use client";
 
-import { Vehicle } from "@/types";
+import { Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent, FocusEvent } from "react";
 import { IMaskInput } from "react-imask";
 import {
@@ -20,9 +20,7 @@ interface VehicleFormProps {
   initialData?: Vehicle | null;
   apiError?: string | null;
   isSaving?: boolean;
-  onSave: (
-    data: Omit<Vehicle, "id" | "userId" | "createdAt" | "updatedAt">
-  ) => void;
+  onSave: (data: WithoutBaseItem<Vehicle>) => void;
   onCancel: () => void;
 }
 
@@ -37,11 +35,11 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     plate: "",
     brand: "",
     model: "",
-    year: new Date().getFullYear() as number | string,
+    year: new Date().getFullYear(),
     color: "",
     renavam: "",
     chassis: "",
-    km: 0 as number | string,
+    km: 0,
     status: "Disponível",
   });
 
@@ -66,6 +64,22 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       });
     }
   }, [initialData]);
+
+  const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawValue = e.target.value.toUpperCase();
+    const cleanValue = rawValue.replace(/[^A-Z0-9]/g, "");
+    let formattedValue = cleanValue;
+    const isLikelyOldFormat =
+      cleanValue.length > 3 && /^[0-9]$/.test(cleanValue[3]);
+    const isLikelyMercosul =
+      cleanValue.length > 4 && /^[A-Z]$/.test(cleanValue[4]);
+    if (isLikelyOldFormat && !isLikelyMercosul) {
+      formattedValue = `${cleanValue.slice(0, 3)}-${cleanValue.slice(3, 7)}`;
+    } else {
+      formattedValue = cleanValue.slice(0, 7);
+    }
+    setFormData((prev) => ({ ...prev, plate: formattedValue }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -107,14 +121,16 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Placa *
           </label>
+
           <Hash className="absolute left-3 top-9 text-gray-400" size={20} />
+
           <input
             type="text"
             name="plate"
             value={formData.plate}
-            onChange={handleChange}
+            onChange={handlePlateChange}
             required
-            placeholder="ABC-1234"
+            placeholder="ABC-1234 ou ABC1D23"
             className={inputStyle}
           />
         </div>
@@ -216,11 +232,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             className="absolute left-3 top-9 text-gray-400"
             size={20}
           />
-          <input
-            type="text"
+          <IMaskInput
+            mask="00000000000"
             name="renavam"
             value={formData.renavam}
-            onChange={handleChange}
+            onAccept={(value) =>
+              handleMaskedInputChange("renavam", String(value))
+            }
             required
             placeholder="00000000000"
             className={inputStyle}
@@ -232,11 +250,14 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             Chassi *
           </label>
           <Shield className="absolute left-3 top-9 text-gray-400" size={20} />
-          <input
-            type="text"
+          <IMaskInput
+            mask={/^[A-HJ-NP-Z0-9]{0,17}$/}
+            prepare={(str: string) => str.toUpperCase()}
             name="chassis"
             value={formData.chassis}
-            onChange={handleChange}
+            onAccept={(value) =>
+              handleMaskedInputChange("chassis", String(value))
+            }
             required
             placeholder="9BW..."
             className={inputStyle}
