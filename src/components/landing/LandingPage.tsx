@@ -163,8 +163,16 @@ export default function LandingPage() {
       <Header />
 
       {/* Seção Hero */}
-      <main className="relative bg-gradient-to-b from-blue-50 via-white to-white">
-        <div className="container mx-auto px-4 pt-24 pb-32 text-center md:text-left">
+      <main className="relative bg-gradient-to-b from-blue-50 via-white to-white overflow-hidden">
+        {/* Elementos gráficos de fundo */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 z-0 grid grid-cols-2 -space-x-52 opacity-40"
+        >
+          <div className="h-56 bg-gradient-to-br from-blue-500 to-purple-500 filter blur-3xl"></div>
+          <div className="h-32 bg-gradient-to-r from-pink-500 to-yellow-500 filter blur-3xl"></div>
+        </div>
+        <div className="relative z-10 container mx-auto px-4 pt-24 pb-32 text-center md:text-left">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
@@ -198,8 +206,14 @@ export default function LandingPage() {
       </main>
 
       {/* Seção de Features */}
-      <section id="features" className="py-24 bg-white">
-        <div className="container mx-auto px-4">
+      <section id="features" className="py-24 bg-white relative overflow-hidden">
+        {/* Elemento de fundo */}
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-1/4 left-0 -translate-x-1/4 w-[50rem] h-[50rem] bg-gradient-to-br from-blue-50 to-purple-100 rounded-full filter blur-3xl opacity-40"
+        ></div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900">
               Tudo o que você precisa
@@ -232,8 +246,14 @@ export default function LandingPage() {
       </section>
 
       {/* Seção de Planos (Pricing) */}
-      <section id="pricing" className="py-24 bg-gray-50/70">
-        <div className="container mx-auto px-4">
+      <section id="pricing" className="py-24 bg-gray-50/70 relative overflow-hidden">
+        {/* Elemento de fundo */}
+        <div
+          aria-hidden="true"
+          className="absolute -top-1/4 right-0 translate-x-1/4 w-[60rem] h-[60rem] bg-gradient-to-bl from-pink-50 to-orange-100 rounded-full filter blur-3xl opacity-40"
+        ></div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900">
               Planos que cabem no seu bolso
@@ -352,8 +372,14 @@ export default function LandingPage() {
       </section>
 
       {/* Seção de Visualização da Plataforma */}
-      <section id="preview" className="py-24 bg-white">
-        <div className="container mx-auto px-4">
+      <section id="preview" className="py-24 bg-white relative overflow-hidden">
+        {/* Elemento de fundo */}
+        <div
+          aria-hidden="true"
+          className="absolute -bottom-1/4 -right-1/4 w-[50rem] h-[50rem] bg-gradient-to-tl from-teal-50 to-cyan-100 rounded-full filter blur-3xl opacity-30"
+        ></div>
+
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900">
               Veja o Syncar em ação
