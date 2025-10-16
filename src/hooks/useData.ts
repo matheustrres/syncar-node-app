@@ -11,7 +11,6 @@ import {
   CashFlowReportItem,
   OverduePaymentReportItem,
   DriverSummaryReportItem,
-  Notification,
   VehiclePerformanceReportItem,
   ExpenseAnalysisReport,
 } from "@/types";
@@ -314,23 +313,6 @@ export function useFetchExpenseAnalysisReport(
     { fallbackData, revalidateOnMount: false }
   );
   return { data, isLoading, isError: error, mutate };
-}
-
-// --- Notifications ---
-
-export function useFetchNotifications() {
-  const { data, error, isLoading, mutate } = useSWR<Notification[]>(
-    `/api/notifications`,
-    fetcher,
-    { revalidateOnFocus: true } // Re-fetch when user focuses the window
-  );
-
-  return {
-    notifications: data || [],
-    isLoading,
-    isError: error,
-    mutateNotifications: mutate,
-  };
 }
 
 // --- Histórico de Ativos ---
