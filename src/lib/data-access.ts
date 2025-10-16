@@ -16,14 +16,9 @@ export const getContracts = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { contracts: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.ContractWhereInput = { userId: session.user.id };
-
-    if (status) {
-      where.status = status;
-    }
-
+    if (status) where.status = status;
     if (search) {
       where.OR = [
         {
@@ -52,7 +47,6 @@ export const getContracts = cache(
         },
       ];
     }
-
     let orderBy: Prisma.ContractOrderByWithRelationInput = {
       createdAt: "desc",
     };
@@ -65,8 +59,7 @@ export const getContracts = cache(
     } else {
       orderBy = { [sortColumn]: sortDirection };
     }
-
-    const [contracts, total] = await prisma.$transaction([
+    const [contractsData, total] = await prisma.$transaction([
       prisma.contract.findMany({
         where,
         include: {
@@ -79,7 +72,12 @@ export const getContracts = cache(
       }),
       prisma.contract.count({ where }),
     ]);
-
+    const contracts = contractsData.map((contract) => ({
+      ...contract,
+      createdAt: contract.createdAt.toISOString(),
+      updatedAt: contract.updatedAt.toISOString(),
+      startDate: contract.startDate.toISOString(),
+    }));
     return { contracts, total };
   }
 );
@@ -110,14 +108,11 @@ export const getDrivers = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { drivers: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.DriverWhereInput = { userId: session.user.id };
-
     if (status) {
       where.status = status;
     }
-
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -125,8 +120,7 @@ export const getDrivers = cache(
         { email: { contains: search, mode: "insensitive" } },
       ];
     }
-
-    const [drivers, total] = await prisma.$transaction([
+    const [driversData, total] = await prisma.$transaction([
       prisma.driver.findMany({
         where,
         select: {
@@ -145,6 +139,9 @@ export const getDrivers = cache(
           cidade: true,
           uf: true,
           status: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
         },
         skip,
         take: limit,
@@ -152,7 +149,12 @@ export const getDrivers = cache(
       }),
       prisma.driver.count({ where }),
     ]);
-
+    const drivers = driversData.map((driver) => ({
+      ...driver,
+      createdAt: driver.createdAt.toISOString(),
+      updatedAt: driver.updatedAt.toISOString(),
+      cnhValidity: driver.cnhValidity.toISOString(),
+    }));
     return { drivers, total };
   }
 );
@@ -178,14 +180,9 @@ export const getVehicles = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { vehicles: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.VehicleWhereInput = { userId: session.user.id };
-
-    if (status) {
-      where.status = status;
-    }
-
+    if (status) where.status = status;
     if (search) {
       where.OR = [
         { plate: { contains: search, mode: "insensitive" } },
@@ -193,8 +190,7 @@ export const getVehicles = cache(
         { model: { contains: search, mode: "insensitive" } },
       ];
     }
-
-    const [vehicles, total] = await prisma.$transaction([
+    const [vehiclesData, total] = await prisma.$transaction([
       prisma.vehicle.findMany({
         where,
         select: {
@@ -208,6 +204,9 @@ export const getVehicles = cache(
           chassis: true,
           km: true,
           status: true,
+          createdAt: true,
+          updatedAt: true,
+          userId: true,
         },
         skip,
         take: limit,
@@ -215,7 +214,11 @@ export const getVehicles = cache(
       }),
       prisma.vehicle.count({ where }),
     ]);
-
+    const vehicles = vehiclesData.map((vehicle) => ({
+      ...vehicle,
+      createdAt: vehicle.createdAt.toISOString(),
+      updatedAt: vehicle.updatedAt.toISOString(),
+    }));
     return { vehicles, total };
   }
 );
@@ -242,13 +245,11 @@ export const getPendingPayments = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { payments: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.PaymentWhereInput = {
       contract: { userId: session.user.id },
       status: "Pendente",
     };
-
     if (search) {
       where.OR = [
         {
@@ -283,21 +284,7 @@ export const getPendingPayments = cache(
         },
       ];
     }
-
-    let orderBy: Prisma.PaymentOrderByWithRelationInput = {
-      dueDate: "asc",
-    };
-    if (sortColumn === "driver.name") {
-      orderBy = { contract: { driver: { name: sortDirection } } };
-    } else if (sortColumn === "vehicle.plate") {
-      orderBy = { contract: { vehicle: { plate: sortDirection } } };
-    } else if (sortColumn === "vehicle.model") {
-      orderBy = { contract: { vehicle: { model: sortDirection } } };
-    } else {
-      orderBy = { [sortColumn]: sortDirection };
-    }
-
-    const [payments, total] = await prisma.$transaction([
+    const [paymentsData, total] = await prisma.$transaction([
       prisma.payment.findMany({
         where,
         include: {
@@ -310,11 +297,21 @@ export const getPendingPayments = cache(
         },
         skip,
         take: limit,
-        orderBy,
+        orderBy: { [sortColumn]: sortDirection },
       }),
       prisma.payment.count({ where }),
     ]);
-
+    const payments = paymentsData.map((payment) => ({
+      ...payment,
+      createdAt: payment.createdAt.toISOString(),
+      updatedAt: payment.updatedAt.toISOString(),
+      dueDate: payment.dueDate.toISOString(),
+      weekStart: payment.weekStart.toISOString(),
+      weekEnd: payment.weekEnd.toISOString(),
+      paymentDate: payment.paymentDate
+        ? payment.paymentDate.toISOString()
+        : null,
+    }));
     return { payments, total };
   }
 );
@@ -329,13 +326,11 @@ export const getPaidPayments = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { payments: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.PaymentWhereInput = {
       contract: { userId: session.user.id },
       status: "Pago",
     };
-
     if (search) {
       where.OR = [
         {
@@ -361,7 +356,6 @@ export const getPaidPayments = cache(
         },
       ];
     }
-
     let orderBy: Prisma.PaymentOrderByWithRelationInput = {
       paymentDate: "desc",
     };
@@ -374,8 +368,7 @@ export const getPaidPayments = cache(
     } else {
       orderBy = { [sortColumn]: sortDirection };
     }
-
-    const [payments, total] = await prisma.$transaction([
+    const [paymentsData, total] = await prisma.$transaction([
       prisma.payment.findMany({
         where,
         include: {
@@ -392,7 +385,17 @@ export const getPaidPayments = cache(
       }),
       prisma.payment.count({ where }),
     ]);
-
+    const payments = paymentsData.map((payment) => ({
+      ...payment,
+      createdAt: payment.createdAt.toISOString(),
+      updatedAt: payment.updatedAt.toISOString(),
+      dueDate: payment.dueDate.toISOString(),
+      weekStart: payment.weekStart.toISOString(),
+      weekEnd: payment.weekEnd.toISOString(),
+      paymentDate: payment.paymentDate
+        ? payment.paymentDate.toISOString()
+        : null,
+    }));
     return { payments, total };
   }
 );
@@ -407,10 +410,8 @@ export const getRecentExpenses = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { expenses: [], total: 0 };
-
     const skip = (page - 1) * limit;
     const where: Prisma.ExpenseWhereInput = { userId: session.user.id };
-
     if (search) {
       where.OR = [
         { type: { contains: search, mode: "insensitive" } },
@@ -418,7 +419,6 @@ export const getRecentExpenses = cache(
         { vehicle: { plate: { contains: search, mode: "insensitive" } } },
       ];
     }
-
     let orderBy: Prisma.ExpenseOrderByWithRelationInput = {
       date: "desc",
     };
@@ -427,8 +427,7 @@ export const getRecentExpenses = cache(
     } else {
       orderBy = { [sortColumn]: sortDirection };
     }
-
-    const [expenses, total] = await prisma.$transaction([
+    const [expensesData, total] = await prisma.$transaction([
       prisma.expense.findMany({
         where,
         include: { vehicle: { select: { plate: true } } },
@@ -438,7 +437,12 @@ export const getRecentExpenses = cache(
       }),
       prisma.expense.count({ where }),
     ]);
-
+    const expenses = expensesData.map((expense) => ({
+      ...expense,
+      createdAt: expense.createdAt.toISOString(),
+      updatedAt: expense.updatedAt.toISOString(),
+      date: expense.date.toISOString(),
+    }));
     return { expenses, total };
   }
 );
@@ -448,9 +452,7 @@ export const getRecentExpenses = cache(
 export const getReportVehiclePerformance = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
-
   const userId = session.user.id;
-
   const vehiclePerformance = await prisma.vehicle.findMany({
     where: { userId },
     select: {
@@ -471,7 +473,6 @@ export const getReportVehiclePerformance = cache(async () => {
       },
     },
   });
-
   const report = vehiclePerformance.map((vehicle) => {
     const totalRevenue = vehicle.contracts.reduce((sum, contract) => {
       return (
@@ -482,12 +483,10 @@ export const getReportVehiclePerformance = cache(async () => {
         )
       );
     }, 0);
-
     const totalExpenses = vehicle.expenses.reduce(
       (sum, expense) => sum + expense.value,
       0
     );
-
     return {
       vehicleId: vehicle.id,
       vehicleInfo: `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`,
@@ -503,9 +502,7 @@ export const getReportVehiclePerformance = cache(async () => {
 export const getReportExpenseAnalysis = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { byType: [], byMonth: [] };
-
   const userId = session.user.id;
-
   const expensesByType = await prisma.expense.groupBy({
     by: ["type"],
     where: { userId },
@@ -513,7 +510,6 @@ export const getReportExpenseAnalysis = cache(async () => {
       value: true,
     },
   });
-
   const expensesByMonth = await prisma.expense.groupBy({
     by: ["date"],
     where: { userId },
@@ -524,17 +520,14 @@ export const getReportExpenseAnalysis = cache(async () => {
       date: "asc",
     },
   });
-
   const byType = expensesByType.map((item) => ({
     name: item.type,
     value: item._sum.value || 0,
   }));
-
   const byMonth = expensesByMonth.map((item) => ({
     month: new Date(item.date).toISOString().slice(0, 7),
     value: item._sum.value || 0,
   }));
-
   return {
     byType,
     byMonth,
@@ -544,9 +537,7 @@ export const getReportExpenseAnalysis = cache(async () => {
 export const getReportCashFlow = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
-
   const userId = session.user.id;
-
   const monthlyRevenue = await prisma.payment.groupBy({
     by: ["paymentDate"],
     where: {
@@ -558,7 +549,6 @@ export const getReportCashFlow = cache(async () => {
       value: true,
     },
   });
-
   const monthlyExpenses = await prisma.expense.groupBy({
     by: ["date"],
     where: { userId },
@@ -566,11 +556,9 @@ export const getReportCashFlow = cache(async () => {
       value: true,
     },
   });
-
   const cashFlowData: {
     [key: string]: { month: string; revenue: number; expense: number };
   } = {};
-
   monthlyRevenue.forEach((item) => {
     const month = item.paymentDate!.toISOString().substring(0, 7);
     if (!cashFlowData[month]) {
@@ -578,7 +566,6 @@ export const getReportCashFlow = cache(async () => {
     }
     cashFlowData[month].revenue += item._sum.value || 0;
   });
-
   monthlyExpenses.forEach((item) => {
     const month = item.date.toISOString().substring(0, 7);
     if (!cashFlowData[month]) {
@@ -586,7 +573,6 @@ export const getReportCashFlow = cache(async () => {
     }
     cashFlowData[month].expense += item._sum.value || 0;
   });
-
   return Object.values(cashFlowData).sort((a, b) =>
     b.month.localeCompare(a.month)
   );
@@ -629,9 +615,7 @@ export const getReportOverduePayments = cache(async () => {
 export const getReportDriverSummary = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
-
   const userId = session.user.id;
-
   const driverSummaries = await prisma.driver.findMany({
     where: { userId },
     select: {
@@ -650,7 +634,6 @@ export const getReportDriverSummary = cache(async () => {
       },
     },
   });
-
   const report = driverSummaries.map((driver) => {
     const totalPaid = driver.contracts.reduce((sum, contract) => {
       return (
@@ -661,12 +644,10 @@ export const getReportDriverSummary = cache(async () => {
         )
       );
     }, 0);
-
     const activeContract = driver.contracts.find((c) => c.payments.length > 0); // Assuming an active contract has payments
     const vehicleInfo = activeContract?.vehicle?.plate
       ? `Veículo: ${activeContract.vehicle.plate}`
       : "";
-
     return {
       driverId: driver.id,
       driverName: driver.name,
@@ -674,7 +655,6 @@ export const getReportDriverSummary = cache(async () => {
       vehicleInfo,
     };
   });
-
   return report;
 });
 
@@ -696,7 +676,6 @@ export const getDashboardData = cache(async () => {
     };
   }
   const userId = session.user.id;
-
   const [
     totalRevenueResult,
     totalExpensesResult,
@@ -744,11 +723,9 @@ export const getDashboardData = cache(async () => {
       take: 5, // Limit pending payments for dashboard display
     }),
   ]);
-
   const totalRevenue = totalRevenueResult._sum.value || 0;
   const totalExpenses = totalExpensesResult._sum.value || 0;
   const netProfit = totalRevenue - totalExpenses;
-
   const pendingPaymentsWithDetails = pendingPayments.map((payment) => ({
     ...payment,
     driverName: payment.contract.driver.name || "N/A",
@@ -756,7 +733,6 @@ export const getDashboardData = cache(async () => {
       ? `${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`
       : "N/A",
   }));
-
   return {
     stats: {
       totalRevenue,

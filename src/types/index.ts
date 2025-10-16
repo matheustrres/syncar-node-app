@@ -8,7 +8,11 @@ import {
 } from "@prisma/client";
 
 type ToJson<T> = {
-  [P in keyof T]: T[P] extends Date ? string : T[P];
+  [P in keyof T]: T[P] extends Date
+    ? string
+    : T[P] extends Date | null
+      ? string | null
+      : T[P];
 };
 
 export type Vehicle = ToJson<VehicleModel>;

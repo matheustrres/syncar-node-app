@@ -7,18 +7,18 @@ import { getServerSession } from "next-auth";
 
 interface ContractDetailsPageProps {
   params: Promise<{ id: string }>;
-  searchParams?: { [key: string]: string | string[] | undefined };
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function ContractDetailsPage(
-  props: ContractDetailsPageProps
-) {
+export default async function ContractDetailsPage({
+  params,
+}: ContractDetailsPageProps) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound();
-  const params = await props.params;
+  const { id } = await params;
   const contract = await prisma.contract.findUnique({
     where: {
-      id: params.id,
+      id,
       userId: session.user.id,
     },
     include: { driver: true, vehicle: true },
@@ -30,7 +30,7 @@ export default async function ContractDetailsPage(
   ]);
   return (
     <ContractDetailsClientPage
-      id={params.id}
+      id={id}
       initialContract={JSON.parse(JSON.stringify(contract))}
       initialVehicles={vehicles}
       initialDrivers={drivers}
