@@ -158,6 +158,30 @@ export default function LandingPage() {
     },
   ];
 
+  const previewImages = [
+    {
+      src: "/screenshots/dashboard.png",
+      alt: "Tela da dashboard do Syncar",
+      title: "Dashboard intuitivo",
+      description:
+        "Visualize os principais indicadores da sua frota em um piscar de olhos.",
+    },
+    {
+      src: "/screenshots/financial.png",
+      alt: "Tela de financeiro do Syncar",
+      title: "Financeiro completo",
+      description:
+        "Controle pagamentos, despesas e o fluxo de caixa com facilidade.",
+    },
+    {
+      src: "/screenshots/reports.png",
+      alt: "Tela de relatórios do Syncar",
+      title: "Relatórios detalhados",
+      description:
+        "Tome decisões inteligentes com base em dados precisos e atualizados.",
+    },
+  ];
+
   return (
     <div className="bg-white min-h-screen text-gray-700">
       <Header />
@@ -172,14 +196,14 @@ export default function LandingPage() {
           <div className="h-56 bg-gradient-to-br from-blue-500 to-purple-500 filter blur-3xl"></div>
           <div className="h-32 bg-gradient-to-r from-pink-500 to-yellow-500 filter blur-3xl"></div>
         </div>
-        <div className="relative z-10 container mx-auto px-4 pt-24 pb-32 text-center md:text-left">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+        <div className="relative z-10 container mx-auto px-4 pt-24 pb-32 text-center">
+          <div className="max-w-3xl mx-auto">
             <div className="space-y-6">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
                 A gestão da sua frota,{" "}
                 <span className="text-blue-600">simples e eficiente</span>.
               </h1>
-              <p className="text-lg text-gray-600 max-w-xl mx-auto md:mx-0">
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
                 Controle seus veículos, motoristas e finanças em um só lugar. O
                 Syncar automatiza suas tarefas para que você possa focar no
                 crescimento do seu negócio.
@@ -192,21 +216,15 @@ export default function LandingPage() {
                 <ArrowRight size={20} />
               </Link>
             </div>
-            <div className="mt-12 md:mt-0">
-              <Image
-                src="/screenshots/dashboard.png"
-                alt="Dashboard do Syncar"
-                width={1200}
-                height={900}
-                className="rounded-xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
-              />
-            </div>
           </div>
         </div>
       </main>
 
       {/* Seção de Features */}
-      <section id="features" className="py-24 bg-white relative overflow-hidden">
+      <section
+        id="features"
+        className="py-24 bg-white relative overflow-hidden"
+      >
         {/* Elemento de fundo */}
         <div
           aria-hidden="true"
@@ -246,7 +264,10 @@ export default function LandingPage() {
       </section>
 
       {/* Seção de Planos (Pricing) */}
-      <section id="pricing" className="py-24 bg-gray-50/70 relative overflow-hidden">
+      <section
+        id="pricing"
+        className="py-24 bg-gray-50/70 relative overflow-hidden"
+      >
         {/* Elemento de fundo */}
         <div
           aria-hidden="true"
@@ -389,21 +410,22 @@ export default function LandingPage() {
               projetada para ser poderosa e fácil de usar.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-            <Image
-              src="/screenshots/dashboard.png"
-              alt="Tela da dashboard do Syncar"
-              width={1200}
-              height={900}
-              className="rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-            />
-            <Image
-              src="/screenshots/financial.png"
-              alt="Tela de financeiro do Syncar"
-              width={1200}
-              height={900}
-              className="rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+            {previewImages.map((image, index) => (
+              <div key={index} className="text-center">
+                <Image
+                  src={image.src}
+                  alt={image.alt}
+                  width={1200}
+                  height={900}
+                  className="rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 mb-4"
+                />
+                <h3 className="text-xl font-semibold text-gray-800">
+                  {image.title}
+                </h3>
+                <p className="text-gray-600">{image.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
