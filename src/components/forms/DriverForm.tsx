@@ -1,6 +1,6 @@
 "use client";
 
-import { Driver } from "@/types";
+import { Driver, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent, useRef } from "react";
 import { IMaskInput } from "react-imask";
 import {
@@ -19,9 +19,7 @@ import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 interface DriverFormProps {
   initialData?: Driver | null;
   isSaving?: boolean;
-  onSave: (
-    data: Omit<Driver, "id" | "userId" | "createdAt" | "updatedAt">
-  ) => void;
+  onSave: (data: WithoutBaseItem<Driver>) => void;
   onCancel: () => void;
 }
 
@@ -87,8 +85,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
   const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
     const cep = e.target.value.replace(/\D/g, "");
     setCepError(null);
-
-    if (cep.length === 0) {
+    if (!cep.length) {
       setAddressFieldsEnabled(false);
       return;
     }
@@ -97,17 +94,15 @@ const DriverForm: React.FC<DriverFormProps> = ({
       if (e.target.value !== "") setCepError("CEP deve ter 8 dígitos.");
       return;
     }
-
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await res.json();
-
+      console.log("Dados do CEP:", data);
       if (data.erro) {
-        setCepError("CEP inválido!");
-        setAddressFieldsEnabled(false);
+        setCepError("CEP inválido! Preencha o endereço manualmente.");
+        setAddressFieldsEnabled(true); // Habilita campos em caso de erro
         return;
       }
-
       setFormData((prev) => ({
         ...prev,
         logradouro: data.logradouro,
@@ -115,13 +110,12 @@ const DriverForm: React.FC<DriverFormProps> = ({
         cidade: data.localidade,
         uf: data.uf,
       }));
-
       setAddressFieldsEnabled(true);
       numeroRef.current?.focus();
     } catch (error) {
       console.error("Erro ao buscar CEP:", error);
-      setCepError("Falha ao buscar CEP.");
-      setAddressFieldsEnabled(false);
+      setCepError("Falha ao buscar CEP. Preencha o endereço manualmente.");
+      setAddressFieldsEnabled(true); // Habilita campos em caso de erro
     }
   };
 
@@ -290,11 +284,12 @@ const DriverForm: React.FC<DriverFormProps> = ({
             className="absolute left-3 top-9 text-gray-400 z-10"
             size={20}
           />
-          <input
+          <IMaskInput
+            mask="00000000000"
             type="text"
             name="cnh"
             value={formData.cnh}
-            onChange={handleChange}
+            onAccept={(value) => handleMaskedInputChange("cnh", String(value))}
             required
             placeholder="00000000000"
             className={inputStyle}
@@ -365,7 +360,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            readOnly
             className={`${autoFilledInputStyle} ${disabledInputStyle}`}
           />
         </div>
@@ -412,7 +406,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            readOnly
             className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
           />
         </div>
@@ -429,9 +422,8 @@ const DriverForm: React.FC<DriverFormProps> = ({
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            readOnly
             className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
-          />
+          />{" "}
         </div>
 
         <div className="lg:col-span-1 relative">
@@ -446,7 +438,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
             required
             placeholder="UF"
             disabled={!addressFieldsEnabled}
-            readOnly
             className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
           />
         </div>
@@ -463,7 +454,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
           />
         </div>
       </div>
-
 
       <div className="flex justify-end gap-4 pt-4">
         <button
