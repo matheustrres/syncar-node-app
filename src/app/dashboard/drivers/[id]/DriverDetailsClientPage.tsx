@@ -23,6 +23,7 @@ import { PaymentWithRelations } from "@/hooks/useData";
 import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
 import PaymentForm from "@/components/forms/PaymentForm";
 import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
+import UpgradeModal from "@/components/ui/UpgradeModal";
 
 const DetailItem = ({
   label,
@@ -74,6 +75,7 @@ export default function DriverDetailsClientPage({
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [, setIsSavingPayment] = useState(false);
   const [isDeletingPayment, setIsDeletingPayment] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handleOpenEditPaymentModal = (payment: Payment) => {
     setSelectedPayment(payment);
@@ -345,9 +347,22 @@ export default function DriverDetailsClientPage({
           Histórico de pagamentos
         </h3>
         {session?.user?.plan === "BASIC" ? (
-          <UpgradePlaceholder featureName="Histórico de pagamentos">
-            <DataTableSkeleton columns={5} />
-          </UpgradePlaceholder>
+          <>
+            <UpgradePlaceholder
+              featureName="Histórico de pagamentos"
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            >
+              <DataTableSkeleton columns={5} />
+            </UpgradePlaceholder>
+            <UpgradeModal
+              isOpen={isUpgradeModalOpen}
+              onClose={() => setIsUpgradeModalOpen(false)}
+              resourceName="Histórico de pagamentos"
+              monthlyPrice="R$ 49,90"
+              annualPrice="R$ 499"
+              annualSavings="Economize R$ 99,80"
+            />
+          </>
         ) : isLoadingPayments ? (
           <DataTableSkeleton columns={5} />
         ) : payments.length > 0 ? (

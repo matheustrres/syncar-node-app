@@ -1,42 +1,16 @@
-"use client";
-
 import { Lock } from "lucide-react";
-import { useState } from "react";
 
 interface UpgradePlaceholderProps {
   featureName: string;
   children: React.ReactNode;
+  onUpgradeClick: () => void;
 }
 
 export default function UpgradePlaceholder({
   featureName,
   children,
+  onUpgradeClick,
 }: UpgradePlaceholderProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleUpgradeClick = async () => {
-    setIsLoading(true);
-    try {
-      const priceId = process.env.NEXT_PUBLIC_STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID;
-      const response = await fetch("/api/stripe/checkout-sessions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ priceId }),
-      });
-      if (!response.ok) {
-        throw new Error("Falha ao criar a sessão de checkout");
-      }
-      const { url } = await response.json();
-      window.location.href = url;
-    } catch (error) {
-      console.error(error);
-      alert("Ocorreu um erro. Tente novamente.");
-      setIsLoading(false);
-    }
-  };
-
   return (
     <div className="relative rounded-lg overflow-hidden">
       {/* 1. Background Content (rendered normally) */}
@@ -52,11 +26,10 @@ export default function UpgradePlaceholder({
           Faça o upgrade para o plano Profissional para acessar este recurso.
         </p>
         <button
-          onClick={handleUpgradeClick}
-          disabled={isLoading}
-          className="bg-blue-600 text-white font-semibold px-8 py-2.5 rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={onUpgradeClick}
+          className="bg-blue-600 text-white font-semibold px-8 py-2.5 rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-300 ease-in-out"
         >
-          {isLoading ? "Aguarde..." : "Fazer Upgrade"}
+          Fazer upgrade
         </button>
       </div>
     </div>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useSession } from "next-auth/react";
@@ -245,11 +244,26 @@ export default function ProfileClientPage({
 }: {
   initialProfile: UserType | null;
 }) {
-  const { data: session, status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus, update } = useSession();
   const { profile, isError, mutateProfile } = useFetchProfile(initialProfile);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const { showToast } = useToast();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("upgrade") === "success") {
+      update(); // Use the destructured 'update' function
+      showToast("Upgrade realizado com sucesso!", "success");
+      // Clean up the URL
+      urlParams.delete("upgrade");
+      window.history.replaceState(
+        { path: window.location.pathname },
+        "",
+        `${window.location.pathname}?${urlParams.toString()}`
+      );
+    }
+  }, [update, showToast]);
 
   if (!profile && !isError) return <ProfileSkeleton />;
   if (isError || !profile) {
@@ -271,14 +285,14 @@ export default function ProfileClientPage({
 
       const { url } = await response.json();
       window.location.href = url;
-    } catch (error) {
+    } catch {
       showToast("Erro ao acessar o portal. Tente novamente.", "error");
       setIsPortalLoading(false);
     }
   };
 
-  const userPlan = session?.user?.plan || "BÁSICO";
-  const isBasicPlan = userPlan === "BÁSICO";
+  const userPlan = session?.user?.plan || "BASIC";
+  const isBasicPlan = userPlan === "BASIC";
 
   const planNames: { [key: string]: string } = {
     BASIC: "Básico",
@@ -286,7 +300,6 @@ export default function ProfileClientPage({
   };
 
   const translatedPlan = planNames[userPlan] || userPlan;
-
   const PlanSection = () => {
     if (sessionStatus === "loading") {
       return (
@@ -338,6 +351,9 @@ export default function ProfileClientPage({
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         resourceName="seu plano atual"
+        monthlyPrice="R$ 49,90"
+        annualPrice="R$ 499"
+        annualSavings="Economize R$ 99,80"
       />
       <h2 className="text-3xl font-bold text-gray-800 mb-6">Meu Perfil</h2>
 

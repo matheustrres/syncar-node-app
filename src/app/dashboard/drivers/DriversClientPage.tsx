@@ -367,6 +367,9 @@ export default function DriversClientPage({
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         resourceName="motoristas"
+        monthlyPrice="R$ 49,90"
+        annualPrice="R$ 499"
+        annualSavings="Economize R$ 99,80"
       />
     </div>
   );

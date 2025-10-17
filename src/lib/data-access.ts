@@ -749,9 +749,12 @@ export const getDashboardData = cache(async () => {
 
 export const getProfile = cache(async () => {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return null;
-  return prisma.user.findUnique({
+  if (!session?.user?.id) {
+    return null;
+  }
+  const userProfile = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { name: true, email: true, companyName: true, plan: true },
-  }) as unknown as User;
+  });
+  return userProfile as unknown as User;
 });

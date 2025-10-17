@@ -16,6 +16,7 @@ import DataTable, { Column } from "@/components/ui/DataTable";
 import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
 import ExpenseForm from "@/components/forms/ExpenseForm";
 import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
+import UpgradeModal from "@/components/ui/UpgradeModal";
 
 const DetailItem = ({
   label,
@@ -67,6 +68,7 @@ export default function VehicleDetailsClientPage({
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
   const [isSavingExpense, setIsSavingExpense] = useState(false);
   const [isDeletingExpense, setIsDeletingExpense] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handleOpenEditExpenseModal = (expense: Expense) => {
     setSelectedExpense(expense);
@@ -315,9 +317,22 @@ export default function VehicleDetailsClientPage({
           Histórico de despesas
         </h3>
         {session?.user?.plan === "BASIC" ? (
-          <UpgradePlaceholder featureName="Histórico de despesas">
-            <DataTableSkeleton columns={4} />
-          </UpgradePlaceholder>
+          <>
+            <UpgradePlaceholder
+              featureName="Histórico de despesas"
+              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+            >
+              <DataTableSkeleton columns={4} />
+            </UpgradePlaceholder>
+            <UpgradeModal
+              isOpen={isUpgradeModalOpen}
+              onClose={() => setIsUpgradeModalOpen(false)}
+              resourceName="Histórico de despesas"
+              monthlyPrice="R$ 49,90"
+              annualPrice="R$ 499"
+              annualSavings="Economize R$ 99,80"
+            />
+          </>
         ) : isLoadingExpenses ? (
           <DataTableSkeleton columns={4} />
         ) : expenses.length > 0 ? (

@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         stripeCustomerId: subscription.customer as string,
       },
     });
-    if (user && user.plan !== "PROFESSIONAL") {
+    if (user) {
       await prisma.user.update({
         where: { id: user.id },
         data: { plan: "PROFESSIONAL" },

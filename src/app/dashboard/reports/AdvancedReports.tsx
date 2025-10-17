@@ -11,6 +11,8 @@ import {
 import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 import AdvancedReportsSkeleton from "./AdvancedReportsSkeleton";
 import { VehiclePerformanceReportItem, ExpenseAnalysisReport } from "@/types";
+import { useState } from "react";
+import UpgradeModal from "@/components/ui/UpgradeModal";
 
 const theme = {
   axis: {
@@ -79,14 +81,28 @@ export default function AdvancedReports({
     useFetchVehiclePerformanceReport(initialVehiclePerformance);
   const { data: expenseAnalysis, isLoading: expenseLoading } =
     useFetchExpenseAnalysisReport(initialExpenseAnalysis);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   if (profileLoading) return <AdvancedReportsSkeleton />;
 
   if (profile?.plan !== "PROFESSIONAL") {
     return (
-      <UpgradePlaceholder featureName="Relatórios Avançados">
-        <AdvancedReportsSkeleton />
-      </UpgradePlaceholder>
+      <>
+        <UpgradePlaceholder
+          featureName="Relatórios Avançados"
+          onUpgradeClick={() => setIsUpgradeModalOpen(true)}
+        >
+          <AdvancedReportsSkeleton />
+        </UpgradePlaceholder>
+        <UpgradeModal
+          isOpen={isUpgradeModalOpen}
+          onClose={() => setIsUpgradeModalOpen(false)}
+          resourceName="Relatórios Avançados"
+          monthlyPrice="R$ 49,90"
+          annualPrice="R$ 499"
+          annualSavings="Economize R$ 99,80"
+        />
+      </>
     );
   }
 

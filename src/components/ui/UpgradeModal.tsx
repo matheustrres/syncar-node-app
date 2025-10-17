@@ -9,6 +9,9 @@ interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   resourceName: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  annualSavings?: string;
 }
 
 const proFeatures = [
@@ -22,6 +25,9 @@ export default function UpgradeModal({
   isOpen,
   onClose,
   resourceName,
+  monthlyPrice,
+  annualPrice,
+  annualSavings,
 }: UpgradeModalProps) {
   const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
     "monthly"
@@ -88,27 +94,29 @@ export default function UpgradeModal({
 
         {/* Seletor de Período */}
         <div className="flex justify-center items-center gap-4 my-6">
-          <span
-            className={`font-semibold ${billingCycle === "monthly" ? "text-blue-600" : "text-gray-500"}`}
-          >
-            Mensal
-          </span>
           <button
-            onClick={() =>
-              setBillingCycle(billingCycle === "monthly" ? "annual" : "monthly")
-            }
-            className="relative w-14 h-8 bg-gray-200 rounded-full p-1 transition-colors duration-300 ease-in-out"
-            aria-label="Alternar para plano anual"
+            onClick={() => setBillingCycle("monthly")}
+            className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all duration-200 ${billingCycle === "monthly" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
           >
-            <span
-              className={`absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${billingCycle === "annual" ? "translate-x-6" : ""}`}
-            />
+            <span className="text-xl font-bold text-gray-800">
+              {monthlyPrice}
+            </span>
+            <span className="text-sm text-gray-500">/mês</span>
           </button>
-          <span
-            className={`font-semibold ${billingCycle === "annual" ? "text-blue-600" : "text-gray-500"}`}
+          <button
+            onClick={() => setBillingCycle("annual")}
+            className={`flex flex-col items-center p-4 rounded-lg border-2 transition-all duration-200 ${billingCycle === "annual" ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300"}`}
           >
-            Anual (Economize 2 meses)
-          </span>
+            <span className="text-xl font-bold text-gray-800">
+              {annualPrice}
+            </span>
+            <span className="text-sm text-gray-500">/ano</span>
+            {annualSavings && (
+              <span className="text-xs text-green-600 font-semibold mt-1">
+                {annualSavings}
+              </span>
+            )}
+          </button>
         </div>
 
         <div className="mt-6 flex flex-col gap-3">

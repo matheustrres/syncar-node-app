@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
   Car,
@@ -51,6 +51,7 @@ const AuthForm = () => {
     hasTwoSpecialChars: false,
   });
   const router = useRouter();
+  const { update: updateSession } = useSession();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] =
     useState(false);
@@ -149,6 +150,7 @@ const AuthForm = () => {
         });
         if (response.ok) {
           setShowSuccessModal(true);
+          updateSession(); // Update session after successful registration
         } else {
           const errorData = await response.json();
           setErrors({ api: errorData.message || "Erro no cadastro." });

@@ -377,6 +377,9 @@ export default function VehiclesClientPage({
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
         resourceName="veículos"
+        monthlyPrice="R$ 49,90"
+        annualPrice="R$ 499"
+        annualSavings="Economize R$ 99,80"
       />
     </div>
   );
