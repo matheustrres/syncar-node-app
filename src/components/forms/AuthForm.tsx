@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Modal from "../ui/Modal";
 import ForgotPasswordForm from "./ForgotPasswordForm";
+import { IMaskInput } from "react-imask";
 
 type FormErrors = {
   name?: string;
@@ -80,6 +81,8 @@ const AuthForm = () => {
     if (!formData.email.trim()) newErrors.email = "Email é obrigatório";
     else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email inválido";
+    if (!isLogin && formData.phone.length < 11)
+      newErrors.phone = "Telefone inválido";
     if (!formData.password) newErrors.password = "Senha é obrigatória";
     else if (!isLogin && !isPasswordValid(passwordStrength))
       newErrors.password = "A senha não atende aos requisitos";
@@ -89,7 +92,9 @@ const AuthForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === "password") {
@@ -257,7 +262,9 @@ const AuthForm = () => {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.name ? "border-red-500" : "border-gray-300"}`}
+                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
+                          errors.name ? "border-red-500" : "border-gray-300"
+                        }`}
                         placeholder="Seu nome completo"
                       />
                     </div>
@@ -279,7 +286,11 @@ const AuthForm = () => {
                         name="companyName"
                         value={formData.companyName}
                         onChange={handleChange}
-                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.companyName ? "border-red-500" : "border-gray-300"}`}
+                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
+                          errors.companyName
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
                         placeholder="Nome da sua empresa"
                       />
                     </div>
@@ -305,7 +316,9 @@ const AuthForm = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.email ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    }`}
                     placeholder="seu@email.com"
                   />
                 </div>
@@ -323,15 +336,24 @@ const AuthForm = () => {
                       className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
                       size={20}
                     />
-                    <input
-                      type="tel"
+                    <IMaskInput
+                      mask="(00) 00000-0000"
                       name="phone"
                       value={formData.phone}
-                      onChange={handleChange}
-                      className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg"
+                      onAccept={(value: any) =>
+                        handleChange({
+                          target: { name: "phone", value },
+                        } as any)
+                      }
+                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
+                        errors.phone ? "border-red-500" : "border-gray-300"
+                      }`}
                       placeholder="(00) 00000-0000"
                     />
                   </div>
+                  {errors.phone && (
+                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+                  )}
                 </div>
               )}
               <div>
@@ -348,7 +370,9 @@ const AuthForm = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`w-full pl-11 pr-11 py-3 border rounded-lg ${errors.password ? "border-red-500" : "border-gray-300"}`}
+                    className={`w-full pl-11 pr-11 py-3 border rounded-lg ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    }`}
                     placeholder="••••••••"
                   />
                   <button
@@ -428,7 +452,11 @@ const AuthForm = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       onPaste={(e) => e.preventDefault()}
-                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
+                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
+                        errors.confirmPassword
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
                       placeholder="••••••••"
                     />
                   </div>
@@ -531,3 +559,4 @@ const AuthForm = () => {
 };
 
 export default AuthForm;
+
