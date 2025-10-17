@@ -164,21 +164,21 @@ export default function LandingPage() {
       alt: "Tela da dashboard do Syncar",
       title: "Dashboard intuitivo",
       description:
-        "Visualize os principais indicadores da sua frota em um piscar de olhos.",
+        "Visualize os principais indicadores da sua frota em um piscar de olhos",
     },
     {
       src: "/screenshots/financial.png",
       alt: "Tela de financeiro do Syncar",
       title: "Financeiro completo",
       description:
-        "Controle pagamentos, despesas e o fluxo de caixa com facilidade.",
+        "Controle pagamentos, despesas e o fluxo de caixa com facilidade",
     },
     {
       src: "/screenshots/reports.png",
       alt: "Tela de relatórios do Syncar",
       title: "Relatórios detalhados",
       description:
-        "Tome decisões inteligentes com base em dados precisos e atualizados.",
+        "Tome decisões inteligentes com base em dados precisos e atualizados",
     },
   ];
 
@@ -420,10 +420,10 @@ export default function LandingPage() {
                   height={900}
                   className="rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 mb-4"
                 />
-                <h3 className="text-xl font-semibold text-gray-800">
+                <h3 className="text-lg font-semibold text-gray-800">
                   {image.title}
                 </h3>
-                <p className="text-gray-600">{image.description}</p>
+                <p className="text-gray-600 text-sm">{image.description}</p>
               </div>
             ))}
           </div>
