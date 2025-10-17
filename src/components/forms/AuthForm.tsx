@@ -93,9 +93,11 @@ const AuthForm = () => {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e:
+      | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      | { name: string; value: string }
   ) => {
-    const { name, value } = e.target;
+    const { name, value } = "target" in e ? e.target : e;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (name === "password") {
       setPasswordStrength(validatePassword(value));
@@ -340,10 +342,8 @@ const AuthForm = () => {
                       mask="(00) 00000-0000"
                       name="phone"
                       value={formData.phone}
-                      onAccept={(value: any) =>
-                        handleChange({
-                          target: { name: "phone", value },
-                        } as any)
+                      onAccept={(value: string) =>
+                        handleChange({ name: "phone", value })
                       }
                       className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
                         errors.phone ? "border-red-500" : "border-gray-300"
@@ -559,4 +559,3 @@ const AuthForm = () => {
 };
 
 export default AuthForm;
-
