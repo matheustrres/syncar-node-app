@@ -126,6 +126,7 @@ export const getDrivers = cache(
         select: {
           id: true,
           name: true,
+          nameNormalized: true,
           cpf: true,
           phone: true,
           email: true,
@@ -196,8 +197,10 @@ export const getVehicles = cache(
         select: {
           id: true,
           plate: true,
+          plateNormalized: true,
           brand: true,
           model: true,
+          modelNormalized: true,
           year: true,
           color: true,
           renavam: true,

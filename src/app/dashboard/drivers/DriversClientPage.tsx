@@ -4,14 +4,25 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Driver, WithoutBaseItem } from "@/types";
-import { useFetchDrivers } from "@/hooks/useData";
+import { DriverFilters, useFetchDrivers } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
-import { Plus, Edit, Trash2, User } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  User,
+  FileText,
+  Phone,
+  Mail,
+  CheckSquare,
+} from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
-import FilterBar from "@/components/ui/FilterBar";
+import AdvancedFilterBar, {
+  FilterConfig,
+} from "@/components/ui/AdvancedFilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import EmptyState from "@/components/ui/EmptyState";
@@ -54,28 +65,76 @@ interface ClientPageProps {
   userPlan: string;
 }
 
+const filtersConfig: FilterConfig[] = [
+  {
+    id: "searchName",
+    label: "Buscar por nome",
+    type: "text",
+    field: "name",
+    placeholder: "Ex: João Silva",
+    icon: User,
+  },
+  {
+    id: "searchCpf",
+    label: "Buscar por CPF",
+    type: "text",
+    field: "cpf",
+    placeholder: "Ex: 000.000.000-00",
+    icon: FileText,
+  },
+  {
+    id: "searchPhone",
+    label: "Buscar por telefone",
+    type: "text",
+    field: "phone",
+    placeholder: "Ex: (00) 90000-0000",
+    icon: Phone,
+  },
+  {
+    id: "searchEmail",
+    label: "Buscar por email",
+    type: "text",
+    field: "email",
+    placeholder: "Ex: joao@exemplo.com",
+    icon: Mail,
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    field: "status",
+    options: statusOptions,
+    placeholder: "Todos os status",
+    icon: CheckSquare,
+  },
+];
+
 export default function DriversClientPage({
   initialDrivers,
+
   total: initialTotal,
+
   userPlan,
 }: ClientPageProps) {
   const router = useRouter();
+
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState<DriverFilters>({});
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
   const limit = 10;
+
+
 
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [filters]);
 
   const { drivers, total, isError, isLoading, mutateDrivers } = useFetchDrivers(
     page,
     limit,
-    searchTerm,
-    statusFilter,
+    filters,
     sortColumn,
     sortDirection,
     {
@@ -88,7 +147,9 @@ export default function DriversClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
+
   const { showToast } = useToast();
+
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
@@ -139,6 +200,7 @@ export default function DriversClientPage({
         error instanceof Error ? error.message : "Ocorreu um erro",
         "error"
       );
+
       setIsSaving(false);
     }
   };
@@ -174,17 +236,6 @@ export default function DriversClientPage({
     e.stopPropagation();
   };
 
-  if (isLoading && !drivers.length) return <DriversSkeleton />;
-
-  if (isError) {
-    return (
-      <ErrorDisplay
-        errorMessage="Falha ao carregar os motoristas."
-        onRetry={mutateDrivers}
-      />
-    );
-  }
-
   const totalPages = Math.ceil(total / limit);
 
   const addButton = (
@@ -193,40 +244,18 @@ export default function DriversClientPage({
       className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
     >
       <Plus size={20} />
+
       <span>Adicionar motorista</span>
     </button>
   );
 
   const handleSort = (column: string, direction: "asc" | "desc") => {
     setSortColumn(column);
+
     setSortDirection(direction);
   };
 
-  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
-    return (
-      <>
-        <EmptyState
-          Icon={User}
-          title="Nenhum motorista cadastrado"
-          description="Comece cadastrando o primeiro motorista da sua frota para poder gerenciá-los."
-          actionButton={addButton}
-        />
-        <Modal
-          isOpen={isFormModalOpen}
-          onClose={handleCloseFormModal}
-          title={editingItem ? "Editar motorista" : "Adicionar motorista"}
-          size="4xl"
-        >
-          <DriverForm
-            initialData={editingItem}
-            isSaving={isSaving}
-            onSave={handleSave}
-            onCancel={handleCloseFormModal}
-          />
-        </Modal>
-      </>
-    );
-  }
+  const isFiltersEmpty = Object.keys(filters).length === 0;
 
   return (
     <div>
@@ -246,99 +275,130 @@ export default function DriversClientPage({
         </button>
       </div>
 
-      <FilterBar
-        searchPlaceholder="Buscar por nome..."
-        filterOptions={statusOptions}
-        onSearchChange={setSearchTerm}
-        onFilterChange={setStatusFilter}
+      <AdvancedFilterBar
+        filtersConfig={filtersConfig}
+        onFilterChange={setFilters}
       />
 
-      <div className="hidden lg:block">
-        <DataTable
-          columns={columns}
-          data={drivers || []}
-          onRowClick={handleRowClick}
-          onEdit={handleOpenFormModal}
-          onDelete={handleDeleteClick}
-          onSort={handleSort}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-        />{" "}
-      </div>
-
-      {/* ... [resto do código para mobile view, modais, etc. que permanece o mesmo] ... */}
-      <div className="lg:hidden grid grid-cols-1 gap-4">
-        {(drivers || []).map((driver) => (
-          <div
-            key={driver.id}
-            onClick={() => handleRowClick(driver.id)}
-            className="bg-white rounded-lg shadow-md p-4 flex flex-col justify-between cursor-pointer"
+      {isLoading && !drivers.length ? (
+        <DriversSkeleton />
+      ) : isError ? (
+        <ErrorDisplay
+          errorMessage="Falha ao carregar os motoristas."
+          onRetry={mutateDrivers}
+        />
+      ) : total === 0 && isFiltersEmpty ? (
+        <>
+          <EmptyState
+            Icon={User}
+            title="Nenhum motorista cadastrado"
+            description="Comece cadastrando o primeiro motorista da sua frota para poder gerenciá-los."
+            actionButton={addButton}
+          />
+          <Modal
+            isOpen={isFormModalOpen}
+            onClose={handleCloseFormModal}
+            title={editingItem ? "Editar motorista" : "Adicionar motorista"}
+            size="4xl"
           >
-            <div className="flex justify-between items-start mb-3">
-              <div className="space-y-1">
-                <p className="font-bold text-gray-900">{driver.name}</p>
-                <p className="text-sm text-gray-500">CPF: {driver.cpf}</p>
-                <p className="text-sm text-gray-500">Tel: {driver.phone}</p>
-              </div>
-              <span
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  driver.status === "Ativo"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
-                }`}
+            <DriverForm
+              initialData={editingItem}
+              isSaving={isSaving}
+              onSave={handleSave}
+              onCancel={handleCloseFormModal}
+            />
+          </Modal>
+        </>
+      ) : (
+        <>
+          <div className="hidden lg:block">
+            <DataTable
+              columns={columns}
+              data={drivers || []}
+              onRowClick={handleRowClick}
+              onEdit={handleOpenFormModal}
+              onDelete={handleDeleteClick}
+              onSort={handleSort}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+            />{" "}
+          </div>
+
+          {/* ... [resto do código para mobile view, modais, etc. que permanece o mesmo] ... */}
+          <div className="lg:hidden grid grid-cols-1 gap-4">
+            {(drivers || []).map((driver) => (
+              <div
+                key={driver.id}
+                onClick={() => handleRowClick(driver.id)}
+                className="bg-white rounded-lg shadow-md p-4 flex flex-col justify-between cursor-pointer"
               >
-                {driver.status}
-              </span>
-            </div>
-            <div
-              className="border-t pt-2 flex justify-end items-center"
-              onClick={handleActionClick}
-            >
-              <div className="flex gap-2">
-                <button
-                  title="Editar motorista"
-                  onClick={() => handleOpenFormModal(driver)}
-                  className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                <div className="flex justify-between items-start mb-3">
+                  <div className="space-y-1">
+                    <p className="font-bold text-gray-900">{driver.name}</p>
+                    <p className="text-sm text-gray-500">CPF: {driver.cpf}</p>
+                    <p className="text-sm text-gray-500">Tel: {driver.phone}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      driver.status === "Ativo"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {driver.status}
+                  </span>
+                </div>
+                <div
+                  className="border-t pt-2 flex justify-end items-center"
+                  onClick={handleActionClick}
                 >
-                  <Edit size={18} />
-                </button>
-                <button
-                  title="Excluir motorista"
-                  onClick={() => handleDeleteClick(driver)}
-                  className="text-red-600 p-2 rounded-full hover:bg-gray-100"
-                >
-                  <Trash2 size={18} />
-                </button>
+                  <div className="flex gap-2">
+                    <button
+                      title="Editar motorista"
+                      onClick={() => handleOpenFormModal(driver)}
+                      className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      title="Excluir motorista"
+                      onClick={() => handleDeleteClick(driver)}
+                      className="text-red-600 p-2 rounded-full hover:bg-gray-100"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {drivers.length} de {total} motoristas.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-700">
+                Página {page} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages || total === 0}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Próximo
+              </button>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Mostrando {drivers.length} de {total} motoristas.
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-700">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages || total === 0}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Próximo
-          </button>
-        </div>
-      </div>
+        </>
+      )}
 
       <Modal
         isOpen={isFormModalOpen}

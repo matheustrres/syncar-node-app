@@ -4,14 +4,25 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
-import { useFetchVehicles } from "@/hooks/useData";
+import { useFetchVehicles, VehicleFilters } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
-import { Plus, Edit, Trash2, Car } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Car,
+  Hash,
+  Calendar,
+  Gauge,
+  CheckSquare,
+} from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
-import FilterBar from "@/components/ui/FilterBar";
+import AdvancedFilterBar, {
+  FilterConfig,
+} from "@/components/ui/AdvancedFilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import EmptyState from "@/components/ui/EmptyState";
@@ -24,8 +35,13 @@ const columns: Column<Vehicle>[] = [
     sortable: true,
   },
   {
+    header: "Marca",
+    accessor: "brand",
+    sortable: true,
+  },
+  {
     header: "Modelo",
-    accessor: (vehicle) => `${vehicle.brand} ${vehicle.model}`,
+    accessor: "model",
     sortable: true,
   },
   {
@@ -60,6 +76,56 @@ interface ClientPageProps {
   userPlan: string;
 }
 
+const filtersConfig: FilterConfig[] = [
+  {
+    id: "searchPlate",
+    label: "Buscar por placa",
+    type: "text",
+    field: "plate",
+    placeholder: "Ex: ABC1234",
+    icon: Hash,
+  },
+  {
+    id: "searchBrand",
+    label: "Buscar por marca",
+    type: "text",
+    field: "brand",
+    placeholder: "Ex: Toyota",
+    icon: Car,
+  },
+  {
+    id: "searchModel",
+    label: "Buscar por modelo",
+    type: "text",
+    field: "model",
+    placeholder: "Ex: Corolla",
+    icon: Car,
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    field: "status",
+    options: statusOptions,
+    placeholder: "Todos os status",
+    icon: CheckSquare,
+  },
+  {
+    id: "yearRange",
+    label: "Ano",
+    type: "number-range",
+    field: "year",
+    icon: Calendar,
+  },
+  {
+    id: "kmRange",
+    label: "Quilometragem",
+    type: "number-range",
+    field: "km",
+    icon: Gauge,
+  },
+];
+
 export default function VehiclesClientPage({
   initialVehicles,
   total: initialTotal,
@@ -67,29 +133,22 @@ export default function VehiclesClientPage({
 }: ClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState<VehicleFilters>({});
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
+
+
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [filters]);
 
   const { vehicles, total, isError, isLoading, mutateVehicles } =
-    useFetchVehicles(
-      page,
-      limit,
-      searchTerm,
-      statusFilter,
-      sortColumn,
-      sortDirection,
-      {
-        vehicles: initialVehicles,
-        total: initialTotal,
-      }
-    );
+    useFetchVehicles(page, limit, filters, sortColumn, sortDirection, {
+      vehicles: initialVehicles,
+      total: initialTotal,
+    });
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -182,17 +241,6 @@ export default function VehiclesClientPage({
     e.stopPropagation();
   };
 
-  if (isLoading) return <VehiclesSkeleton />;
-
-  if (isError) {
-    return (
-      <ErrorDisplay
-        errorMessage="Falha ao carregar os veículos."
-        onRetry={mutateVehicles}
-      />
-    );
-  }
-
   const totalPages = Math.ceil(total / limit);
 
   const addButton = (
@@ -210,31 +258,7 @@ export default function VehiclesClientPage({
     setSortDirection(direction);
   };
 
-  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
-    return (
-      <>
-        <EmptyState
-          Icon={Car}
-          title="Nenhum veículo cadastrado"
-          description="Comece cadastrando o primeiro veículo da sua frota para poder gerenciá-los."
-          actionButton={addButton}
-        />
-        <Modal
-          isOpen={isFormModalOpen}
-          onClose={handleCloseFormModal}
-          title={editingItem ? "Editar veículo" : "Adicionar veículo"}
-          size="4xl"
-        >
-          <VehicleForm
-            initialData={editingItem}
-            isSaving={isSaving}
-            onSave={handleSave}
-            onCancel={handleCloseFormModal}
-          />
-        </Modal>
-      </>
-    );
-  }
+  const isFiltersEmpty = Object.keys(filters).length === 0;
 
   return (
     <div>
@@ -254,101 +278,131 @@ export default function VehiclesClientPage({
         </button>
       </div>
 
-      <FilterBar
-        searchPlaceholder="Buscar por placa..."
-        filterOptions={statusOptions}
-        onSearchChange={setSearchTerm}
-        onFilterChange={setStatusFilter}
+      <AdvancedFilterBar
+        filtersConfig={filtersConfig}
+        onFilterChange={setFilters}
       />
 
-      <div className="hidden lg:block">
-        <DataTable
-          columns={columns}
-          data={vehicles || []}
-          onRowClick={handleRowClick}
-          onEdit={handleOpenFormModal}
-          onDelete={handleDeleteClick}
-          onSort={handleSort}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
+      {isLoading ? (
+        <VehiclesSkeleton />
+      ) : isError ? (
+        <ErrorDisplay
+          errorMessage="Falha ao carregar os veículos."
+          onRetry={mutateVehicles}
         />
-      </div>
-
-      <div className="lg:hidden grid grid-cols-1 gap-4">
-        {(vehicles || []).map((vehicle) => (
-          <div
-            key={vehicle.id}
-            onClick={() => handleRowClick(vehicle.id)}
-            className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
+      ) : total === 0 && isFiltersEmpty ? (
+        <>
+          <EmptyState
+            Icon={Car}
+            title="Nenhum veículo cadastrado"
+            description="Comece cadastrando o primeiro veículo da sua frota para poder gerenciá-los."
+            actionButton={addButton}
+          />
+          <Modal
+            isOpen={isFormModalOpen}
+            onClose={handleCloseFormModal}
+            title={editingItem ? "Editar veículo" : "Adicionar veículo"}
+            size="4xl"
           >
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="font-bold text-gray-900">{vehicle.plate}</p>
-                <p className="text-sm text-gray-500">
-                  {vehicle.brand} {vehicle.model}
-                </p>
-              </div>
-              <span
-                className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                  vehicle.status === "Disponível"
-                    ? "bg-green-100 text-green-800"
-                    : vehicle.status === "Manutenção"
-                      ? "bg-yellow-100 text-yellow-800"
-                      : "bg-blue-100 text-blue-800"
-                }`}
+            <VehicleForm
+              initialData={editingItem}
+              isSaving={isSaving}
+              onSave={handleSave}
+              onCancel={handleCloseFormModal}
+            />
+          </Modal>
+        </>
+      ) : (
+        <>
+          <div className="hidden lg:block">
+            <DataTable
+              columns={columns}
+              data={vehicles || []}
+              onRowClick={handleRowClick}
+              onEdit={handleOpenFormModal}
+              onDelete={handleDeleteClick}
+              onSort={handleSort}
+              sortColumn={sortColumn}
+              sortDirection={sortDirection}
+            />
+          </div>
+
+          <div className="lg:hidden grid grid-cols-1 gap-4">
+            {(vehicles || []).map((vehicle) => (
+              <div
+                key={vehicle.id}
+                onClick={() => handleRowClick(vehicle.id)}
+                className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
               >
-                {vehicle.status}
-              </span>
-            </div>
-            <div
-              className="border-t pt-2 flex justify-end items-center"
-              onClick={handleActionClick}
-            >
-              <div className="flex gap-2">
-                <button
-                  title="Editar Veículo"
-                  onClick={() => handleOpenFormModal(vehicle)}
-                  className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-bold text-gray-900">{vehicle.plate}</p>
+                    <p className="text-sm text-gray-500">{vehicle.brand}</p>
+                    <p className="text-sm text-gray-500">{vehicle.model}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      vehicle.status === "Disponível"
+                        ? "bg-green-100 text-green-800"
+                        : vehicle.status === "Manutenção"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {vehicle.status}
+                  </span>
+                </div>
+                <div
+                  className="border-t pt-2 flex justify-end items-center"
+                  onClick={handleActionClick}
                 >
-                  <Edit size={18} />
-                </button>
-                <button
-                  title="Excluir Veículo"
-                  onClick={() => handleDeleteClick(vehicle)}
-                  className="text-red-600 p-2 rounded-full hover:bg-gray-100"
-                >
-                  <Trash2 size={18} />
-                </button>
+                  <div className="flex gap-2">
+                    <button
+                      title="Editar Veículo"
+                      onClick={() => handleOpenFormModal(vehicle)}
+                      className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+                    >
+                      <Edit size={18} />
+                    </button>
+                    <button
+                      title="Excluir Veículo"
+                      onClick={() => handleDeleteClick(vehicle)}
+                      className="text-red-600 p-2 rounded-full hover:bg-gray-100"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          <div className="mt-6 flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Mostrando {vehicles.length} de {total} veículos.
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(page - 1)}
+                disabled={page === 1}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+              <span className="text-sm text-gray-700">
+                Página {page} de {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(page + 1)}
+                disabled={page === totalPages || total === 0}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Próximo
+              </button>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Mostrando {vehicles.length} de {total} veículos.
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-700">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages || total === 0}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Próximo
-          </button>
-        </div>
-      </div>
+        </>
+      )}
 
       <Modal
         isOpen={isFormModalOpen}

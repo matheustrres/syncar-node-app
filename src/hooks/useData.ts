@@ -36,25 +36,72 @@ export type ExpenseWithRelations = Expense & {
   vehicle: { plate: string } | null;
 };
 
+export interface VehicleFilters {
+  plate?: string;
+  brand?: string;
+  model?: string;
+  status?: string;
+  yearMin?: string;
+  yearMax?: string;
+  kmMin?: string;
+  kmMax?: string;
+}
+
+export interface DriverFilters {
+  name?: string;
+  cpf?: string;
+  phone?: string;
+  email?: string;
+  status?: string;
+}
+
+export interface ContractFilters {
+  driverName?: string;
+  vehiclePlate?: string;
+  vehicleModel?: string;
+  status?: string;
+  weeklyValueMin?: string;
+  weeklyValueMax?: string;
+  startDateStartDate?: string;
+  startDateEndDate?: string;
+}
+
 // --- Paginated Hooks ---
 
 export function useFetchContracts(
   page: number,
   limit: number,
-  search: string,
-  status: string,
+  filters: ContractFilters,
   sortColumn: string,
   sortDirection: "asc" | "desc",
   fallbackData?: { contracts: ContractWithRelations[]; total: number }
 ) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("page", page.toString());
+  queryParams.append("limit", limit.toString());
+  queryParams.append("sortColumn", sortColumn);
+  queryParams.append("sortDirection", sortDirection);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      // Handle range filters
+      if (value.min) queryParams.append(`${key}Min`, value.min);
+      if (value.max) queryParams.append(`${key}Max`, value.max);
+      if (value.startDate)
+        queryParams.append(`${key}StartDate`, value.startDate);
+      if (value.endDate) queryParams.append(`${key}EndDate`, value.endDate);
+    } else if (value) {
+      queryParams.append(key, value);
+    }
+  });
+
   const { data, error, isLoading, mutate } = useSWR<{
     contracts: ContractWithRelations[];
     total: number;
-  }>(
-    `/api/contracts?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
-    fetcher,
-    { fallbackData, revalidateOnMount: false }
-  );
+  }>(`/api/contracts?${queryParams.toString()}`, fetcher, {
+    fallbackData,
+    revalidateOnMount: false,
+  });
   return {
     contracts: data?.contracts || [],
     total: data?.total || 0,
@@ -67,20 +114,37 @@ export function useFetchContracts(
 export function useFetchDrivers(
   page: number,
   limit: number,
-  search: string,
-  status: string,
+  filters: DriverFilters,
   sortColumn: string,
   sortDirection: "asc" | "desc",
   fallbackData?: { drivers: Driver[]; total: number }
 ) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("page", page.toString());
+  queryParams.append("limit", limit.toString());
+  queryParams.append("sortColumn", sortColumn);
+  queryParams.append("sortDirection", sortDirection);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      // Handle range filters
+      if (value.min) queryParams.append(`${key}Min`, value.min);
+      if (value.max) queryParams.append(`${key}Max`, value.max);
+      if (value.startDate)
+        queryParams.append(`${key}StartDate`, value.startDate);
+      if (value.endDate) queryParams.append(`${key}EndDate`, value.endDate);
+    } else if (value) {
+      queryParams.append(key, value);
+    }
+  });
+
   const { data, error, isLoading, mutate } = useSWR<{
     drivers: Driver[];
     total: number;
-  }>(
-    `/api/drivers?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
-    fetcher,
-    { fallbackData, revalidateOnMount: false }
-  );
+  }>(`/api/drivers?${queryParams.toString()}`, fetcher, {
+    fallbackData,
+    revalidateOnMount: false,
+  });
   return {
     drivers: data?.drivers || [],
     total: data?.total || 0,
@@ -93,20 +157,37 @@ export function useFetchDrivers(
 export function useFetchVehicles(
   page: number,
   limit: number,
-  search: string,
-  status: string,
+  filters: VehicleFilters,
   sortColumn: string,
   sortDirection: "asc" | "desc",
   fallbackData?: { vehicles: Vehicle[]; total: number }
 ) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("page", page.toString());
+  queryParams.append("limit", limit.toString());
+  queryParams.append("sortColumn", sortColumn);
+  queryParams.append("sortDirection", sortDirection);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      // Handle range filters
+      if (value.min) queryParams.append(`${key}Min`, value.min);
+      if (value.max) queryParams.append(`${key}Max`, value.max);
+      if (value.startDate)
+        queryParams.append(`${key}StartDate`, value.startDate);
+      if (value.endDate) queryParams.append(`${key}EndDate`, value.endDate);
+    } else if (value) {
+      queryParams.append(key, value);
+    }
+  });
+
   const { data, error, isLoading, mutate } = useSWR<{
     vehicles: Vehicle[];
     total: number;
-  }>(
-    `/api/vehicles?page=${page}&limit=${limit}&search=${search}&status=${status}&sortColumn=${sortColumn}&sortDirection=${sortDirection}`,
-    fetcher,
-    { fallbackData, revalidateOnMount: false }
-  );
+  }>(`/api/vehicles?${queryParams.toString()}`, fetcher, {
+    fallbackData,
+    revalidateOnMount: false,
+  });
 
   return {
     vehicles: data?.vehicles || [],

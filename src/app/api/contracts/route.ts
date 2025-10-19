@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+import { normalizeString } from "@/lib/string-utils";
+
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -11,36 +13,87 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const search = searchParams.get("search") || "";
-  const status = searchParams.get("status") || "";
   const sortColumn = searchParams.get("sortColumn") || "createdAt";
   const sortDirection = searchParams.get("sortDirection") || "desc";
   const skip = (page - 1) * limit;
   const where: { [key: string]: unknown } = { userId: session.user.id };
-  if (status) {
-    where.status = status;
-  }
-  if (search) {
-    where.OR = [
-      {
-        driver: {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
+  const driverName = searchParams.get("driverName");
+  if (driverName) {
+    where.driver = {
+      nameNormalized: {
+        contains: normalizeString(driverName),
+        mode: "insensitive",
       },
-      {
-        vehicle: {
-          plate: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      },
-    ];
+    };
   }
-
+  const vehiclePlate = searchParams.get("vehiclePlate");
+  if (vehiclePlate) {
+    where.vehicle = {
+      ...where.vehicle!,
+      plateNormalized: {
+        contains: normalizeString(vehiclePlate),
+        mode: "insensitive",
+      },
+    };
+  }
+  const vehicleModel = searchParams.get("vehicleModel");
+  if (vehicleModel) {
+    where.vehicle = {
+      ...where.vehicle!,
+      modelNormalized: {
+        contains: normalizeString(vehicleModel),
+        mode: "insensitive",
+      },
+    };
+  }
+  // Parse other filters
+  searchParams.forEach((value, key) => {
+    if (
+      [
+        "page",
+        "limit",
+        "sortColumn",
+        "sortDirection",
+        "driverName",
+        "vehiclePlate",
+        "vehicleModel",
+      ].includes(key)
+    ) {
+      return;
+    }
+    // Select filters
+    if (key === "status") {
+      if (value) {
+        where.status = value;
+      }
+    }
+    // Number range filters
+    if (key.endsWith("Min")) {
+      const field = key.replace("Min", "");
+      if (value) {
+        where[field] = { ...where[field]!, gte: parseFloat(value) };
+      }
+    }
+    if (key.endsWith("Max")) {
+      const field = key.replace("Max", "");
+      if (value) {
+        where[field] = { ...where[field]!, lte: parseFloat(value) };
+      }
+    }
+    // Date range filters
+    if (key.endsWith("StartDate")) {
+      const field = key.replace("StartDate", "");
+      if (value) {
+        where[field] = { ...where[field]!, gte: new Date(value) };
+      }
+    }
+    if (key.endsWith("EndDate")) {
+      const field = key.replace("EndDate", "");
+      if (value) {
+        where[field] = { ...where[field]!, lte: new Date(value) };
+      }
+    }
+  });
   let orderBy:
     | { [key: string]: "asc" | "desc" }
     | { driver: { name: "asc" | "desc" } }
@@ -57,7 +110,6 @@ export async function GET(request: NextRequest) {
   } else {
     orderBy = { [sortColumn]: sortDirection as "asc" | "desc" };
   }
-
   const [contracts, total] = await prisma.$transaction([
     prisma.contract.findMany({
       where,
@@ -78,72 +130,36 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ contracts, total });
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const data = await request.json();
-  const { vehicleId, status, startDate, weeklyValue, paymentDay } = data;
-  if (status === "Ativo") {
-    try {
-      const dayMap: { [key: string]: number } = {
-        Domingo: 0,
-        "Segunda-feira": 1,
-        "Terça-feira": 2,
-        "Quarta-feira": 3,
-        "Quinta-feira": 4,
-        "Sexta-feira": 5,
-        Sábado: 6,
-      };
-      const paymentDayNumber = dayMap[paymentDay];
-      const newContract = await prisma.$transaction(async (prisma) => {
-        const createdContract = await prisma.contract.create({
-          data: { ...data, userId: session.user.id },
-        });
-        await prisma.vehicle.update({
-          where: { id: vehicleId },
-          data: { status: "Alugado" },
-        });
-        const currentWeekStart = new Date(startDate);
-        const paymentsToCreate = [];
-        for (let i = 0; i < 4; i++) {
-          const weekStart = new Date(currentWeekStart);
-          const weekEnd = new Date(weekStart);
-          weekEnd.setDate(weekStart.getDate() + 6);
-          const dueDate = new Date(weekStart);
-          const dayDifference = (paymentDayNumber - dueDate.getDay() + 7) % 7;
-          dueDate.setDate(dueDate.getDate() + dayDifference);
-          if (dueDate < weekStart) {
-            dueDate.setDate(dueDate.getDate() + 7);
-          }
-          paymentsToCreate.push({
-            contractId: createdContract.id,
-            weekStart: weekStart,
-            weekEnd: weekEnd,
-            value: weeklyValue,
-            dueDate: dueDate,
-            status: "Pendente",
-          });
-          currentWeekStart.setDate(currentWeekStart.getDate() + 7);
-        }
-        await prisma.payment.createMany({
-          data: paymentsToCreate,
-        });
-        return createdContract;
-      });
-      return NextResponse.json(newContract, { status: 201 });
-    } catch (error) {
-      console.error("Erro na transação de criação de contrato:", error);
-      return NextResponse.json(
-        { error: "Falha ao criar contrato e gerar pagamentos." },
-        { status: 500 }
-      );
-    }
-  } else {
-    const newContract = await prisma.contract.create({
-      data: { ...data, userId: session.user.id },
-    });
-    return NextResponse.json(newContract, { status: 201 });
+
+  const body = await request.json();
+  const { vehicleId, ...contractData } = body;
+
+  try {
+    const [newContract, updatedVehicle] = await prisma.$transaction([
+      prisma.contract.create({
+        data: {
+          ...contractData,
+          userId: session.user.id,
+          vehicleId,
+        },
+      }),
+      prisma.vehicle.update({
+        where: { id: vehicleId },
+        data: { status: "Alugado" },
+      }),
+    ]);
+
+    return NextResponse.json(newContract);
+  } catch (error) {
+    console.error("Erro ao criar contrato:", error);
+    return NextResponse.json(
+      { error: "Ocorreu um erro ao criar o contrato." },
+      { status: 500 }
+    );
   }
 }

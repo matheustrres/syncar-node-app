@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
+import { normalizeString } from "@/lib/string-utils";
+
 interface VehicleFormProps {
   initialData?: Vehicle | null;
   apiError?: string | null;
@@ -108,6 +110,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       ...formData,
       year: parseInt(String(formData.year)) || new Date().getFullYear(),
       km: parseInt(String(formData.km).replace(/\./g, "")) || 0,
+      plateNormalized: normalizeString(formData.plate),
+      modelNormalized: normalizeString(formData.model),
     });
   };
 
@@ -193,7 +197,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           <input
             type="text"
             name="color"
-            value={formData.color}
+            value={formData.color.toUpperCase()}
             onChange={handleChange}
             required
             placeholder="Ex: Branco"

@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
+import { normalizeString } from "@/lib/string-utils";
+
 export async function GET(
   _: NextRequest,
   context: { params: Promise<{ id: string }> }
@@ -34,6 +36,9 @@ export async function PUT(
   }
   const { id } = await context.params;
   const data = await request.json();
+  if (data.name) {
+    data.nameNormalized = normalizeString(data.name);
+  }
   const updatedDriver = await prisma.driver.update({
     where: { id, userId: session.user.id },
     data,

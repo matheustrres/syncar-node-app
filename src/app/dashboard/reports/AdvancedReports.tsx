@@ -59,10 +59,12 @@ const CenteredMetric = ({
         fill: "#374151",
       }}
     >
-      {new Intl.NumberFormat("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-      }).format(total)}
+      {total === 0
+        ? "R$ 0,00"
+        : new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(total)}
     </text>
   );
 };
@@ -116,11 +118,14 @@ export default function AdvancedReports({
       label: item.name,
       value: item.value,
     })) || [];
+  const finalPieData = pieData.length > 0 ? pieData : [{ id: "Sem dados", label: "Sem dados", value: 0 }];
+
   const barData =
     expenseAnalysis?.byMonth.map((item) => ({
       month: item.month,
       Despesa: item.value,
     })) || [];
+  const finalBarData = barData.length > 0 ? barData : [{ month: "N/A", Despesa: 0.000001 }];
 
   return (
     <div className="mt-8">
@@ -185,11 +190,8 @@ export default function AdvancedReports({
         </h3>
         <div className="flex flex-wrap -mx-4" style={{ height: "auto" }}>
           <div className="w-full md:w-1/2 px-4 h-96">
-            {/* <h4 className="text-md font-semibold mb-2 text-center">
-              Despesas por tipo
-            </h4> */}
             <ResponsivePie
-              data={pieData}
+              data={finalPieData}
               margin={{ top: 20, right: 40, bottom: 40, left: 40 }}
               innerRadius={0.6}
               padAngle={0.7}
@@ -216,11 +218,8 @@ export default function AdvancedReports({
             />
           </div>
           <div className="w-full md:w-1/2 px-4 h-96">
-            {/* <h4 className="text-md font-semibold mb-2 text-center">
-              Despesas por mês
-            </h4> */}
             <ResponsiveBar
-              data={barData}
+              data={finalBarData}
               keys={["Despesa"]}
               indexBy="month"
               margin={{ top: 50, right: 60, bottom: 50, left: 60 }}

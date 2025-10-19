@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
+import { normalizeString } from "@/lib/string-utils";
+
 interface DriverFormProps {
   initialData?: Driver | null;
   isSaving?: boolean;
@@ -165,6 +167,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
 
     onSave({
       name,
+      nameNormalized: normalizeString(name),
       cpf,
       phone,
       email,

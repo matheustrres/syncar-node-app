@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/authOptions";
 
 import { handlePrismaError } from "@/lib/api-utils";
 
+import { normalizeString } from "@/lib/string-utils";
+
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -13,21 +15,48 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const search = searchParams.get("search") || "";
-  const status = searchParams.get("status") || "";
   const sortColumn = searchParams.get("sortColumn") || "createdAt";
   const sortDirection = searchParams.get("sortDirection") || "desc";
   const skip = (page - 1) * limit;
   const where: { [key: string]: unknown } = { userId: session.user.id };
-  if (search) {
-    where.plate = {
-      contains: search,
-      mode: "insensitive",
-    };
-  }
-  if (status) {
-    where.status = status;
-  }
+  // Parse advanced filters
+  searchParams.forEach((value, key) => {
+    if (
+      key === "page" ||
+      key === "limit" ||
+      key === "sortColumn" ||
+      key === "sortDirection"
+    )
+      return;
+    // Text filters
+    if (["plate", "brand", "model"].includes(key)) {
+      if (value) {
+        where[key] = {
+          contains: value,
+          mode: "insensitive",
+        };
+      }
+    }
+    // Select filters
+    if (key === "status") {
+      if (value) {
+        where.status = value;
+      }
+    }
+    // Number range filters
+    if (key.endsWith("Min")) {
+      const field = key.replace("Min", "");
+      if (value) {
+        where[field] = { ...where[field]!, gte: parseInt(value, 10) };
+      }
+    }
+    if (key.endsWith("Max")) {
+      const field = key.replace("Max", "");
+      if (value) {
+        where[field] = { ...where[field]!, lte: parseInt(value, 10) };
+      }
+    }
+  });
   const [vehicles, total] = await prisma.$transaction([
     prisma.vehicle.findMany({
       where,
@@ -76,7 +105,12 @@ export async function POST(request: Request) {
   const data = await request.json();
   try {
     const newVehicle = await prisma.vehicle.create({
-      data: { ...data, userId: session.user.id },
+      data: {
+        ...data,
+        userId: session.user.id,
+        plateNormalized: normalizeString(data.plate),
+        modelNormalized: normalizeString(data.model),
+      },
     });
     return NextResponse.json(newVehicle, { status: 201 });
   } catch (error: unknown) {

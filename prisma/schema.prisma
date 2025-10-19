@@ -8,21 +8,21 @@ datasource db {
 }
 
 model User {
-  id          String               @id @default(cuid())
-  name        String
-  email       String               @unique
-  password    String
-  companyName String               @map("company_name")
-  phone       String
-  plan        String               @default("BASIC")
-  stripeCustomerId String?            @unique @map("stripe_customer_id")
-  vehicles    Vehicle[]
-  drivers     Driver[]
-  contracts   Contract[]
-  expenses    Expense[]
-  resetTokens PasswordResetToken[]
-  createdAt   DateTime             @default(now()) @map("created_at")
-  updatedAt   DateTime             @updatedAt @map("updated_at")
+  id               String               @id @default(cuid())
+  name             String
+  email            String               @unique
+  password         String
+  companyName      String               @map("company_name")
+  phone            String
+  plan             String               @default("BASIC")
+  stripeCustomerId String?              @unique @map("stripe_customer_id")
+  vehicles         Vehicle[]
+  drivers          Driver[]
+  contracts        Contract[]
+  expenses         Expense[]
+  resetTokens      PasswordResetToken[]
+  createdAt        DateTime             @default(now()) @map("created_at")
+  updatedAt        DateTime             @updatedAt @map("updated_at")
 
   @@map("users")
 }
@@ -39,47 +39,50 @@ model PasswordResetToken {
 }
 
 model Vehicle {
-  id        String     @id @default(cuid())
-  plate     String     @unique
-  brand     String
-  model     String
-  year      Int
-  color     String
-  renavam   String     @unique
-  chassis   String     @unique
-  km        Int
-  status    String     @default("Disponível")
-  userId    String     @map("user_id")
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contracts Contract[]
-  expenses  Expense[]
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
+  id              String     @id @default(cuid())
+  plate           String     @unique
+  plateNormalized String?    @map("plate_normalized")
+  brand           String
+  model           String
+  modelNormalized String?    @map("model_normalized")
+  year            Int
+  color           String
+  renavam         String     @unique
+  chassis         String     @unique
+  km              Int
+  status          String     @default("Disponível")
+  userId          String     @map("user_id")
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contracts       Contract[]
+  expenses        Expense[]
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
 
   @@map("vehicles")
 }
 
 model Driver {
-  id          String     @id @default(cuid())
-  name        String
-  cpf         String     @unique
-  phone       String
-  email       String
-  cnh         String     @unique
-  cnhValidity DateTime   @map("cnh_validity")
-  cep         String?
-  logradouro  String?
-  numero      String?
-  complemento String?
-  bairro      String?
-  cidade      String?
-  uf          String?
-  status      String     @default("Ativo")
-  userId      String     @map("user_id")
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contracts   Contract[]
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
+  id             String     @id @default(cuid())
+  name           String
+  nameNormalized String?    @map("name_normalized")
+  cpf            String     @unique
+  phone          String
+  email          String
+  cnh            String     @unique
+  cnhValidity    DateTime   @map("cnh_validity")
+  cep            String?
+  logradouro     String?
+  numero         String?
+  complemento    String?
+  bairro         String?
+  cidade         String?
+  uf             String?
+  status         String     @default("Ativo")
+  userId         String     @map("user_id")
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contracts      Contract[]
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
 
   @@map("drivers")
 }

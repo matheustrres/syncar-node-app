@@ -10,13 +10,26 @@ import {
   useAllDrivers,
   useAllVehicles,
   ContractWithRelations,
+  ContractFilters,
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
-import { Plus, Edit, Trash2, FileText } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  FileText,
+  User,
+  Car,
+  Hash,
+  DollarSign,
+  Calendar,
+} from "lucide-react";
 import DataTable, { Column } from "@/components/ui/DataTable";
 import ContractsSkeleton from "./ContractsSkeleton";
-import FilterBar from "@/components/ui/FilterBar";
+import AdvancedFilterBar, {
+  FilterConfig,
+} from "@/components/ui/AdvancedFilterBar";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import EmptyState from "@/components/ui/EmptyState";
@@ -36,9 +49,13 @@ const columns: Column<ContractWithRelations>[] = [
     sortable: true,
   },
   {
-    header: "Veículo",
-    accessor: (contract) =>
-      `${contract.vehicle.plate} - ${contract.vehicle.model}`,
+    header: "Placa",
+    accessor: (contract) => contract.vehicle.plate,
+    sortable: true,
+  },
+  {
+    header: "Modelo",
+    accessor: (contract) => contract.vehicle.model,
     sortable: true,
   },
   {
@@ -70,6 +87,56 @@ const statusOptions = [
   { value: "Finalizado", label: "Finalizado" },
 ];
 
+const filtersConfig: FilterConfig[] = [
+  {
+    id: "searchDriverName",
+    label: "Buscar por motorista",
+    type: "text",
+    field: "driverName",
+    placeholder: "Ex: João Silva",
+    icon: User,
+  },
+  {
+    id: "searchVehiclePlate",
+    label: "Buscar por placa",
+    type: "text",
+    field: "vehiclePlate",
+    placeholder: "Ex: ABC1234",
+    icon: Car,
+  },
+  {
+    id: "searchVehicleModel",
+    label: "Buscar por modelo",
+    type: "text",
+    field: "vehicleModel",
+    placeholder: "Ex: Corolla",
+    icon: Car,
+  },
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    field: "status",
+    options: statusOptions,
+    placeholder: "Todos os status",
+    icon: Hash,
+  },
+  {
+    id: "weeklyValueRange",
+    label: "Valor Semanal",
+    type: "number-range",
+    field: "weeklyValue",
+    icon: DollarSign,
+  },
+  {
+    id: "startDateRange",
+    label: "Data de Início",
+    type: "date-range",
+    field: "startDate",
+    icon: Calendar,
+  },
+];
+
 export default function ContractsClientPage({
   initialContracts,
   total: initialTotal,
@@ -78,29 +145,22 @@ export default function ContractsClientPage({
 }: ContractsClientPageProps) {
   const router = useRouter();
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [filters, setFilters] = useState<ContractFilters>({});
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
+
+
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [filters]);
 
   const { contracts, total, isLoading, isError, mutateContracts } =
-    useFetchContracts(
-      page,
-      limit,
-      searchTerm,
-      statusFilter,
-      sortColumn,
-      sortDirection,
-      {
-        contracts: initialContracts,
-        total: initialTotal,
-      }
-    );
+    useFetchContracts(page, limit, filters, sortColumn, sortDirection, {
+      contracts: initialContracts,
+      total: initialTotal,
+    });
 
   const { drivers: allDrivers } = useAllDrivers(initialDrivers);
   const { vehicles: allVehicles } = useAllVehicles(initialVehicles);
@@ -191,17 +251,6 @@ export default function ContractsClientPage({
     e.stopPropagation();
   };
 
-  if (isLoading) return <ContractsSkeleton />;
-
-  if (isError) {
-    return (
-      <ErrorDisplay
-        errorMessage="Falha ao carregar os dados."
-        onRetry={mutateContracts}
-      />
-    );
-  }
-
   const totalPages = Math.ceil(total / limit);
 
   const addButton = (
@@ -219,172 +268,365 @@ export default function ContractsClientPage({
     setSortDirection(direction);
   };
 
-  if (total === 0 && !isLoading && !isError && !searchTerm && !statusFilter) {
+  const isFiltersEmpty = Object.keys(filters).length === 0;
+
     return (
-      <>
-        <EmptyState
-          Icon={FileText}
-          title="Nenhum contrato cadastrado"
-          description="Comece cadastrando o primeiro contrato para poder gerenciá-los."
-          actionButton={addButton}
+
+      <div>
+
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+
+            Contratos
+
+          </h2>
+
+          <button
+
+            onClick={() => handleOpenFormModal()}
+
+            className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"
+
+          >
+
+            <Plus size={20} />
+
+            <span className="hidden sm:inline whitespace-nowrap">
+
+              Novo contrato
+
+            </span>
+
+            <span className="sm:hidden">Adicionar</span>
+
+          </button>
+
+        </div>
+
+  
+
+        <AdvancedFilterBar
+
+          filtersConfig={filtersConfig}
+
+          onFilterChange={setFilters}
+
         />
-        <Modal
-          isOpen={isFormModalOpen}
-          onClose={handleCloseFormModal}
-          title={editingItem ? "Editar contrato" : "Novo contrato"}
-          size="4xl"
-        >
-          <ContractForm
-            initialData={editingItem}
-            vehicles={allVehicles || []}
-            drivers={allDrivers || []}
-            isSaving={isSaving}
-            onSave={handleSave}
-            onCancel={handleCloseFormModal}
+
+  
+
+        {isLoading ? (
+
+          <ContractsSkeleton />
+
+        ) : isError ? (
+
+          <ErrorDisplay
+
+            errorMessage="Falha ao carregar os dados."
+
+            onRetry={mutateContracts}
+
           />
-        </Modal>
-      </>
-    );
-  }
 
-  return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Contratos
-        </h2>
-        <button
-          onClick={() => handleOpenFormModal()}
-          className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"
-        >
-          <Plus size={20} />
-          <span className="hidden sm:inline whitespace-nowrap">
-            Novo contrato
-          </span>
-          <span className="sm:hidden">Adicionar</span>
-        </button>
-      </div>
+        ) : total === 0 && isFiltersEmpty ? (
 
-      <FilterBar
-        searchPlaceholder="Buscar por motorista ou placa..."
-        filterOptions={statusOptions}
-        onSearchChange={setSearchTerm}
-        onFilterChange={setStatusFilter}
-      />
+          <>
 
-      <div className="hidden lg:block">
-        <DataTable
-          columns={columns}
-          data={contracts || []}
-          onRowClick={handleRowClick}
-          onEdit={handleOpenFormModal}
-          onDelete={handleDeleteClick}
-          onSort={handleSort}
-          sortColumn={sortColumn}
-          sortDirection={sortDirection}
-        />
-      </div>
+            <EmptyState
 
-      <div className="lg:hidden grid grid-cols-1 gap-4">
-        {(contracts || []).map((contract) => {
-          return (
-            <div
-              key={contract.id}
-              onClick={() => handleRowClick(contract.id)}
-              className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
+              Icon={FileText}
+
+              title="Nenhum contrato cadastrado"
+
+              description="Comece cadastrando o primeiro contrato para poder gerenciá-los."
+
+              actionButton={addButton}
+
+            />
+
+            <Modal
+
+              isOpen={isFormModalOpen}
+
+              onClose={handleCloseFormModal}
+
+              title={editingItem ? "Editar contrato" : "Novo contrato"}
+
+              size="4xl"
+
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="font-bold text-gray-900">
-                    {contract.driver.name}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {contract.vehicle.plate} - {contract.vehicle.model}
-                  </p>
-                </div>
-                <span
-                  className={`px-2 py-1 text-xs font-semibold rounded-full ${contract.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
-                >
-                  {contract.status}
-                </span>
-              </div>
-              <div className="border-t pt-2 flex justify-between items-center">
-                <p className="font-semibold text-green-600">
-                  R$ {contract.weeklyValue.toFixed(2)}
-                  <span className="font-normal text-sm text-gray-500">
-                    /semana
-                  </span>
-                </p>
-                <div className="flex gap-2" onClick={handleActionClick}>
-                  <button
-                    title="Editar Contrato"
-                    onClick={() => handleOpenFormModal(contract)}
-                    className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
-                  >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    title="Excluir Contrato"
-                    onClick={() => handleDeleteClick(contract)}
-                    className="text-red-600 p-2 rounded-full hover:bg-gray-100"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
+
+              <ContractForm
+
+                initialData={editingItem}
+
+                vehicles={allVehicles || []}
+
+                drivers={allDrivers || []}
+
+                isSaving={isSaving}
+
+                onSave={handleSave}
+
+                onCancel={handleCloseFormModal}
+
+              />
+
+            </Modal>
+
+          </>
+
+        ) : (
+
+          <>
+
+            <div className="hidden lg:block">
+
+              <DataTable
+
+                columns={columns}
+
+                data={contracts || []}
+
+                onRowClick={handleRowClick}
+
+                onEdit={handleOpenFormModal}
+
+                onDelete={handleDeleteClick}
+
+                onSort={handleSort}
+
+                sortColumn={sortColumn}
+
+                sortDirection={sortDirection}
+
+              />
+
             </div>
-          );
-        })}
-      </div>
 
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
-          Mostrando {contracts.length} de {total} contratos.
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage(page - 1)}
-            disabled={page === 1}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <span className="text-sm text-gray-700">
-            Página {page} de {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(page + 1)}
-            disabled={page === totalPages || total === 0}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Próximo
-          </button>
-        </div>
-      </div>
+  
 
-      <Modal
-        isOpen={isFormModalOpen}
-        onClose={handleCloseFormModal}
-        title={editingItem ? "Editar contrato" : "Novo contrato"}
-        size="4xl"
-      >
-        <ContractForm
-          initialData={editingItem}
-          vehicles={allVehicles || []}
-          drivers={allDrivers || []}
-          onSave={handleSave}
-          onCancel={handleCloseFormModal}
+            <div className="lg:hidden grid grid-cols-1 gap-4">
+
+              {(contracts || []).map((contract) => {
+
+                return (
+
+                  <div
+
+                    key={contract.id}
+
+                    onClick={() => handleRowClick(contract.id)}
+
+                    className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
+
+                  >
+
+                    <div className="flex justify-between items-start">
+
+                      <div>
+
+                        <p className="font-bold text-gray-900">
+
+                          {contract.driver.name}
+
+                        </p>
+
+                                          <p className="text-sm text-gray-500">
+
+                                            {contract.vehicle.plate}
+
+                                          </p>
+
+                                          <p className="text-sm text-gray-500">
+
+                                            {contract.vehicle.model}
+
+                                          </p>
+
+                      </div>
+
+                      <span
+
+                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
+
+                          contract.status === "Ativo"
+
+                            ? "bg-green-100 text-green-800"
+
+                            : "bg-gray-100 text-gray-800"
+
+                        }`}
+
+                      >
+
+                        {contract.status}
+
+                      </span>
+
+                    </div>
+
+                    <div className="border-t pt-2 flex justify-between items-center">
+
+                      <p className="font-semibold text-green-600">
+
+                        R$ {contract.weeklyValue.toFixed(2)}
+
+                        <span className="font-normal text-sm text-gray-500">
+
+                          /semana
+
+                        </span>
+
+                      </p>
+
+                      <div className="flex gap-2" onClick={handleActionClick}>
+
+                        <button
+
+                          title="Editar Contrato"
+
+                          onClick={() => handleOpenFormModal(contract)}
+
+                          className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
+
+                        >
+
+                          <Edit size={18} />
+
+                        </button>
+
+                        <button
+
+                          title="Excluir Contrato"
+
+                          onClick={() => handleDeleteClick(contract)}
+
+                          className="text-red-600 p-2 rounded-full hover:bg-gray-100"
+
+                        >
+
+                          <Trash2 size={18} />
+
+                        </button>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                );
+
+              })}
+
+            </div>
+
+  
+
+            <div className="mt-6 flex items-center justify-between">
+
+              <div className="text-sm text-gray-700">
+
+                Mostrando {contracts.length} de {total} contratos.
+
+              </div>
+
+              <div className="flex items-center gap-2">
+
+                <button
+
+                  onClick={() => setPage(page - 1)}
+
+                  disabled={page === 1}
+
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+
+                >
+
+                  Anterior
+
+                </button>
+
+                <span className="text-sm text-gray-700">
+
+                  Página {page} de {totalPages}
+
+                </span>
+
+                <button
+
+                  onClick={() => setPage(page + 1)}
+
+                  disabled={page === totalPages || total === 0}
+
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+
+                >
+
+                  Próximo
+
+                </button>
+
+              </div>
+
+            </div>
+
+          </>
+
+        )}
+
+  
+
+        <Modal
+
+          isOpen={isFormModalOpen}
+
+          onClose={handleCloseFormModal}
+
+          title={editingItem ? "Editar contrato" : "Novo contrato"}
+
+          size="4xl"
+
+        >
+
+          <ContractForm
+
+            initialData={editingItem}
+
+            vehicles={allVehicles || []}
+
+            drivers={allDrivers || []}
+
+            onSave={handleSave}
+
+            onCancel={handleCloseFormModal}
+
+          />
+
+        </Modal>
+
+  
+
+        <DeleteConfirmationModal
+
+          isOpen={!!itemToDelete}
+
+          onClose={handleCloseDeleteModal}
+
+          onConfirm={handleConfirmDelete}
+
+          resourceName="contrato"
+
+          resourceIdentifier={`do motorista ${itemToDelete?.driver.name}`}
+
+          isDeleting={isDeleting}
+
         />
-      </Modal>
 
-      <DeleteConfirmationModal
-        isOpen={!!itemToDelete}
-        onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        resourceName="contrato"
-        resourceIdentifier={`do motorista ${itemToDelete?.driver.name}`}
-        isDeleting={isDeleting}
-      />
-    </div>
-  );
+      </div>
+
+    );
 }
