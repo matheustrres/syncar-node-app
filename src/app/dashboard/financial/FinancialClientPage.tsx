@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/context/ToastContext";
 import { Contract, Vehicle, Driver } from "@/types";
 import {
@@ -54,17 +54,39 @@ export default function FinancialClientPage({
     data: pendingData,
     isLoading: pendingLoading,
     mutate: mutatePending,
-  } = useFetchPendingPayments(pendingPage, limit, initialPendingPayments);
+  } = useFetchPendingPayments(pendingPage, limit);
   const {
     data: paidData,
     isLoading: paidLoading,
     mutate: mutatePaid,
-  } = useFetchPaidPayments(paidPage, limit, initialPaidPayments);
+  } = useFetchPaidPayments(paidPage, limit);
   const {
     data: expensesData,
     isLoading: expensesLoading,
     mutate: mutateExpenses,
-  } = useFetchRecentExpenses(expensesPage, limit, initialRecentExpenses);
+  } = useFetchRecentExpenses(expensesPage, limit);
+
+  const [accumulatedExpenses, setAccumulatedExpenses] = useState<ExpenseWithRelations[]>(initialRecentExpenses.expenses);
+  const [accumulatedPending, setAccumulatedPending] = useState<PaymentWithRelations[]>(initialPendingPayments.payments);
+  const [accumulatedPaid, setAccumulatedPaid] = useState<PaymentWithRelations[]>(initialPaidPayments.payments);
+
+  useEffect(() => {
+    if (expensesData?.expenses && expensesPage > 1) {
+      setAccumulatedExpenses((prev) => [...prev, ...expensesData.expenses]);
+    }
+  }, [expensesData, expensesPage]);
+
+  useEffect(() => {
+    if (pendingData?.payments && pendingPage > 1) {
+      setAccumulatedPending((prev) => [...prev, ...pendingData.payments]);
+    }
+  }, [pendingData, pendingPage]);
+
+  useEffect(() => {
+    if (paidData?.payments && paidPage > 1) {
+      setAccumulatedPaid((prev) => [...prev, ...paidData.payments]);
+    }
+  }, [paidData, paidPage]);
 
   const { contracts } = useAllContracts(initialContracts);
   const { drivers } = useAllDrivers(initialDrivers);
@@ -170,17 +192,14 @@ export default function FinancialClientPage({
     return <FinancialSkeleton />;
   }
 
-  const pendingPayments = pendingData?.payments || [];
   const pendingTotal = pendingData?.total || 0;
-  const hasMorePending = pendingPayments.length < pendingTotal;
+  const hasMorePending = accumulatedPending.length < pendingTotal;
 
-  const paidPayments = paidData?.payments || [];
   const paidTotal = paidData?.total || 0;
-  const hasMorePaid = paidPayments.length < paidTotal;
+  const hasMorePaid = accumulatedPaid.length < paidTotal;
 
-  const recentExpenses = expensesData?.expenses || [];
   const expensesTotal = expensesData?.total || 0;
-  const hasMoreExpenses = recentExpenses.length < expensesTotal;
+  const hasMoreExpenses = accumulatedExpenses.length < expensesTotal;
 
   return (
     <div>
@@ -219,8 +238,8 @@ export default function FinancialClientPage({
             <Clock size={20} /> Pagamentos pendentes
           </h3>
           <div className="space-y-3 overflow-y-auto flex-grow">
-            {pendingPayments.length > 0 ? (
-              pendingPayments.map((payment) => {
+            {accumulatedPending.length > 0 ? (
+              accumulatedPending.map((payment) => {
                 const isOverdue = new Date(payment.dueDate) < new Date();
                 return (
                   <div
@@ -292,8 +311,8 @@ export default function FinancialClientPage({
             <TrendingDown size={20} /> Despesas recentes
           </h3>
           <div className="space-y-3 overflow-y-auto flex-grow">
-            {recentExpenses.length > 0 ? (
-              recentExpenses.map((expense) => (
+            {accumulatedExpenses.length > 0 ? (
+              accumulatedExpenses.map((expense) => (
                 <div
                   key={expense.id}
                   className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500 h-[120px] flex flex-col"
@@ -352,8 +371,8 @@ export default function FinancialClientPage({
             <CheckCircle size={20} /> Histórico de pagamentos
           </h3>
           <div className="space-y-3 overflow-y-auto flex-grow">
-            {paidPayments.length > 0 ? (
-              paidPayments.map((payment) => (
+            {accumulatedPaid.length > 0 ? (
+              accumulatedPaid.map((payment) => (
                 <div
                   key={payment.id}
                   className="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 h-[120px] flex flex-col"

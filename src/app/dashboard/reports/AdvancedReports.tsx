@@ -74,6 +74,30 @@ interface AdvancedReportsProps {
   initialExpenseAnalysis: ExpenseAnalysisReport;
 }
 
+const expenseCategories = [
+  "IPVA",
+  "Manutenção",
+  "Seguro",
+  "Documentação",
+  "Multa",
+  "Outros",
+];
+
+const months = [
+  "Jan",
+  "Fev",
+  "Mar",
+  "Abr",
+  "Mai",
+  "Jun",
+  "Jul",
+  "Ago",
+  "Set",
+  "Out",
+  "Nov",
+  "Dez",
+];
+
 export default function AdvancedReports({
   initialVehiclePerformance,
   initialExpenseAnalysis,
@@ -118,14 +142,27 @@ export default function AdvancedReports({
       label: item.name,
       value: item.value,
     })) || [];
-  const finalPieData = pieData.length > 0 ? pieData : [{ id: "Sem dados", label: "Sem dados", value: 0 }];
+  const finalPieData =
+    pieData.length > 0
+      ? pieData
+      : expenseCategories.map((category) => ({
+          id: category,
+          label: category,
+          value: 0,
+        }));
 
   const barData =
     expenseAnalysis?.byMonth.map((item) => ({
       month: item.month,
       Despesa: item.value,
     })) || [];
-  const finalBarData = barData.length > 0 ? barData : [{ month: "N/A", Despesa: 0.000001 }];
+  const finalBarData =
+    barData.length > 0
+      ? barData
+      : months.map((month) => ({
+          month: month,
+          Despesa: 0,
+        }));
 
   return (
     <div className="mt-8">

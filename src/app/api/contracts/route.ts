@@ -140,19 +140,47 @@ export async function POST(request: NextRequest) {
   const { vehicleId, ...contractData } = body;
 
   try {
-    const [newContract, updatedVehicle] = await prisma.$transaction([
-      prisma.contract.create({
-        data: {
-          ...contractData,
-          userId: session.user.id,
-          vehicleId,
+    const startDate = new Date(contractData.startDate);
+    const paymentDay = contractData.paymentDay;
+    const dayOfWeekMap: { [key: string]: number } = {
+      Domingo: 0,
+      "Segunda-feira": 1,
+      "Terça-feira": 2,
+      "Quarta-feira": 3,
+      "Quinta-feira": 4,
+      "Sexta-feira": 5,
+      Sábado: 6,
+    };
+    const paymentDayIndex = dayOfWeekMap[paymentDay];
+    let nextPaymentDate = new Date(startDate);
+    nextPaymentDate.setDate(
+      startDate.getDate() + ((paymentDayIndex - startDate.getDay() + 7) % 7)
+    );
+
+    const weekStart = new Date(nextPaymentDate);
+    weekStart.setDate(nextPaymentDate.getDate() - 6);
+    const weekEnd = new Date(nextPaymentDate);
+
+    const newContract = await prisma.contract.create({
+      data: {
+        ...contractData,
+        userId: session.user.id,
+        vehicleId,
+        payments: {
+          create: {
+            value: contractData.weeklyValue,
+            dueDate: nextPaymentDate,
+            weekStart,
+            weekEnd,
+          },
         },
-      }),
-      prisma.vehicle.update({
-        where: { id: vehicleId },
-        data: { status: "Alugado" },
-      }),
-    ]);
+      },
+    });
+
+    await prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { status: "Alugado" },
+    });
 
     return NextResponse.json(newContract);
   } catch (error) {

@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "rm -rf .next",
     "dev": "next dev",
     "build": "next build",
+    "prestart": "npm run predev && npm run build",
     "start": "next start",
     "lint": "eslint",
     "seed": "ts-node prisma/seed.ts"

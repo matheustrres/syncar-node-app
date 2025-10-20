@@ -456,40 +456,56 @@ export const getReportVehiclePerformance = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
   const userId = session.user.id;
-  const vehiclePerformance = await prisma.vehicle.findMany({
+
+  const vehicles = await prisma.vehicle.findMany({
     where: { userId },
-    select: {
-      id: true,
-      brand: true,
-      model: true,
-      plate: true,
-      contracts: {
-        select: {
-          payments: {
-            where: { status: "Pago" },
-            select: { value: true },
-          },
-        },
-      },
-      expenses: {
-        select: { value: true },
-      },
+    select: { id: true, brand: true, model: true, plate: true },
+  });
+
+  const vehicleIds = vehicles.map((v) => v.id);
+
+  const revenues = await prisma.$queryRaw<
+    {
+      vehicleId: string;
+      total: string;
+    }[]
+  >`
+    SELECT
+      c.vehicle_id AS "vehicleId",
+      SUM(p.value) AS "total"
+    FROM
+      payments p
+      JOIN contracts c ON p.contract_id = c.id
+    WHERE
+      c.vehicle_id IN (${Prisma.join(vehicleIds)})
+      AND p.status = 'Pago'
+    GROUP BY
+      c.vehicle_id
+  `;
+
+  const expenses = await prisma.expense.groupBy({
+    by: ["vehicleId"],
+    where: { vehicleId: { in: vehicleIds } },
+    _sum: {
+      value: true,
     },
   });
-  const report = vehiclePerformance.map((vehicle) => {
-    const totalRevenue = vehicle.contracts.reduce((sum, contract) => {
-      return (
-        sum +
-        contract.payments.reduce(
-          (paymentSum, payment) => paymentSum + payment.value,
-          0
-        )
-      );
-    }, 0);
-    const totalExpenses = vehicle.expenses.reduce(
-      (sum, expense) => sum + expense.value,
-      0
-    );
+
+  const revenueMap = new Map<string, number>();
+  revenues.forEach((r) => {
+    revenueMap.set(r.vehicleId, Number(r.total));
+  });
+
+  const expenseMap = new Map<string, number>();
+  expenses.forEach((e) => {
+    if (e.vehicleId) {
+      expenseMap.set(e.vehicleId, e._sum.value || 0);
+    }
+  });
+
+  const report = vehicles.map((vehicle) => {
+    const totalRevenue = revenueMap.get(vehicle.id) || 0;
+    const totalExpenses = expenseMap.get(vehicle.id) || 0;
     return {
       vehicleId: vehicle.id,
       vehicleInfo: `${vehicle.brand} ${vehicle.model} (${vehicle.plate})`,
@@ -506,6 +522,7 @@ export const getReportExpenseAnalysis = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { byType: [], byMonth: [] };
   const userId = session.user.id;
+
   const expensesByType = await prisma.expense.groupBy({
     by: ["type"],
     where: { userId },
@@ -513,6 +530,7 @@ export const getReportExpenseAnalysis = cache(async () => {
       value: true,
     },
   });
+
   const expensesByMonth = await prisma.expense.groupBy({
     by: ["date"],
     where: { userId },
@@ -523,14 +541,25 @@ export const getReportExpenseAnalysis = cache(async () => {
       date: "asc",
     },
   });
+
   const byType = expensesByType.map((item) => ({
     name: item.type,
     value: item._sum.value || 0,
   }));
-  const byMonth = expensesByMonth.map((item) => ({
-    month: new Date(item.date).toISOString().slice(0, 7),
-    value: item._sum.value || 0,
-  }));
+
+  const monthlyData: { [key: string]: { month: string; value: number } } = {};
+  expensesByMonth.forEach((item) => {
+    const month = new Date(item.date).toISOString().slice(0, 7);
+    if (!monthlyData[month]) {
+      monthlyData[month] = { month, value: 0 };
+    }
+    monthlyData[month].value += item._sum.value || 0;
+  });
+
+  const byMonth = Object.values(monthlyData).sort((a, b) =>
+    a.month.localeCompare(b.month)
+  );
+
   return {
     byType,
     byMonth,
@@ -541,7 +570,8 @@ export const getReportCashFlow = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
   const userId = session.user.id;
-  const monthlyRevenue = await prisma.payment.groupBy({
+
+  const revenueByMonth = await prisma.payment.groupBy({
     by: ["paymentDate"],
     where: {
       contract: { userId },
@@ -551,106 +581,150 @@ export const getReportCashFlow = cache(async () => {
     _sum: {
       value: true,
     },
+    orderBy: {
+      paymentDate: "asc",
+    },
   });
-  const monthlyExpenses = await prisma.expense.groupBy({
+
+  const expensesByMonth = await prisma.expense.groupBy({
     by: ["date"],
     where: { userId },
     _sum: {
       value: true,
     },
+    orderBy: {
+      date: "asc",
+    },
   });
+
   const cashFlowData: {
     [key: string]: { month: string; revenue: number; expense: number };
   } = {};
-  monthlyRevenue.forEach((item) => {
-    const month = item.paymentDate!.toISOString().substring(0, 7);
-    if (!cashFlowData[month]) {
-      cashFlowData[month] = { month, revenue: 0, expense: 0 };
+
+  revenueByMonth.forEach((item) => {
+    if (item.paymentDate) {
+      const month = item.paymentDate.toISOString().slice(0, 7);
+      if (!cashFlowData[month]) {
+        cashFlowData[month] = { month, revenue: 0, expense: 0 };
+      }
+      cashFlowData[month].revenue += item._sum.value || 0;
     }
-    cashFlowData[month].revenue += item._sum.value || 0;
   });
-  monthlyExpenses.forEach((item) => {
-    const month = item.date.toISOString().substring(0, 7);
+
+  expensesByMonth.forEach((item) => {
+    const month = item.date.toISOString().slice(0, 7);
     if (!cashFlowData[month]) {
       cashFlowData[month] = { month, revenue: 0, expense: 0 };
     }
     cashFlowData[month].expense += item._sum.value || 0;
   });
+
   return Object.values(cashFlowData).sort((a, b) =>
-    b.month.localeCompare(a.month)
+    a.month.localeCompare(b.month)
   );
 });
 
 export const getReportOverduePayments = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
-  const overduePayments = await prisma.payment.findMany({
-    where: {
-      contract: { userId: session.user.id },
-      status: "Pendente",
-      dueDate: { lt: new Date() },
-    },
-    include: {
-      contract: {
-        include: {
-          driver: { select: { name: true } },
-          vehicle: { select: { plate: true, model: true } },
-        },
-      },
-    },
-    orderBy: { dueDate: "asc" },
-  });
-  return overduePayments.map((p) => ({
-    id: p.id,
-    weekStart: p.weekStart,
-    weekEnd: p.weekEnd,
-    dueDate: p.dueDate,
-    value: p.value,
-    driverName: p.contract.driver.name,
-    vehicleInfo: `${p.contract.vehicle.plate} - ${p.contract.vehicle.model}`,
-    daysOverdue: Math.floor(
-      (new Date().getTime() - new Date(p.dueDate).getTime()) /
-        (1000 * 60 * 60 * 24)
-    ),
-  }));
+
+  // This raw query is specific to PostgreSQL.
+  const overduePayments = await prisma.$queryRaw<
+    {
+      id: string;
+      weekStart: Date;
+      weekEnd: Date;
+      dueDate: Date;
+      value: number;
+      driverName: string;
+      vehicleInfo: string;
+      daysOverdue: number;
+    }[]
+  >`
+    SELECT
+      p.id,
+      p.week_start AS "weekStart",
+      p.week_end AS "weekEnd",
+      p.due_date AS "dueDate",
+      p.value,
+      d.name AS "driverName",
+      v.plate || ' - ' || v.model AS "vehicleInfo",
+      floor(EXTRACT(EPOCH FROM (NOW() - p.due_date)) / (60 * 60 * 24)) AS "daysOverdue"
+    FROM
+      payments p
+      JOIN contracts c ON p.contract_id = c.id
+      JOIN drivers d ON c.driver_id = d.id
+      JOIN vehicles v ON c.vehicle_id = v.id
+    WHERE
+      c.user_id = ${session.user.id}
+      AND p.status = 'Pendente'
+      AND p.due_date < NOW()
+    ORDER BY
+      p.due_date ASC
+  `;
+
+  return overduePayments;
 });
 
 export const getReportDriverSummary = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
   const userId = session.user.id;
-  const driverSummaries = await prisma.driver.findMany({
+
+  const drivers = await prisma.driver.findMany({
     where: { userId },
+    select: { id: true, name: true },
+  });
+
+  const driverIds = drivers.map((d) => d.id);
+
+  const revenues = await prisma.$queryRaw<
+    { driverId: string; total: string }[]
+  >`
+    SELECT
+      c.driver_id AS "driverId",
+      SUM(p.value) AS "total"
+    FROM
+      payments p
+      JOIN contracts c ON p.contract_id = c.id
+    WHERE
+      c.driver_id IN (${Prisma.join(driverIds)})
+      AND p.status = 'Pago'
+    GROUP BY
+      c.driver_id
+  `;
+
+  const revenueMap = new Map<string, number>();
+  revenues.forEach((r) => {
+    revenueMap.set(r.driverId, Number(r.total));
+  });
+
+  const lastContracts = await prisma.contract.findMany({
+    where: {
+      driverId: { in: driverIds },
+    },
     select: {
-      id: true,
-      name: true,
-      contracts: {
-        select: {
-          vehicle: {
-            select: { plate: true },
-          },
-          payments: {
-            where: { status: "Pago" },
-            select: { value: true },
-          },
-        },
+      driverId: true,
+      vehicle: {
+        select: { plate: true },
       },
     },
+    orderBy: {
+      createdAt: "desc",
+    },
+    distinct: ["driverId"],
   });
-  const report = driverSummaries.map((driver) => {
-    const totalPaid = driver.contracts.reduce((sum, contract) => {
-      return (
-        sum +
-        contract.payments.reduce(
-          (paymentSum, payment) => paymentSum + payment.value,
-          0
-        )
-      );
-    }, 0);
-    const activeContract = driver.contracts.find((c) => c.payments.length > 0); // Assuming an active contract has payments
-    const vehicleInfo = activeContract?.vehicle?.plate
-      ? `Veículo: ${activeContract.vehicle.plate}`
-      : "";
+
+  const vehicleInfoMap = new Map<string, string>();
+  lastContracts.forEach((c) => {
+    if (c.driverId && c.vehicle) {
+      vehicleInfoMap.set(c.driverId, `Veículo: ${c.vehicle.plate}`);
+    }
+  });
+
+  const report = drivers.map((driver) => {
+    const totalPaid = revenueMap.get(driver.id) || 0;
+    const vehicleInfo = vehicleInfoMap.get(driver.id) || "";
     return {
       driverId: driver.id,
       driverName: driver.name,
@@ -658,6 +732,7 @@ export const getReportDriverSummary = cache(async () => {
       vehicleInfo,
     };
   });
+
   return report;
 });
 
@@ -683,10 +758,8 @@ export const getDashboardData = cache(async () => {
     totalRevenueResult,
     totalExpensesResult,
     overduePaymentsCount,
-    rentedVehiclesCount,
-    availableVehiclesCount,
-    totalVehicles,
     pendingPayments,
+    vehicleCounts,
   ] = await Promise.all([
     prisma.payment.aggregate({
       where: { contract: { userId }, status: "Pago" },
@@ -703,15 +776,6 @@ export const getDashboardData = cache(async () => {
         dueDate: { lt: new Date() },
       },
     }),
-    prisma.vehicle.count({
-      where: { userId, status: "Alugado" },
-    }),
-    prisma.vehicle.count({
-      where: { userId, status: "Disponível" },
-    }),
-    prisma.vehicle.count({
-      where: { userId },
-    }),
     prisma.payment.findMany({
       where: { contract: { userId }, status: "Pendente" },
       orderBy: { dueDate: "asc" },
@@ -725,7 +789,28 @@ export const getDashboardData = cache(async () => {
       },
       take: 5, // Limit pending payments for dashboard display
     }),
+    prisma.vehicle.groupBy({
+      by: ["status"],
+      where: { userId },
+      _count: {
+        status: true,
+      },
+    }),
   ]);
+
+  let rentedVehiclesCount = 0;
+  let availableVehiclesCount = 0;
+  let totalVehicles = 0;
+
+  for (const group of vehicleCounts) {
+    const count = group._count.status;
+    totalVehicles += count;
+    if (group.status === "Alugado") {
+      rentedVehiclesCount = count;
+    } else if (group.status === "Disponível") {
+      availableVehiclesCount = count;
+    }
+  }
   const totalRevenue = totalRevenueResult._sum.value || 0;
   const totalExpenses = totalExpensesResult._sum.value || 0;
   const netProfit = totalRevenue - totalExpenses;
