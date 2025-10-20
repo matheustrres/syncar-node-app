@@ -254,7 +254,7 @@ const AuthForm = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome Completo *
+                      NomecCompleto *
                     </label>
                     <div className="relative">
                       <User

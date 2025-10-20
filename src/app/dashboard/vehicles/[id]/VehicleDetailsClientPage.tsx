@@ -206,14 +206,14 @@ export default function VehicleDetailsClientPage({
       </button>
 
       <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <div className="min-w-0">
+            <h2 className="text-3xl font-bold text-gray-800 truncate">
               {vehicle.brand} {vehicle.model}
             </h2>
             <p className="text-lg text-gray-600">{vehicle.plate}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span
               className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                 vehicle.status === "Disponível"

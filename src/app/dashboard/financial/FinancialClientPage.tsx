@@ -54,21 +54,27 @@ export default function FinancialClientPage({
     data: pendingData,
     isLoading: pendingLoading,
     mutate: mutatePending,
-  } = useFetchPendingPayments(pendingPage, limit);
+  } = useFetchPendingPayments(pendingPage, limit, initialPendingPayments);
   const {
     data: paidData,
     isLoading: paidLoading,
     mutate: mutatePaid,
-  } = useFetchPaidPayments(paidPage, limit);
+  } = useFetchPaidPayments(paidPage, limit, initialPaidPayments);
   const {
     data: expensesData,
     isLoading: expensesLoading,
     mutate: mutateExpenses,
-  } = useFetchRecentExpenses(expensesPage, limit);
+  } = useFetchRecentExpenses(expensesPage, limit, initialRecentExpenses);
 
-  const [accumulatedExpenses, setAccumulatedExpenses] = useState<ExpenseWithRelations[]>(initialRecentExpenses.expenses);
-  const [accumulatedPending, setAccumulatedPending] = useState<PaymentWithRelations[]>(initialPendingPayments.payments);
-  const [accumulatedPaid, setAccumulatedPaid] = useState<PaymentWithRelations[]>(initialPaidPayments.payments);
+  const [accumulatedExpenses, setAccumulatedExpenses] = useState<
+    ExpenseWithRelations[]
+  >(initialRecentExpenses.expenses);
+  const [accumulatedPending, setAccumulatedPending] = useState<
+    PaymentWithRelations[]
+  >(initialPendingPayments.payments);
+  const [accumulatedPaid, setAccumulatedPaid] = useState<
+    PaymentWithRelations[]
+  >(initialPaidPayments.payments);
 
   useEffect(() => {
     if (expensesData?.expenses && expensesPage > 1) {
@@ -156,18 +162,20 @@ export default function FinancialClientPage({
     if (isExpense) {
       if (editingItem) {
         setAccumulatedExpenses((prev) =>
-          prev.map((exp) => (exp.id === editingItem.id ? { ...exp, ...data } : exp))
+          prev.map((exp) =>
+            exp.id === editingItem.id ? { ...exp, ...data } : exp
+          )
         );
       } else {
         // For new expenses, we need a temporary ID
         const tempId = `temp-${Date.now()}`;
-        const newExpense = { ...(data as any), id: tempId };
+        const newExpense = { ...(data as ExpenseWithRelations), id: tempId };
         setAccumulatedExpenses((prev) => [newExpense, ...prev]);
       }
     } else {
       // For new payments
       const tempId = `temp-${Date.now()}`;
-      const newPayment = { ...(data as any), id: tempId };
+      const newPayment = { ...(data as PaymentWithRelations), id: tempId };
       setAccumulatedPending((prev) => [newPayment, ...prev]);
     }
 
@@ -205,10 +213,14 @@ export default function FinancialClientPage({
           // Simple revert, could be improved to store original item
           mutateExpenses();
         } else {
-          setAccumulatedExpenses((prev) => prev.filter((exp) => !exp.id.startsWith("temp-")));
+          setAccumulatedExpenses((prev) =>
+            prev.filter((exp) => !exp.id.startsWith("temp-"))
+          );
         }
       } else {
-        setAccumulatedPending((prev) => prev.filter((p) => !p.id.startsWith("temp-")));
+        setAccumulatedPending((prev) =>
+          prev.filter((p) => !p.id.startsWith("temp-"))
+        );
       }
     }
     setIsSaving(false);
@@ -342,7 +354,9 @@ export default function FinancialClientPage({
                           className="text-sm text-green-600 hover:text-green-800 font-semibold flex items-center gap-2"
                         >
                           <Check size={16} />
-                          <span className="hidden md:inline">Marcar como Pago</span>
+                          <span className="hidden md:inline">
+                            Marcar como pago
+                          </span>
                         </button>
                       </div>
                     </div>
@@ -359,7 +373,7 @@ export default function FinancialClientPage({
                 onClick={() => setPendingPage((p) => p + 1)}
                 className="w-full text-center text-blue-600 font-semibold p-2"
               >
-                Carregar Mais
+                Carregar mais
               </button>
             )}
           </div>
@@ -381,7 +395,8 @@ export default function FinancialClientPage({
                     <div className="flex-shrink min-w-0">
                       <p className="font-semibold truncate">{expense.type}</p>
                       <p className="text-sm text-gray-500 truncate">
-                        {expense.description} ({expense.vehicle?.plate || "N/A"})
+                        {expense.description} ({expense.vehicle?.plate || "N/A"}
+                        )
                       </p>
                       <p className="text-sm text-gray-500">&nbsp;</p>
                     </div>
@@ -419,7 +434,7 @@ export default function FinancialClientPage({
                 onClick={() => setExpensesPage((p) => p + 1)}
                 className="w-full text-center text-blue-600 font-semibold p-2"
               >
-                Carregar Mais
+                Carregar mais
               </button>
             )}
           </div>
@@ -443,6 +458,10 @@ export default function FinancialClientPage({
                         {payment.contract.driver.name}
                       </p>
                       <p className="text-sm text-gray-500">
+                        Venc.:{" "}
+                        {new Date(payment.dueDate).toLocaleDateString("pt-BR")}
+                      </p>
+                      <p className="text-sm text-gray-500">
                         Pago em:{" "}
                         {payment.paymentDate
                           ? new Date(payment.paymentDate).toLocaleDateString(
@@ -450,7 +469,6 @@ export default function FinancialClientPage({
                             )
                           : "N/A"}
                       </p>
-                      <p className="text-sm text-gray-500">&nbsp;</p>
                     </div>
                     <p className="font-bold text-green-600 whitespace-nowrap">
                       R$ {payment.value.toFixed(2)}

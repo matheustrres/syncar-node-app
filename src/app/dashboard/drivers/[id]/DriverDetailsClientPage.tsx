@@ -240,12 +240,14 @@ export default function DriverDetailsClientPage({
       </button>
 
       <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">{driver.name}</h2>
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <div className="min-w-0">
+            <h2 className="text-3xl font-bold text-gray-800 truncate">
+              {driver.name}
+            </h2>
             <p className="text-lg text-gray-600">CPF: {driver.cpf}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span
               className={`px-3 py-1 text-sm font-semibold rounded-full ${driver.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}`}
             >
@@ -273,7 +275,7 @@ export default function DriverDetailsClientPage({
             Detalhes do motorista
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
-            <DetailItem label="Nome Completo" value={driver.name} />
+            <DetailItem label="Nome completo" value={driver.name} />
             <DetailItem label="CPF" value={driver.cpf} />
             <DetailItem label="Telefone" value={driver.phone} />
             <DetailItem label="Email" value={driver.email} />

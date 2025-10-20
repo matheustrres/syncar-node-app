@@ -244,31 +244,46 @@ export function useAllVehicles(fallbackData?: Vehicle[]) {
 
 // --- Financial Page Hooks ---
 
-export function useFetchRecentExpenses(page: number, limit: number) {
+export function useFetchRecentExpenses(
+  page: number,
+  limit: number,
+  fallbackData?: { expenses: ExpenseWithRelations[]; total: number }
+) {
   const { data, error, isLoading, mutate } = useSWR<{
     expenses: ExpenseWithRelations[];
     total: number;
   }>(`/api/financial/recent-expenses?page=${page}&limit=${limit}`, fetcher, {
+    fallbackData,
     revalidateOnMount: false,
   });
   return { data, isLoading, isError: error, mutate };
 }
 
-export function useFetchPendingPayments(page: number, limit: number) {
+export function useFetchPendingPayments(
+  page: number,
+  limit: number,
+  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+) {
   const { data, error, isLoading, mutate } = useSWR<{
     payments: PaymentWithRelations[];
     total: number;
   }>(`/api/financial/pending-payments?page=${page}&limit=${limit}`, fetcher, {
+    fallbackData,
     revalidateOnMount: false,
   });
   return { data, isLoading, isError: error, mutate };
 }
 
-export function useFetchPaidPayments(page: number, limit: number) {
+export function useFetchPaidPayments(
+  page: number,
+  limit: number,
+  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+) {
   const { data, error, isLoading, mutate } = useSWR<{
     payments: PaymentWithRelations[];
     total: number;
   }>(`/api/financial/paid-payments?page=${page}&limit=${limit}`, fetcher, {
+    fallbackData,
     revalidateOnMount: false,
   });
   return { data, isLoading, isError: error, mutate };

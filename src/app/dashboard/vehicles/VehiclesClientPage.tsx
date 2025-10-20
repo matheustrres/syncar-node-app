@@ -138,8 +138,6 @@ export default function VehiclesClientPage({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
 
-
-
   useEffect(() => {
     setPage(1);
   }, [filters]);
@@ -274,7 +272,7 @@ export default function VehiclesClientPage({
         showToast("Veículo excluído com sucesso!", "success");
         return { vehicles: optimisticData, total: total - 1 };
       }, options);
-    } catch (error) {
+    } catch {
       showToast("Falha ao excluir veículo.", "error");
     }
 

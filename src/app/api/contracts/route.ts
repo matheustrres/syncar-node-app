@@ -200,6 +200,14 @@ export async function POST(request: NextRequest) {
           create: paymentsToCreate,
         },
       },
+      include: {
+        driver: {
+          select: { name: true },
+        },
+        vehicle: {
+          select: { plate: true, model: true },
+        },
+      },
     });
 
     await prisma.vehicle.update({

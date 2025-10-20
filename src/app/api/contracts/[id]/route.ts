@@ -50,7 +50,14 @@ export async function PUT(
     );
   }
   const data = await request.json();
-  const updatedContract = await prisma.contract.update({ where: { id }, data });
+  const updatedContract = await prisma.contract.update({
+    where: { id },
+    data,
+    include: {
+      driver: { select: { name: true } },
+      vehicle: { select: { plate: true, model: true } },
+    },
+  });
   if (
     data.weeklyValue &&
     data.weeklyValue !== contractBeforeUpdate.weeklyValue

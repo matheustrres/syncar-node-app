@@ -125,8 +125,6 @@ export default function DriversClientPage({
 
   const limit = 10;
 
-
-
   useEffect(() => {
     setPage(1);
   }, [filters]);
@@ -268,7 +266,7 @@ export default function DriversClientPage({
         showToast("Motorista excluído com sucesso!", "success");
         return { drivers: optimisticData, total: total - 1 };
       }, options);
-    } catch (error) {
+    } catch {
       showToast("Falha ao excluir motorista.", "error");
     }
 

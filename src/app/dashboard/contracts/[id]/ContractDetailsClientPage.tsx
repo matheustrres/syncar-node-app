@@ -119,17 +119,17 @@ export default function ContractDetailsClientPage({
       </button>
 
       <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">
+        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
+          <div className="min-w-0">
+            <h2 className="text-3xl font-bold text-gray-800 truncate">
               {contract.driver.name}
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-600 truncate">
               {contract.vehicle.plate} - {contract.vehicle.brand}{" "}
               {contract.vehicle.model}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <span
               className={`px-3 py-1 text-sm font-semibold rounded-full ${contract.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
             >
@@ -157,6 +157,7 @@ export default function ContractDetailsClientPage({
             Detalhes do contrato
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+            <DetailItem label="Motorista" value={contract.driver.name} />
             <DetailItem
               label="Valor semanal"
               value={`R$ ${contract.weeklyValue.toFixed(2)}`}
