@@ -152,14 +152,44 @@ export async function POST(request: NextRequest) {
       Sábado: 6,
     };
     const paymentDayIndex = dayOfWeekMap[paymentDay];
-    let nextPaymentDate = new Date(startDate);
-    nextPaymentDate.setDate(
-      startDate.getDate() + ((paymentDayIndex - startDate.getDay() + 7) % 7)
-    );
+    const nextPaymentDate = new Date(startDate);
+    const dayDifference = (paymentDayIndex - startDate.getDay() + 7) % 7;
+
+    if (dayDifference === 0) {
+      // If the start date is the same as the payment day, add 7 days
+      nextPaymentDate.setDate(startDate.getDate() + 7);
+    } else {
+      nextPaymentDate.setDate(startDate.getDate() + dayDifference);
+    }
 
     const weekStart = new Date(nextPaymentDate);
     weekStart.setDate(nextPaymentDate.getDate() - 6);
     const weekEnd = new Date(nextPaymentDate);
+
+    const paymentsToCreate = [];
+    if (contractData.duration) {
+      for (let i = 0; i < contractData.duration; i++) {
+        const paymentDate = new Date(nextPaymentDate);
+        paymentDate.setDate(paymentDate.getDate() + i * 7);
+
+        const weekStart = new Date(paymentDate);
+        weekStart.setDate(paymentDate.getDate() - 6);
+
+        paymentsToCreate.push({
+          value: contractData.weeklyValue,
+          dueDate: paymentDate,
+          weekStart,
+          weekEnd: paymentDate,
+        });
+      }
+    } else {
+      paymentsToCreate.push({
+        value: contractData.weeklyValue,
+        dueDate: nextPaymentDate,
+        weekStart,
+        weekEnd,
+      });
+    }
 
     const newContract = await prisma.contract.create({
       data: {
@@ -167,12 +197,7 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
         vehicleId,
         payments: {
-          create: {
-            value: contractData.weeklyValue,
-            dueDate: nextPaymentDate,
-            weekStart,
-            weekEnd,
-          },
+          create: paymentsToCreate,
         },
       },
     });

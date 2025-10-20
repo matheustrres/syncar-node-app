@@ -171,6 +171,12 @@ export default function ContractDetailsClientPage({
               label="Data de início"
               value={new Date(contract.startDate).toLocaleDateString("pt-BR")}
             />
+            {contract.duration && (
+              <DetailItem
+                label="Duração (semanas)"
+                value={contract.duration}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -179,35 +179,66 @@ export default function VehiclesClientPage({
   };
 
   const handleSave = async (formData: WithoutBaseItem<Vehicle>) => {
-    setIsSaving(true);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem
       ? `/api/vehicles/${editingItem.id}`
       : "/api/vehicles";
+
+    const optimisticData = editingItem
+      ? vehicles.map((v) =>
+          v.id === editingItem.id ? { ...v, ...formData } : v
+        )
+      : [
+          {
+            ...(formData as Vehicle),
+            id: "temp-id",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            userId: "temp-user-id", // This will be replaced by the server response
+          },
+          ...vehicles,
+        ];
+
+    const options = {
+      optimisticData: { vehicles: optimisticData, total },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+
+    setIsSaving(true);
+    handleCloseFormModal();
+
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error);
-      }
-      showToast(
-        `Veículo ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
-        "success"
-      );
-      setIsSaving(false);
-      handleCloseFormModal();
-      mutateVehicles();
+      await mutateVehicles(async () => {
+        const response = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) {
+          const { error } = await response.json();
+          throw new Error(error);
+        }
+        const savedVehicle = await response.json();
+        showToast(
+          `Veículo ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
+          "success"
+        );
+        // Replace temp-id with the real id
+        const finalData = optimisticData.map((v) =>
+          v.id === "temp-id" ? savedVehicle : v
+        );
+        return { vehicles: finalData, total: editingItem ? total : total + 1 };
+      }, options);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Ocorreu um erro",
         "error"
       );
-      setIsSaving(false);
     }
+
+    setIsSaving(false);
   };
 
   const handleDeleteClick = (item: Vehicle) => {
@@ -219,18 +250,35 @@ export default function VehiclesClientPage({
   };
 
   const handleConfirmDelete = async () => {
-    if (itemToDelete) {
-      setIsDeleting(true);
-      try {
-        await fetch(`/api/vehicles/${itemToDelete.id}`, { method: "DELETE" });
+    if (!itemToDelete) return;
+
+    const optimisticData = vehicles.filter((v) => v.id !== itemToDelete.id);
+    const options = {
+      optimisticData: { vehicles: optimisticData, total: total - 1 },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+
+    setIsDeleting(true);
+    setItemToDelete(null);
+
+    try {
+      await mutateVehicles(async () => {
+        const response = await fetch(`/api/vehicles/${itemToDelete.id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          throw new Error("Falha ao excluir");
+        }
         showToast("Veículo excluído com sucesso!", "success");
-        setItemToDelete(null);
-        mutateVehicles();
-      } catch {
-        showToast("Falha ao excluir veículo.", "error");
-      }
-      setIsDeleting(false);
+        return { vehicles: optimisticData, total: total - 1 };
+      }, options);
+    } catch (error) {
+      showToast("Falha ao excluir veículo.", "error");
     }
+
+    setIsDeleting(false);
   };
 
   const handleRowClick = (itemId: string) => {

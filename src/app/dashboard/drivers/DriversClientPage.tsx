@@ -175,34 +175,64 @@ export default function DriversClientPage({
   const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async (formData: WithoutBaseItem<Driver>) => {
-    setIsSaving(true);
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem ? `/api/drivers/${editingItem.id}` : "/api/drivers";
+
+    const optimisticData = editingItem
+      ? drivers.map((d) =>
+          d.id === editingItem.id ? { ...d, ...formData } : d
+        )
+      : [
+          {
+            ...(formData as Driver),
+            id: "temp-id",
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            userId: "temp-user-id", // This will be replaced by the server response
+          },
+          ...drivers,
+        ];
+
+    const options = {
+      optimisticData: { drivers: optimisticData, total },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+
+    setIsSaving(true);
+    handleCloseFormModal();
+
     try {
-      const response = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (!response.ok) {
-        const { error } = await response.json();
-        throw new Error(error);
-      }
-      showToast(
-        `Motorista ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
-        "success"
-      );
-      setIsSaving(false);
-      handleCloseFormModal();
-      mutateDrivers();
+      await mutateDrivers(async () => {
+        const response = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
+        if (!response.ok) {
+          const { error } = await response.json();
+          throw new Error(error);
+        }
+        const savedDriver = await response.json();
+        showToast(
+          `Motorista ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
+          "success"
+        );
+        // Replace temp-id with the real id
+        const finalData = optimisticData.map((d) =>
+          d.id === "temp-id" ? savedDriver : d
+        );
+        return { drivers: finalData, total: editingItem ? total : total + 1 };
+      }, options);
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Ocorreu um erro",
         "error"
       );
-
-      setIsSaving(false);
     }
+
+    setIsSaving(false);
   };
 
   const handleDeleteClick = (item: Driver) => {
@@ -214,18 +244,35 @@ export default function DriversClientPage({
   };
 
   const handleConfirmDelete = async () => {
-    if (itemToDelete) {
-      setIsDeleting(true);
-      try {
-        await fetch(`/api/drivers/${itemToDelete.id}`, { method: "DELETE" });
+    if (!itemToDelete) return;
+
+    const optimisticData = drivers.filter((d) => d.id !== itemToDelete.id);
+    const options = {
+      optimisticData: { drivers: optimisticData, total: total - 1 },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+
+    setIsDeleting(true);
+    setItemToDelete(null);
+
+    try {
+      await mutateDrivers(async () => {
+        const response = await fetch(`/api/drivers/${itemToDelete.id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          throw new Error("Falha ao excluir");
+        }
         showToast("Motorista excluído com sucesso!", "success");
-        setItemToDelete(null);
-        mutateDrivers();
-      } catch {
-        showToast("Falha ao excluir motorista.", "error");
-      }
-      setIsDeleting(false);
+        return { drivers: optimisticData, total: total - 1 };
+      }, options);
+    } catch (error) {
+      showToast("Falha ao excluir motorista.", "error");
     }
+
+    setIsDeleting(false);
   };
 
   const handleRowClick = (itemId: string) => {

@@ -117,20 +117,27 @@ export default function FinancialClientPage({
   };
 
   const handleConfirmDeleteExpense = async () => {
-    if (expenseToDelete) {
-      setIsDeleting(true);
-      try {
-        await fetch(`/api/expenses/${expenseToDelete.id}`, {
-          method: "DELETE",
-        });
-        showToast("Despesa excluída com sucesso!", "success");
-        setExpenseToDelete(null);
-        mutateExpenses();
-      } catch {
-        showToast("Falha ao excluir despesa.", "error");
-      }
-      setIsDeleting(false);
+    if (!expenseToDelete) return;
+
+    const expenseToRemove = expenseToDelete;
+    setExpenseToDelete(null);
+    setAccumulatedExpenses((prev) =>
+      prev.filter((exp) => exp.id !== expenseToRemove.id)
+    );
+
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/expenses/${expenseToRemove.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error("Falha na API");
+      showToast("Despesa excluída com sucesso!", "success");
+      mutateExpenses(); // Revalidate
+    } catch {
+      showToast("Falha ao excluir despesa. Revertendo...", "error");
+      setAccumulatedExpenses((prev) => [expenseToRemove, ...prev]);
     }
+    setIsDeleting(false);
   };
 
   const handleCloseModal = () => {
@@ -139,40 +146,90 @@ export default function FinancialClientPage({
   };
 
   const handleSave = async (apiPath: string, data: object) => {
+    const isExpense = apiPath.includes("expenses");
+    const editingItem = isExpense ? editingExpense : null; // Assuming only expenses can be edited for now
+
     setIsSaving(true);
-    const method = editingExpense ? "PUT" : "POST";
-    const url = editingExpense ? `${apiPath}/${editingExpense.id}` : apiPath;
+
+    // Optimistic UI update
+    handleCloseModal();
+    if (isExpense) {
+      if (editingItem) {
+        setAccumulatedExpenses((prev) =>
+          prev.map((exp) => (exp.id === editingItem.id ? { ...exp, ...data } : exp))
+        );
+      } else {
+        // For new expenses, we need a temporary ID
+        const tempId = `temp-${Date.now()}`;
+        const newExpense = { ...(data as any), id: tempId };
+        setAccumulatedExpenses((prev) => [newExpense, ...prev]);
+      }
+    } else {
+      // For new payments
+      const tempId = `temp-${Date.now()}`;
+      const newPayment = { ...(data as any), id: tempId };
+      setAccumulatedPending((prev) => [newPayment, ...prev]);
+    }
 
     try {
+      const method = editingItem ? "PUT" : "POST";
+      const url = editingItem ? `${apiPath}/${editingItem.id}` : apiPath;
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+
       if (!response.ok) {
         const { error } = await response.json();
         throw new Error(error);
       }
+
       showToast(`Operação realizada com sucesso!`, "success");
-      handleCloseModal();
-      if (apiPath.includes("payments")) {
+
+      // Revalidate with the server
+      if (isExpense) {
+        mutateExpenses();
+      } else {
         mutatePending();
         mutatePaid();
-      } else if (apiPath.includes("expenses")) {
-        mutateExpenses();
       }
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Ocorreu um erro",
         "error"
       );
+      // Revert optimistic update on failure
+      if (isExpense) {
+        if (editingItem) {
+          // Simple revert, could be improved to store original item
+          mutateExpenses();
+        } else {
+          setAccumulatedExpenses((prev) => prev.filter((exp) => !exp.id.startsWith("temp-")));
+        }
+      } else {
+        setAccumulatedPending((prev) => prev.filter((p) => !p.id.startsWith("temp-")));
+      }
     }
     setIsSaving(false);
   };
 
   const handleMarkAsPaid = async (paymentId: string) => {
+    const paymentToMove = accumulatedPending.find((p) => p.id === paymentId);
+    if (!paymentToMove) return;
+
+    setAccumulatedPending((prev) => prev.filter((p) => p.id !== paymentId));
+    setAccumulatedPaid((prev) => [
+      {
+        ...paymentToMove,
+        status: "Pago",
+        paymentDate: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+
     try {
-      await fetch(`/api/payments/${paymentId}`, {
+      const response = await fetch(`/api/payments/${paymentId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -180,11 +237,14 @@ export default function FinancialClientPage({
           paymentDate: new Date().toISOString(),
         }),
       });
+      if (!response.ok) throw new Error("Falha na API");
       showToast("Pagamento marcado como pago!", "success");
       mutatePending();
       mutatePaid();
     } catch {
-      showToast("Falha ao marcar como pago.", "error");
+      showToast("Falha ao marcar como pago. Revertendo...", "error");
+      setAccumulatedPaid((prev) => prev.filter((p) => p.id !== paymentId));
+      setAccumulatedPending((prev) => [paymentToMove, ...prev]);
     }
   };
 

@@ -2,7 +2,15 @@
 
 import { Contract, Vehicle, Driver } from "@/types";
 import { useState, useEffect, FormEvent } from "react";
-import { Car, User, DollarSign, Calendar, Shield, Hash, AlertCircle } from "lucide-react";
+import {
+  Car,
+  User,
+  DollarSign,
+  Calendar,
+  Shield,
+  Hash,
+  AlertCircle,
+} from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
@@ -35,13 +43,17 @@ const ContractForm: React.FC<ContractFormProps> = ({
     startDate: new Date().toISOString().split("T")[0],
     deposit: undefined as string | undefined,
     status: "Ativo",
+    duration: undefined as number | undefined,
   });
 
   const availableVehiclesOptions: SelectOption[] = vehicles
     .filter((v) => v.status === "Disponível" || v.id === formData.vehicleId)
     .map((v) => ({ value: v.id, label: `${v.plate} - ${v.model}` }));
 
-  const activeDriversOptions: SelectOption[] = drivers.map((d) => ({ value: d.id, label: d.name }));
+  const activeDriversOptions: SelectOption[] = drivers.map((d) => ({
+    value: d.id,
+    label: d.name,
+  }));
 
   const paymentDayOptions: SelectOption[] = [
     { value: "Segunda-feira", label: "Segunda-feira" },
@@ -65,12 +77,12 @@ const ContractForm: React.FC<ContractFormProps> = ({
         driverId: initialData.driverId || "",
         weeklyValue: String(initialData.weeklyValue) || undefined,
         paymentDay: initialData.paymentDay || "Segunda-feira",
-        startDate:
-          initialData.startDate
-            ? new Date(initialData.startDate).toISOString().split("T")[0]
-            : new Date().toISOString().split("T")[0],
+        startDate: initialData.startDate
+          ? new Date(initialData.startDate).toISOString().split("T")[0]
+          : new Date().toISOString().split("T")[0],
         deposit: String(initialData.deposit) || undefined,
         status: initialData.status || "Ativo",
+        duration: initialData.duration || undefined,
       });
     }
   }, [initialData]);
@@ -94,11 +106,15 @@ const ContractForm: React.FC<ContractFormProps> = ({
         .replace(",", ".");
       return parseFloat(cleanedValue) || 0;
     };
+    const [year, month, day] = formData.startDate.split("-").map(Number);
     onSave({
       ...formData,
       weeklyValue: parseCurrency(formData.weeklyValue),
       deposit: parseCurrency(formData.deposit),
-      startDate: new Date(formData.startDate).toISOString(),
+      startDate: new Date(year, month - 1, day).toISOString(),
+      duration: formData.duration
+        ? parseInt(String(formData.duration), 10)
+        : null,
     });
   };
 
@@ -170,7 +186,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
           required
         />
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-1">
           <CustomSelect
             label="Status do contrato *"
             value={formData.status}
@@ -179,6 +195,21 @@ const ContractForm: React.FC<ContractFormProps> = ({
             }
             options={statusOptions}
             Icon={Hash}
+          />
+        </div>
+
+        <div className="relative md:col-span-1">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Duração (semanas) *
+          </label>
+          <Hash className="absolute left-3 top-9 text-gray-400" size={20} />
+          <input
+            type="number"
+            name="duration"
+            value={formData.duration || ""}
+            onChange={handleChange}
+            required
+            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100"
           />
         </div>
       </div>
