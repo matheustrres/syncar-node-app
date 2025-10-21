@@ -224,3 +224,37 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  }
+  const { ids } = await request.json();
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return NextResponse.json(
+      { error: "IDs inválidos fornecidos." },
+      { status: 400 }
+    );
+  }
+  try {
+    await prisma.contract.deleteMany({
+      where: {
+        id: {
+          in: ids,
+        },
+        userId: session.user.id,
+      },
+    });
+    return NextResponse.json(
+      { message: "Contratos excluídos com sucesso." },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Erro ao excluir contratos:", error);
+    return NextResponse.json(
+      { error: "Ocorreu um erro ao excluir os contratos." },
+      { status: 500 }
+    );
+  }
+}

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicles, VehicleFilters } from "@/hooks/useData";
+import useCrud from "@/hooks/useCrud";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import {
@@ -152,11 +153,14 @@ export default function VehiclesClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Vehicle | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Vehicle | null>(null);
+  const [itemsToDelete, setItemsToDelete] = useState<string[]>([]);
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
+
+  const { deleteMany: deleteManyVehicles } = useCrud<Vehicle>("/api/vehicles");
 
   const handleOpenFormModal = (item: Vehicle | null = null) => {
     setEditingItem(item);
@@ -245,6 +249,7 @@ export default function VehiclesClientPage({
 
   const handleCloseDeleteModal = () => {
     setItemToDelete(null);
+    setItemsToDelete([]);
   };
 
   const handleConfirmDelete = async () => {
@@ -274,6 +279,43 @@ export default function VehiclesClientPage({
       }, options);
     } catch {
       showToast("Falha ao excluir veículo.", "error");
+    }
+
+    setIsDeleting(false);
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    setItemsToDelete(ids);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const optimisticData = vehicles.filter(
+      (vehicle) => !itemsToDelete.includes(vehicle.id)
+    );
+    const options = {
+      optimisticData: {
+        vehicles: optimisticData,
+        total: total - itemsToDelete.length,
+      },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+
+    setIsDeleting(true);
+    setItemsToDelete([]);
+
+    try {
+      await mutateVehicles(async () => {
+        await deleteManyVehicles(itemsToDelete);
+        showToast("Veículos excluídos com sucesso!", "success");
+        return {
+          vehicles: optimisticData,
+          total: total - itemsToDelete.length,
+        };
+      }, options);
+    } catch {
+      showToast("Falha ao excluir veículos.", "error");
     }
 
     setIsDeleting(false);
@@ -370,6 +412,7 @@ export default function VehiclesClientPage({
               onSort={handleSort}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
+              onBulkDelete={handleBulkDelete}
             />
           </div>
 
@@ -404,14 +447,14 @@ export default function VehiclesClientPage({
                 >
                   <div className="flex gap-2">
                     <button
-                      title="Editar Veículo"
+                      title="Editar veículo"
                       onClick={() => handleOpenFormModal(vehicle)}
                       className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
                     >
                       <Edit size={18} />
                     </button>
                     <button
-                      title="Excluir Veículo"
+                      title="Excluir veículo"
                       onClick={() => handleDeleteClick(vehicle)}
                       className="text-red-600 p-2 rounded-full hover:bg-gray-100"
                     >
@@ -465,11 +508,13 @@ export default function VehiclesClientPage({
       </Modal>
 
       <DeleteConfirmationModal
-        isOpen={!!itemToDelete}
+        isOpen={!!itemToDelete || itemsToDelete.length > 0}
         onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        resourceName="veículo"
-        resourceIdentifier={itemToDelete?.plate}
+        onConfirm={itemToDelete ? handleConfirmDelete : handleConfirmBulkDelete}
+        resourceName={
+          itemToDelete ? "veículo" : `${itemsToDelete.length} veículos`
+        }
+        resourceIdentifier={itemToDelete ? itemToDelete.plate : "selecionados"}
         isDeleting={isDeleting}
       />
 

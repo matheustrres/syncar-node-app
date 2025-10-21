@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Driver, WithoutBaseItem } from "@/types";
 import { DriverFilters, useFetchDrivers } from "@/hooks/useData";
+import useCrud from "@/hooks/useCrud";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
 import {
@@ -145,12 +146,15 @@ export default function DriversClientPage({
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Driver | null>(null);
   const [itemToDelete, setItemToDelete] = useState<Driver | null>(null);
+  const [itemsToDelete, setItemsToDelete] = useState<string[]>([]);
 
   const { showToast } = useToast();
 
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && total >= 3;
+
+  const { deleteMany: deleteManyDrivers } = useCrud<Driver>("/api/drivers");
 
   const handleOpenFormModal = (item: Driver | null = null) => {
     setEditingItem(item);
@@ -175,7 +179,6 @@ export default function DriversClientPage({
   const handleSave = async (formData: WithoutBaseItem<Driver>) => {
     const method = editingItem ? "PUT" : "POST";
     const url = editingItem ? `/api/drivers/${editingItem.id}` : "/api/drivers";
-
     const optimisticData = editingItem
       ? drivers.map((d) =>
           d.id === editingItem.id ? { ...d, ...formData } : d
@@ -190,17 +193,14 @@ export default function DriversClientPage({
           },
           ...drivers,
         ];
-
     const options = {
       optimisticData: { drivers: optimisticData, total },
       rollbackOnError: true,
       populateCache: true,
       revalidate: false,
     };
-
     setIsSaving(true);
     handleCloseFormModal();
-
     try {
       await mutateDrivers(async () => {
         const response = await fetch(url, {
@@ -229,7 +229,6 @@ export default function DriversClientPage({
         "error"
       );
     }
-
     setIsSaving(false);
   };
 
@@ -239,11 +238,11 @@ export default function DriversClientPage({
 
   const handleCloseDeleteModal = () => {
     setItemToDelete(null);
+    setItemsToDelete([]);
   };
 
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
-
     const optimisticData = drivers.filter((d) => d.id !== itemToDelete.id);
     const options = {
       optimisticData: { drivers: optimisticData, total: total - 1 },
@@ -251,10 +250,8 @@ export default function DriversClientPage({
       populateCache: true,
       revalidate: false,
     };
-
     setIsDeleting(true);
     setItemToDelete(null);
-
     try {
       await mutateDrivers(async () => {
         const response = await fetch(`/api/drivers/${itemToDelete.id}`, {
@@ -270,6 +267,40 @@ export default function DriversClientPage({
       showToast("Falha ao excluir motorista.", "error");
     }
 
+    setIsDeleting(false);
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    setItemsToDelete(ids);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const optimisticData = drivers.filter(
+      (driver) => !itemsToDelete.includes(driver.id)
+    );
+    const options = {
+      optimisticData: {
+        drivers: optimisticData,
+        total: total - itemsToDelete.length,
+      },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+    setIsDeleting(true);
+    setItemsToDelete([]);
+    try {
+      await mutateDrivers(async () => {
+        await deleteManyDrivers(itemsToDelete);
+        showToast("Motoristas excluídos com sucesso!", "success");
+        return {
+          drivers: optimisticData,
+          total: total - itemsToDelete.length,
+        };
+      }, options);
+    } catch {
+      showToast("Falha ao excluir motoristas.", "error");
+    }
     setIsDeleting(false);
   };
 
@@ -366,6 +397,7 @@ export default function DriversClientPage({
               onSort={handleSort}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
+              onBulkDelete={handleBulkDelete}
             />{" "}
           </div>
 
@@ -448,7 +480,7 @@ export default function DriversClientPage({
       <Modal
         isOpen={isFormModalOpen}
         onClose={handleCloseFormModal}
-        title={editingItem ? "Editar Motorista" : "Adicionar Motorista"}
+        title={editingItem ? "Editar motorista" : "Adicionar motorista"}
         size="4xl"
       >
         <DriverForm
@@ -460,11 +492,13 @@ export default function DriversClientPage({
       </Modal>
 
       <DeleteConfirmationModal
-        isOpen={!!itemToDelete}
+        isOpen={!!itemToDelete || itemsToDelete.length > 0}
         onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        resourceName="motorista"
-        resourceIdentifier={itemToDelete?.name}
+        onConfirm={itemToDelete ? handleConfirmDelete : handleConfirmBulkDelete}
+        resourceName={
+          itemToDelete ? "motorista" : `${itemsToDelete.length} motoristas`
+        }
+        resourceIdentifier={itemToDelete ? itemToDelete.name : "selecionados"}
         isDeleting={isDeleting}
       />
 

@@ -227,7 +227,7 @@ export default function VehicleDetailsClientPage({
             </span>
             <button
               onClick={() => setIsFormModalOpen(true)}
-              title="Editar Veículo"
+              title="Editar veículo"
               className="p-2 rounded-full text-indigo-600 hover:bg-gray-100"
             >
               <Edit size={20} />
@@ -265,7 +265,7 @@ export default function VehicleDetailsClientPage({
       <Modal
         isOpen={isFormModalOpen}
         onClose={() => setIsFormModalOpen(false)}
-        title="Editar Veículo"
+        title="Editar veículo"
         size="4xl"
       >
         <VehicleForm

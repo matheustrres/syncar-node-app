@@ -17,7 +17,7 @@ interface BaseItem {
   updatedAt: string;
 }
 
-export function useCrud<T extends BaseItem>(apiPath: string) {
+export default function useCrud<T extends BaseItem>(apiPath: string) {
   const router = useRouter();
   const { data, error, isLoading, mutate } = useSWR<T[]>(apiPath, fetcher);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -64,6 +64,14 @@ export function useCrud<T extends BaseItem>(apiPath: string) {
     }
   };
 
+  const deleteMany = async (ids: string[]) => {
+    await fetch(apiPath, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+  };
+
   const handleRowClick = (itemId: string) => {
     const resourceName = apiPath.split("/")[2];
     router.push(`/dashboard/${resourceName}/${itemId}`);
@@ -76,6 +84,7 @@ export function useCrud<T extends BaseItem>(apiPath: string) {
     isFormModalOpen,
     editingItem,
     itemToDelete,
+    deleteMany,
     handleOpenFormModal,
     handleCloseFormModal,
     handleSave,

@@ -12,6 +12,7 @@ import {
   ContractWithRelations,
   ContractFilters,
 } from "@/hooks/useData";
+import useCrud from "@/hooks/useCrud";
 import Modal from "@/components/ui/Modal";
 import ContractForm from "@/components/forms/ContractForm";
 import {
@@ -173,10 +174,14 @@ export default function ContractsClientPage({
   );
   const [itemToDelete, setItemToDelete] =
     useState<ContractWithRelations | null>(null);
+  const [itemsToDelete, setItemsToDelete] = useState<string[]>([]);
   const { showToast } = useToast();
   const { mutate } = useSWRConfig();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const { deleteMany: deleteManyContracts } =
+    useCrud<Contract>("/api/contracts");
 
   const handleOpenFormModal = (item: ContractWithRelations | null = null) => {
     setEditingItem(item);
@@ -279,6 +284,7 @@ export default function ContractsClientPage({
 
   const handleCloseDeleteModal = () => {
     setItemToDelete(null);
+    setItemsToDelete([]);
   };
 
   const handleConfirmDelete = async () => {
@@ -310,6 +316,40 @@ export default function ContractsClientPage({
       showToast("Falha ao excluir contrato.", "error");
     }
 
+    setIsDeleting(false);
+  };
+
+  const handleBulkDelete = (ids: string[]) => {
+    setItemsToDelete(ids);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    const optimisticData = contracts.filter(
+      (contract) => !itemsToDelete.includes(contract.id)
+    );
+    const options = {
+      optimisticData: {
+        contracts: optimisticData,
+        total: total - itemsToDelete.length,
+      },
+      rollbackOnError: true,
+      populateCache: true,
+      revalidate: false,
+    };
+    setIsDeleting(true);
+    setItemsToDelete([]);
+    try {
+      await mutateContracts(async () => {
+        await deleteManyContracts(itemsToDelete);
+        showToast("Contratos excluídos com sucesso!", "success");
+        return {
+          contracts: optimisticData,
+          total: total - itemsToDelete.length,
+        };
+      }, options);
+    } catch {
+      showToast("Falha ao excluir contratos.", "error");
+    }
     setIsDeleting(false);
   };
 
@@ -410,6 +450,7 @@ export default function ContractsClientPage({
               onSort={handleSort}
               sortColumn={sortColumn}
               sortDirection={sortDirection}
+              onBulkDelete={handleBulkDelete}
             />
           </div>
 
@@ -529,11 +570,17 @@ export default function ContractsClientPage({
       </Modal>
 
       <DeleteConfirmationModal
-        isOpen={!!itemToDelete}
+        isOpen={!!itemToDelete || itemsToDelete.length > 0}
         onClose={handleCloseDeleteModal}
-        onConfirm={handleConfirmDelete}
-        resourceName="contrato"
-        resourceIdentifier={`do motorista ${itemToDelete?.driver.name}`}
+        onConfirm={itemToDelete ? handleConfirmDelete : handleConfirmBulkDelete}
+        resourceName={
+          itemToDelete ? "contrato" : `${itemsToDelete.length} contratos`
+        }
+        resourceIdentifier={
+          itemToDelete
+            ? `do motorista ${itemToDelete?.driver.name}`
+            : "selecionados"
+        }
         isDeleting={isDeleting}
       />
     </div>
