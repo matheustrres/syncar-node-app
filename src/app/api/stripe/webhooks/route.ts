@@ -33,11 +33,11 @@ export async function POST(req: Request) {
         },
         data: {
           plan: "PROFESSIONAL",
+          stripeCustomerId: session.customer as string,
         },
       });
-      revalidatePath("/api/profile"); // Revalidate profile data
-    } catch (error) {
-      console.error("Error updating user plan:", error);
+      revalidatePath("/api/profile");
+    } catch {
       return new NextResponse("Webhook database error", { status: 500 });
     }
   }
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
         where: { id: user.id },
         data: { plan: "PROFESSIONAL" },
       });
-      revalidatePath("/api/profile"); // Revalidate profile data
+      revalidatePath("/api/profile");
     }
   }
   if (
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
           plan: newPlan,
         },
       });
-      revalidatePath("/api/profile"); // Revalidate profile data
+      revalidatePath("/api/profile");
     }
   }
   return new NextResponse(null, { status: 200 });
