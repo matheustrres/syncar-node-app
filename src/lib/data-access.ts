@@ -850,24 +850,27 @@ export const getProfile = cache(async () => {
 export const getAllNotifications = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    return { notifications: [], unreadCount: 0 };
+    return { notifications: [], unreadCount: 0, total: 0 };
   }
-
+  const whereClause = { userId: session.user.id };
   const notifications = await prisma.notification.findMany({
-    where: { userId: session.user.id },
+    where: whereClause,
     orderBy: {
       createdAt: 'desc',
     },
   });
-
   const unreadCount = await prisma.notification.count({
-    where: { userId: session.user.id, isRead: false },
+    where: { ...whereClause, isRead: false },
   });
 
-  const serializedNotifications = notifications.map((notification) => ({
-    ...notification,
-    createdAt: notification.createdAt.toISOString(),
-  }));
+  const total = await prisma.notification.count({ where: whereClause });
 
-  return { notifications: serializedNotifications, unreadCount };
+  return {
+    notifications: notifications.map((n) => ({
+      ...n,
+      createdAt: n.createdAt.toISOString(),
+    })),
+    unreadCount,
+    total,
+  };
 });

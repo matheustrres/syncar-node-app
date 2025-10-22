@@ -16,7 +16,13 @@ import { Notification } from "@/types";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const NotificationIcon = ({ type, isRead }: { type: string; isRead: boolean }) => {
+const NotificationIcon = ({
+  type,
+  isRead,
+}: {
+  type: string;
+  isRead: boolean;
+}) => {
   const iconProps = {
     size: 18,
     className: isRead ? "text-gray-500" : "text-blue-600",
@@ -90,7 +96,7 @@ export default function NotificationsClientPage({
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Bell />
-          Central de Notificações
+          Central de notificações
         </h1>
         <button
           onClick={handleMarkAllAsRead}
@@ -106,7 +112,7 @@ export default function NotificationsClientPage({
         </button>
       </div>
 
-      <div className={`space-y-4 ${isLoading ? 'opacity-50' : ''}`}>
+      <div className={`space-y-4 ${isLoading ? "opacity-50" : ""}`}>
         {notifications.length > 0 ? (
           notifications.map((notification: Notification) => (
             <Link

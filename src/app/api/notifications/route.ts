@@ -16,7 +16,9 @@ export async function GET(req: Request) {
   const limit = parseInt(searchParams.get("limit") || "10", 10);
   const skip = (page - 1) * limit;
 
-  const where: any = { userId: session.user.id };
+  const where: { userId: string; isRead?: boolean } = {
+    userId: session.user.id,
+  };
 
   if (isRead !== null) {
     where.isRead = isRead === "true";
