@@ -76,7 +76,7 @@ async function checkOverduePayments() {
   const overduePayments = await prisma.payment.findMany({
     where: {
       status: 'Pendente',
-      dueDate: { lt: today },
+      dueDate: { lte: today },
     },
     include: { contract: { include: { driver: true } } },
   });
