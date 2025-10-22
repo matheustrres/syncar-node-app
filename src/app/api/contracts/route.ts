@@ -165,6 +165,7 @@ export async function POST(request: NextRequest) {
     const weekStart = new Date(nextPaymentDate);
     weekStart.setDate(nextPaymentDate.getDate() - 6);
     const weekEnd = new Date(nextPaymentDate);
+    weekEnd.setDate(nextPaymentDate.getDate() + 6);
 
     const paymentsToCreate = [];
     if (contractData.duration) {
@@ -174,12 +175,14 @@ export async function POST(request: NextRequest) {
 
         const weekStart = new Date(paymentDate);
         weekStart.setDate(paymentDate.getDate() - 6);
+        const weekEnd = new Date(paymentDate);
+        weekEnd.setDate(paymentDate.getDate() + 6);
 
         paymentsToCreate.push({
           value: contractData.weeklyValue,
           dueDate: paymentDate,
           weekStart,
-          weekEnd: paymentDate,
+          weekEnd,
         });
       }
     } else {
