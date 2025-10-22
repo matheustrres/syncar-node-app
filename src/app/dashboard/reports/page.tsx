@@ -10,7 +10,7 @@ import ReportsClientPage from "./ReportsClientPage";
 export default async function ReportsPage() {
   const [
     cashFlow,
-    overduePayments,
+    rawOverduePayments,
     driverSummary,
     vehiclePerformance,
     expenseAnalysis,
@@ -21,6 +21,12 @@ export default async function ReportsPage() {
     getReportVehiclePerformance(),
     getReportExpenseAnalysis(),
   ]);
+
+  const overduePayments = rawOverduePayments.map((payment) => ({
+    ...payment,
+    daysOverdue: Number(payment.daysOverdue),
+  }));
+
   return (
     <ReportsClientPage
       initialCashFlow={cashFlow}

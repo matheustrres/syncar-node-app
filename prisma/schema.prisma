@@ -7,6 +7,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum NotificationType {
+  CONTRACT_ENDING
+  PAYMENT_OVERDUE
+}
+
 model User {
   id               String               @id @default(cuid())
   name             String
@@ -21,6 +26,7 @@ model User {
   contracts        Contract[]
   expenses         Expense[]
   resetTokens      PasswordResetToken[]
+  notifications    Notification[]
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
 
@@ -36,6 +42,19 @@ model PasswordResetToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("password_reset_tokens")
+}
+
+model Notification {
+  id              String           @id @default(cuid())
+  type            NotificationType
+  message         String
+  relatedEntityId String           @map("related_entity_id")
+  isRead          Boolean          @default(false) @map("is_read")
+  userId          String           @map("user_id")
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  @@map("notifications")
 }
 
 model Vehicle {

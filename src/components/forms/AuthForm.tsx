@@ -254,7 +254,7 @@ const AuthForm = () => {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      NomecCompleto *
+                      Nome completo *
                     </label>
                     <div className="relative">
                       <User
@@ -278,7 +278,7 @@ const AuthForm = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome da Empresa *
+                      Nome da empresa *
                     </label>
                     <div className="relative">
                       <Building

@@ -846,3 +846,28 @@ export const getProfile = cache(async () => {
   });
   return userProfile as unknown as User;
 });
+
+export const getAllNotifications = cache(async () => {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    return { notifications: [], unreadCount: 0 };
+  }
+
+  const notifications = await prisma.notification.findMany({
+    where: { userId: session.user.id },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  });
+
+  const unreadCount = await prisma.notification.count({
+    where: { userId: session.user.id, isRead: false },
+  });
+
+  const serializedNotifications = notifications.map((notification) => ({
+    ...notification,
+    createdAt: notification.createdAt.toISOString(),
+  }));
+
+  return { notifications: serializedNotifications, unreadCount };
+});
