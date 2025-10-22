@@ -17,8 +17,17 @@ import { useNotifications } from "@/hooks/useNotifications";
 import Link from "next/link";
 import { Notification } from "@/types";
 
-const NotificationIcon = ({ type }: { type: string }) => {
-  const iconProps = { size: 18, className: "text-gray-500" };
+const NotificationIcon = ({
+  type,
+  isRead,
+}: {
+  type: string;
+  isRead: boolean;
+}) => {
+  const iconProps = {
+    size: 18,
+    className: isRead ? "text-gray-500" : "text-blue-600",
+  };
 
   switch (type) {
     case "CONTRACT_ENDING":
@@ -36,7 +45,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
+  const { notifications, unreadCount, total, markAsRead, markAllAsRead } =
     useNotifications();
 
   const getNotificationLink = (notification: Notification) => {
@@ -98,7 +107,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
               </div>
               <div className="py-1 max-h-80 overflow-y-auto">
-                {notifications.length > 0 ? (
+                {total > 0 ? (
                   notifications.map((notification: Notification) => (
                     <Menu.Item key={notification.id}>
                       {({ active }) => (
@@ -107,13 +116,30 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                           onClick={() => markAsRead(notification.id)}
                           className={`${
                             active ? "bg-gray-100" : ""
-                          } flex items-start gap-3 px-4 py-3 text-sm text-gray-700`}
+                          } flex items-start gap-3 px-4 py-3 text-sm`}
                         >
-                          <div className="mt-0.5">
-                            <NotificationIcon type={notification.type} />
+                          <div
+                            className={`mt-0.5 p-1 rounded-full ${
+                              !notification.isRead
+                                ? "bg-blue-100"
+                                : "bg-gray-100"
+                            }`}
+                          >
+                            <NotificationIcon
+                              type={notification.type}
+                              isRead={notification.isRead}
+                            />
                           </div>
                           <div className="flex-1">
-                            {notification.message}
+                            <p
+                              className={`text-sm ${
+                                !notification.isRead
+                                  ? "font-semibold text-gray-900"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {notification.message}
+                            </p>
                             <p className="text-xs text-gray-400 mt-1">
                               {new Date(
                                 notification.createdAt
@@ -125,6 +151,12 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                               })}
                             </p>
                           </div>
+                          {!notification.isRead && (
+                            <div
+                              className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"
+                              title="Não lida"
+                            ></div>
+                          )}
                         </Link>
                       )}
                     </Menu.Item>
