@@ -1,4 +1,5 @@
-import { PrismaClient, NotificationType } from '@prisma/client';
+import { PrismaClient, NotificationType } from "@prisma/client";
+import cron from "node-cron";
 
 const prisma = new PrismaClient();
 
@@ -35,7 +36,7 @@ async function checkContractEndings() {
   console.log(`Fifteen Days From Now: ${fifteenDaysFromNow.toISOString()}`);
 
   const activeContracts = await prisma.contract.findMany({
-    where: { status: 'Ativo' },
+    where: { status: "Ativo" },
     include: { driver: true },
   });
   console.log(`Found ${activeContracts.length} active contracts to check.`);
@@ -53,13 +54,17 @@ async function checkContractEndings() {
     console.log(`  Start Date: ${startDate.toISOString()}`);
     console.log(`  Duration (weeks): ${contract.duration}`);
     console.log(`  Calculated End Date: ${endDate.toISOString()}`);
-    console.log(`  Condition Met (endDate >= today && endDate <= fifteenDaysFromNow): ${conditionMet}`);
+    console.log(
+      `  Condition Met (endDate >= today && endDate <= fifteenDaysFromNow): ${conditionMet}`
+    );
 
     if (conditionMet) {
-      const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      const daysLeft = Math.ceil(
+        (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+      );
       await createNotification({
         userId: contract.userId,
-        type: 'CONTRACT_ENDING',
+        type: "CONTRACT_ENDING",
         message: `O contrato com ${contract.driver.name} vence em ${daysLeft} dias.`,
         relatedEntityId: contract.id,
       });
@@ -75,7 +80,7 @@ async function checkOverduePayments() {
 
   const overduePayments = await prisma.payment.findMany({
     where: {
-      status: 'Pendente',
+      status: "Pendente",
       dueDate: { lte: today },
     },
     include: { contract: { include: { driver: true } } },
@@ -87,24 +92,27 @@ async function checkOverduePayments() {
     console.log(`  Due Date: ${payment.dueDate.toISOString()}`);
     await createNotification({
       userId: payment.contract.userId,
-      type: 'PAYMENT_OVERDUE',
+      type: "PAYMENT_OVERDUE",
       message: `O pagamento de ${payment.contract.driver.name} está atrasado.`,
       relatedEntityId: payment.contractId,
     });
   }
 }
 
-async function main() {
-  console.log('Iniciando verificação de notificações (com logs de depuração)...');
+console.log("Starting notification scheduler...");
+
+cron.schedule("* * * * *", async () => {
+  console.log("Running scheduled notification checks...");
   try {
     await checkContractEndings();
     await checkOverduePayments();
   } catch (error) {
-    console.error('Erro ao gerar notificações:', error);
-  } finally {
-    await prisma.$disconnect();
+    console.error("Error during scheduled notification checks:", error);
   }
-  console.log('Verificação de notificações concluída.');
-}
+});
 
-main();
+process.on("SIGINT", async () => {
+  console.log("Stopping cron scheduler and disconnecting Prisma...");
+  await prisma.$disconnect();
+  process.exit(0);
+});
