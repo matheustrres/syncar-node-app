@@ -13,12 +13,17 @@ import {
   DriverSummaryReportItem,
   VehiclePerformanceReportItem,
   ExpenseAnalysisReport,
+  Maintenance,
 } from "@/types";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 // --- Type Definitions ---
+
+export type MaintenanceWithRelations = Maintenance & {
+  vehicle: Vehicle;
+};
 
 export type ContractWithRelations = Contract & {
   driver: { name: string };
@@ -66,7 +71,62 @@ export interface ContractFilters {
   startDateEndDate?: string;
 }
 
+export interface MaintenanceFilters {
+  vehicleId?: string;
+  type?: string;
+  description?: string;
+  costMin?: string;
+  costMax?: string;
+  dateStartDate?: string;
+  dateEndDate?: string;
+  mileageMin?: string;
+  mileageMax?: string;
+}
+
 // --- Paginated Hooks ---
+
+export function useFetchMaintenance(
+  page: number,
+  limit: number,
+  filters: MaintenanceFilters,
+  sortColumn: string,
+  sortDirection: "asc" | "desc",
+  fallbackData?: { maintenance: MaintenanceWithRelations[]; total: number }
+) {
+  const queryParams = new URLSearchParams();
+  queryParams.append("page", page.toString());
+  queryParams.append("limit", limit.toString());
+  queryParams.append("sortColumn", sortColumn);
+  queryParams.append("sortDirection", sortDirection);
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (typeof value === "object" && value !== null) {
+      if (value.min) queryParams.append(`${key}Min`, value.min);
+      if (value.max) queryParams.append(`${key}Max`, value.max);
+      if (value.startDate)
+        queryParams.append(`${key}StartDate`, value.startDate);
+      if (value.endDate) queryParams.append(`${key}EndDate`, value.endDate);
+    } else if (value) {
+      queryParams.append(key, value);
+    }
+  });
+
+  const { data, error, isLoading, mutate } = useSWR<{
+    maintenance: MaintenanceWithRelations[];
+    total: number;
+  }>(`/api/maintenance?${queryParams.toString()}`, fetcher, {
+    fallbackData,
+    revalidateOnMount: false,
+  });
+
+  return {
+    maintenance: data?.maintenance || [],
+    total: data?.total || 0,
+    isLoading,
+    isError: error,
+    mutateMaintenance: mutate,
+  };
+}
 
 export function useFetchContracts(
   page: number,
@@ -81,10 +141,8 @@ export function useFetchContracts(
   queryParams.append("limit", limit.toString());
   queryParams.append("sortColumn", sortColumn);
   queryParams.append("sortDirection", sortDirection);
-
   Object.entries(filters).forEach(([key, value]) => {
     if (typeof value === "object" && value !== null) {
-      // Handle range filters
       if (value.min) queryParams.append(`${key}Min`, value.min);
       if (value.max) queryParams.append(`${key}Max`, value.max);
       if (value.startDate)
@@ -124,10 +182,8 @@ export function useFetchDrivers(
   queryParams.append("limit", limit.toString());
   queryParams.append("sortColumn", sortColumn);
   queryParams.append("sortDirection", sortDirection);
-
   Object.entries(filters).forEach(([key, value]) => {
     if (typeof value === "object" && value !== null) {
-      // Handle range filters
       if (value.min) queryParams.append(`${key}Min`, value.min);
       if (value.max) queryParams.append(`${key}Max`, value.max);
       if (value.startDate)
@@ -137,7 +193,6 @@ export function useFetchDrivers(
       queryParams.append(key, value);
     }
   });
-
   const { data, error, isLoading, mutate } = useSWR<{
     drivers: Driver[];
     total: number;
@@ -167,10 +222,8 @@ export function useFetchVehicles(
   queryParams.append("limit", limit.toString());
   queryParams.append("sortColumn", sortColumn);
   queryParams.append("sortDirection", sortDirection);
-
   Object.entries(filters).forEach(([key, value]) => {
     if (typeof value === "object" && value !== null) {
-      // Handle range filters
       if (value.min) queryParams.append(`${key}Min`, value.min);
       if (value.max) queryParams.append(`${key}Max`, value.max);
       if (value.startDate)
@@ -180,7 +233,6 @@ export function useFetchVehicles(
       queryParams.append(key, value);
     }
   });
-
   const { data, error, isLoading, mutate } = useSWR<{
     vehicles: Vehicle[];
     total: number;
@@ -188,7 +240,6 @@ export function useFetchVehicles(
     fallbackData,
     revalidateOnMount: false,
   });
-
   return {
     vehicles: data?.vehicles || [],
     total: data?.total || 0,
@@ -322,6 +373,17 @@ export function useFetchDriverById(id?: string, fallbackData?: Driver) {
 
 export function useFetchVehicleById(id?: string, fallbackData?: Vehicle) {
   return useFetchItemById<Vehicle>("/api/vehicles", id, fallbackData);
+}
+
+export function useFetchMaintenanceById(
+  id?: string,
+  fallbackData?: MaintenanceWithRelations
+) {
+  return useFetchItemById<MaintenanceWithRelations>(
+    "/api/maintenance",
+    id,
+    fallbackData
+  );
 }
 
 // --- Profile Hook ---

@@ -10,6 +10,7 @@ datasource db {
 enum NotificationType {
   CONTRACT_ENDING
   PAYMENT_OVERDUE
+  MAINTENANCE_REMINDER
 }
 
 model User {
@@ -27,6 +28,7 @@ model User {
   expenses         Expense[]
   resetTokens      PasswordResetToken[]
   notifications    Notification[]
+  maintenances     Maintenance[]
   createdAt        DateTime             @default(now()) @map("created_at")
   updatedAt        DateTime             @updatedAt @map("updated_at")
 
@@ -58,24 +60,25 @@ model Notification {
 }
 
 model Vehicle {
-  id              String     @id @default(cuid())
-  plate           String     @unique
-  plateNormalized String?    @map("plate_normalized")
+  id              String        @id @default(cuid())
+  plate           String        @unique
+  plateNormalized String?       @map("plate_normalized")
   brand           String
   model           String
-  modelNormalized String?    @map("model_normalized")
+  modelNormalized String?       @map("model_normalized")
   year            Int
   color           String
-  renavam         String     @unique
-  chassis         String     @unique
+  renavam         String        @unique
+  chassis         String        @unique
   km              Int
-  status          String     @default("Disponível")
-  userId          String     @map("user_id")
-  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          String        @default("Disponível")
+  userId          String        @map("user_id")
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   contracts       Contract[]
   expenses        Expense[]
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  maintenances    Maintenance[]
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
 
   @@map("vehicles")
 }
@@ -157,4 +160,33 @@ model Expense {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("expenses")
+}
+
+enum MaintenanceType {
+  PREVENTIVA
+  CORRETIVA
+  TROCA_OLEO
+  PNEUS
+  FREIOS
+  OUTROS
+}
+
+model Maintenance {
+  id                 String          @id @default(cuid())
+  vehicleId          String          @map("vehicle_id")
+  vehicle            Vehicle         @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type               MaintenanceType
+  description        String
+  cost               Float
+  date               DateTime
+  mileage            Int
+  nextServiceMileage Int?            @map("next_service_mileage")
+  nextServiceDate    DateTime?       @map("next_service_date")
+  notes              String?
+  userId             String          @map("user_id")
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  @@map("maintenances")
 }

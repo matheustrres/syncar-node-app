@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
@@ -28,7 +29,6 @@ import AdvancedFilterBar, {
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import EmptyState from "@/components/ui/EmptyState";
-import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 
 const columns: Column<Vehicle>[] = [
   {
@@ -76,7 +76,6 @@ const statusOptions = [
 interface ClientPageProps {
   initialVehicles: Vehicle[];
   total: number;
-  userPlan: string;
 }
 
 const filtersConfig: FilterConfig[] = [
@@ -132,8 +131,9 @@ const filtersConfig: FilterConfig[] = [
 export default function VehiclesClientPage({
   initialVehicles,
   total: initialTotal,
-  userPlan,
 }: ClientPageProps) {
+  const { data: dataSession, status } = useSession();
+  const userPlan = status === "authenticated" ? dataSession.user.plan : "BASIC";
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<VehicleFilters>({});
@@ -331,6 +331,16 @@ export default function VehiclesClientPage({
     e.stopPropagation();
   };
 
+  const { data: session } = useSession();
+
+  const handleExportClick = () => {
+    if (session?.user?.plan?.toUpperCase() !== "PRO") {
+      setIsUpgradeModalOpen(true);
+    } else {
+      handleExport();
+    }
+  };
+
   const handleExport = async () => {
     try {
       showToast("Gerando CSV...", "success");
@@ -382,30 +392,16 @@ export default function VehiclesClientPage({
           Veículos
         </h2>
         <div className="flex gap-2">
-          {userPlan !== "BASIC" ? (
-            <button
-              onClick={handleExport}
-              className="bg-green-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 w-full sm:w-auto"
-            >
-              <Download size={20} />
-              <span className="hidden sm:inline whitespace-nowrap">Exportar CSV</span>
-              <span className="sm:hidden">Exportar</span>
-            </button>
-          ) : (
-            <UpgradePlaceholder
-              featureName="Exportar Veículos"
-              onUpgradeClick={() => setIsUpgradeModalOpen(true)}
-            >
-              <button
-                className="bg-green-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 w-full sm:w-auto opacity-50 cursor-not-allowed"
-                disabled
-              >
-                <Download size={20} />
-                <span className="hidden sm:inline whitespace-nowrap">Exportar CSV</span>
-                <span className="sm:hidden">Exportar</span>
-              </button>
-            </UpgradePlaceholder>
-          )}
+          <button
+            onClick={handleExportClick}
+            className="bg-green-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 w-full sm:w-auto"
+          >
+            <Download size={20} />
+            <span className="hidden sm:inline whitespace-nowrap">
+              Exportar CSV
+            </span>
+            <span className="sm:hidden">Exportar</span>
+          </button>
           <button
             onClick={handleAddClick}
             className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"

@@ -3,7 +3,83 @@ import { prisma } from "./prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./authOptions";
 import { Contract, Driver, User, Vehicle } from "@/types";
-import { Prisma } from "@prisma/client";
+import {
+  Prisma,
+  Maintenance,
+  MaintenanceType as PrismaMaintenanceType,
+} from "@prisma/client";
+
+export interface MaintenanceWithRelations extends Maintenance {
+  vehicle: Vehicle;
+}
+
+export const getMaintenance = cache(
+  async (
+    page = 1,
+    limit = 10,
+    search = "",
+    type = "",
+    sortColumn = "date",
+    sortDirection: "asc" | "desc" = "desc"
+  ) => {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return { maintenance: [], total: 0 };
+    const skip = (page - 1) * limit;
+    const where: Prisma.MaintenanceWhereInput = { userId: session.user.id };
+
+    if (type) where.type = type as PrismaMaintenanceType;
+
+    if (search) {
+      where.OR = [
+        { description: { contains: search, mode: "insensitive" } },
+        { vehicle: { plate: { contains: search, mode: "insensitive" } } },
+        { vehicle: { model: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    let orderBy: Prisma.MaintenanceOrderByWithRelationInput = {
+      date: "desc",
+    };
+
+    if (sortColumn === "vehicle.plate") {
+      orderBy = { vehicle: { plate: sortDirection } };
+    } else if (sortColumn === "vehicle.model") {
+      orderBy = { vehicle: { model: sortDirection } };
+    } else {
+      orderBy = { [sortColumn]: sortDirection };
+    }
+
+    const [maintenanceData, total] = await prisma.$transaction([
+      prisma.maintenance.findMany({
+        where,
+        include: {
+          vehicle: true,
+        },
+        skip,
+        take: limit,
+        orderBy,
+      }),
+      prisma.maintenance.count({ where }),
+    ]);
+
+    const maintenance = maintenanceData.map((m) => ({
+      ...m,
+      date: m.date.toISOString(),
+      createdAt: m.createdAt.toISOString(),
+      updatedAt: m.updatedAt.toISOString(),
+      nextServiceDate: m.nextServiceDate
+        ? m.nextServiceDate.toISOString()
+        : null,
+      vehicle: {
+        ...m.vehicle,
+        createdAt: m.vehicle.createdAt.toISOString(),
+        updatedAt: m.vehicle.updatedAt.toISOString(),
+      }
+    }));
+
+    return { maintenance, total };
+  }
+);
 
 export const getContracts = cache(
   async (
@@ -21,30 +97,9 @@ export const getContracts = cache(
     if (status) where.status = status;
     if (search) {
       where.OR = [
-        {
-          driver: {
-            name: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-        {
-          vehicle: {
-            plate: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
-        {
-          vehicle: {
-            model: {
-              contains: search,
-              mode: "insensitive",
-            },
-          },
-        },
+        { driver: { name: { contains: search, mode: "insensitive" } } },
+        { vehicle: { plate: { contains: search, mode: "insensitive" } } },
+        { vehicle: { model: { contains: search, mode: "insensitive" } } },
       ];
     }
     let orderBy: Prisma.ContractOrderByWithRelationInput = {
@@ -257,32 +312,17 @@ export const getPendingPayments = cache(
       where.OR = [
         {
           contract: {
-            driver: {
-              name: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
+            driver: { name: { contains: search, mode: "insensitive" } },
           },
         },
         {
           contract: {
-            vehicle: {
-              plate: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
+            vehicle: { plate: { contains: search, mode: "insensitive" } },
           },
         },
         {
           contract: {
-            vehicle: {
-              model: {
-                contains: search,
-                mode: "insensitive",
-              },
-            },
+            vehicle: { model: { contains: search, mode: "insensitive" } },
           },
         },
       ];
@@ -338,23 +378,17 @@ export const getPaidPayments = cache(
       where.OR = [
         {
           contract: {
-            driver: {
-              name: { contains: search, mode: "insensitive" },
-            },
+            driver: { name: { contains: search, mode: "insensitive" } },
           },
         },
         {
           contract: {
-            vehicle: {
-              plate: { contains: search, mode: "insensitive" },
-            },
+            vehicle: { plate: { contains: search, mode: "insensitive" } },
           },
         },
         {
           contract: {
-            vehicle: {
-              model: { contains: search, mode: "insensitive" },
-            },
+            vehicle: { model: { contains: search, mode: "insensitive" } },
           },
         },
       ];
@@ -422,9 +456,7 @@ export const getRecentExpenses = cache(
         { vehicle: { plate: { contains: search, mode: "insensitive" } } },
       ];
     }
-    let orderBy: Prisma.ExpenseOrderByWithRelationInput = {
-      date: "desc",
-    };
+    let orderBy: Prisma.ExpenseOrderByWithRelationInput = { date: "desc" };
     if (sortColumn === "vehicle.plate") {
       orderBy = { vehicle: { plate: sortDirection } };
     } else {
@@ -463,6 +495,10 @@ export const getReportVehiclePerformance = cache(async () => {
   });
 
   const vehicleIds = vehicles.map((v) => v.id);
+
+  if (vehicleIds.length === 0) {
+    return [];
+  }
 
   const revenues = await prisma.$queryRaw<
     {
@@ -560,10 +596,7 @@ export const getReportExpenseAnalysis = cache(async () => {
     a.month.localeCompare(b.month)
   );
 
-  return {
-    byType,
-    byMonth,
-  };
+  return { byType, byMonth };
 });
 
 export const getReportCashFlow = cache(async () => {
@@ -573,11 +606,7 @@ export const getReportCashFlow = cache(async () => {
 
   const revenueByMonth = await prisma.payment.groupBy({
     by: ["paymentDate"],
-    where: {
-      contract: { userId },
-      status: "Pago",
-      paymentDate: { not: null },
-    },
+    where: { contract: { userId }, status: "Pago", paymentDate: { not: null } },
     _sum: {
       value: true,
     },
@@ -628,7 +657,6 @@ export const getReportOverduePayments = cache(async () => {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return [];
 
-  // This raw query is specific to PostgreSQL.
   const overduePayments = await prisma.$queryRaw<
     {
       id: string;
@@ -678,8 +706,15 @@ export const getReportDriverSummary = cache(async () => {
 
   const driverIds = drivers.map((d) => d.id);
 
+  if (driverIds.length === 0) {
+    return [];
+  }
+
   const revenues = await prisma.$queryRaw<
-    { driverId: string; total: string }[]
+    {
+      driverId: string;
+      total: string;
+    }[]
   >`
     SELECT
       c.driver_id AS "driverId",
@@ -700,18 +735,9 @@ export const getReportDriverSummary = cache(async () => {
   });
 
   const lastContracts = await prisma.contract.findMany({
-    where: {
-      driverId: { in: driverIds },
-    },
-    select: {
-      driverId: true,
-      vehicle: {
-        select: { plate: true },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+    where: { driverId: { in: driverIds } },
+    select: { driverId: true, vehicle: { select: { plate: true } } },
+    orderBy: { createdAt: "desc" },
     distinct: ["driverId"],
   });
 
@@ -856,7 +882,7 @@ export const getAllNotifications = cache(async () => {
   const notifications = await prisma.notification.findMany({
     where: whereClause,
     orderBy: {
-      createdAt: 'desc',
+      createdAt: "desc",
     },
   });
   const unreadCount = await prisma.notification.count({

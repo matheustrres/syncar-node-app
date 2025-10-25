@@ -6,6 +6,7 @@ import {
   Expense as ExpenseModel,
   User as UserModel,
   Notification as NotificationModel,
+  Maintenance as MaintenanceModel, // Adicionado
 } from "@prisma/client";
 
 type ToJson<T> = {
@@ -23,6 +24,7 @@ export type Payment = ToJson<PaymentModel>;
 export type Expense = ToJson<ExpenseModel>;
 export type User = ToJson<UserModel>;
 export type Notification = ToJson<NotificationModel>;
+export type Maintenance = ToJson<MaintenanceModel>; // Adicionado
 
 export type ContractWithDetails = Contract & {
   driver: Driver;

@@ -55,7 +55,7 @@ export async function checkContractEndings() {
       await createNotification({
         userId: contract.userId,
         type: "CONTRACT_ENDING",
-        message: `O contrato com ${contract.driver.name} vence em ${daysLeft} dias`,
+        message: `O contrato com ${contract.driver.name} vence em ${daysLeft} dias.`,
         relatedEntityId: contract.id,
       });
     }
@@ -81,8 +81,65 @@ export async function checkOverduePayments() {
     await createNotification({
       userId: payment.contract.userId,
       type: "PAYMENT_OVERDUE",
-      message: `O pagamento de ${payment.contract.driver.name} está atrasado`,
+      message: `O pagamento de ${payment.contract.driver.name} está atrasado.`,
       relatedEntityId: payment.contractId,
     });
+  }
+}
+
+export async function checkUpcomingMaintenance() {
+  console.log("\n--- Checking Upcoming Maintenance ---");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const sevenDaysFromNow = new Date(today);
+  sevenDaysFromNow.setDate(today.getDate() + 7);
+
+  const allUsers = await prisma.user.findMany({ select: { id: true } });
+
+  for (const user of allUsers) {
+    const upcomingMaintenance = await prisma.maintenance.findMany({
+      where: {
+        userId: user.id,
+        OR: [
+          {
+            nextServiceDate: { gte: today, lte: sevenDaysFromNow },
+          },
+          {
+            nextServiceMileage: {
+              gte: 0, // Assuming mileage is always positive
+              lte: 500, // Example: within 500km of next service mileage
+            },
+            // This part needs to be dynamic based on current vehicle mileage
+            // For now, we'll just check if nextServiceMileage is set and within a range
+            // A more robust solution would involve storing current vehicle mileage and comparing
+          },
+        ],
+      },
+      include: { vehicle: true },
+    });
+
+    for (const maintenance of upcomingMaintenance) {
+      let message = `Manutenção de ${maintenance.type.toLowerCase()} para o veículo ${maintenance.vehicle.plate} - ${maintenance.vehicle.model} está próxima.`;
+
+      if (maintenance.nextServiceDate && maintenance.nextServiceDate >= today && maintenance.nextServiceDate <= sevenDaysFromNow) {
+        const daysLeft = Math.ceil((maintenance.nextServiceDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        message += ` Vencimento em ${daysLeft} dias.`;
+      }
+
+      if (maintenance.nextServiceMileage && maintenance.nextServiceMileage > 0) {
+        // This part is tricky without current vehicle mileage. For a real system,
+        // we'd need to fetch the current mileage of the vehicle.
+        // For now, we'll just indicate that a mileage reminder is set.
+        message += ` Próxima revisão em ${maintenance.nextServiceMileage} KM.`;
+      }
+
+      await createNotification({
+        userId: user.id,
+        type: "MAINTENANCE_REMINDER",
+        message,
+        relatedEntityId: maintenance.id,
+      });
+    }
   }
 }

@@ -10,31 +10,39 @@ export interface SelectOption {
 }
 
 interface CustomSelectProps {
-  label: string;
+  id?: string;
+  name?: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
   Icon?: LucideIcon;
   placeholder?: string;
+  className?: string;
 }
 
 export default function CustomSelect({
+  id,
+  name,
   label,
   value,
   onChange,
   options,
   Icon,
   placeholder,
+  className,
 }: CustomSelectProps) {
   const selectedOption = options.find((option) => option.value === value);
 
   return (
-    <div>
+    <div className={className}>
       <Listbox value={value} onChange={onChange}>
         <div className="relative">
-          <Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
-            {label}
-          </Listbox.Label>
+          {label && (
+            <Listbox.Label className="block text-sm font-medium text-gray-700 mb-1">
+              {label}
+            </Listbox.Label>
+          )}
 
           {Icon && (
             <Icon
@@ -44,6 +52,8 @@ export default function CustomSelect({
           )}
 
           <Listbox.Button
+            id={id}
+            name={name}
             className={`relative w-full cursor-default rounded-lg border border-gray-300 bg-gray-100 py-2 pr-10 text-left focus:outline-none focus-visible:border-indigo-500 focus-visible:ring-2 focus-visible:ring-white/75 sm:text-sm h-11 ${Icon ? "pl-11" : "pl-4"}`}
           >
             <span

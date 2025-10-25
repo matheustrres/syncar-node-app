@@ -10,11 +10,13 @@ import {
   Calendar,
   TrendingUp,
   Settings,
+  Wrench,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", icon: TrendingUp, label: "Dashboard" },
   { href: "/dashboard/vehicles", icon: Car, label: "Veículos" },
+  { href: "/dashboard/maintenance", icon: Wrench, label: "Manutenções" }, // Adicionado
   { href: "/dashboard/drivers", icon: Users, label: "Motoristas" },
   { href: "/dashboard/contracts", icon: FileText, label: "Contratos" },
   { href: "/dashboard/financial", icon: DollarSign, label: "Financeiro" },
