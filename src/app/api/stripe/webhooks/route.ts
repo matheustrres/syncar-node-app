@@ -61,6 +61,7 @@ export async function POST(req: Request) {
     event.type === "customer.subscription.deleted"
   ) {
     const subscription = event.data.object as Stripe.Subscription;
+    console.log({ subscription });
     const user = await prisma.user.findUnique({
       where: {
         stripeCustomerId: subscription.customer as string,
@@ -77,6 +78,26 @@ export async function POST(req: Request) {
         },
         data: {
           plan: newPlan,
+        },
+      });
+      revalidatePath("/api/profile");
+    }
+  }
+  if (event.type === "customer.deleted") {
+    const customer = event.data.object as Stripe.Customer;
+    const user = await prisma.user.findUnique({
+      where: {
+        stripeCustomerId: customer.id,
+      },
+    });
+    if (user) {
+      await prisma.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          stripeCustomerId: null,
+          plan: "BASIC",
         },
       });
       revalidatePath("/api/profile");

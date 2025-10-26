@@ -8,8 +8,10 @@
     "build": "next build",
     "prestart": "npm run predev && npm run build",
     "start": "next start",
-    "lint": "next lint",
-    "cron:start": "node src/lib/notification-scheduler.ts"
+    "lint": "next lint"
+  },
+  "prisma": {
+    "seed": "ts-node --esm prisma/seed.ts"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
