@@ -14,6 +14,15 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const existingUserByEmail = await prisma.user.findUnique({
+      where: { email },
+    });
+    if (existingUserByEmail) {
+      return NextResponse.json(
+        { message: "Este email já está em uso." },
+        { status: 409 }
+      );
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
@@ -28,7 +37,11 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     return handlePrismaError(
       error,
-      { email: "Este email já está em uso." },
+      {
+        email: "Endereço de email já em uso.",
+        phone: "Telefone já em uso.",
+        company_name: "Nome de empresa já em uso.",
+      },
       "Ocorreu um erro interno."
     );
   }

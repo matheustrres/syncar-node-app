@@ -153,7 +153,7 @@ const AuthForm = () => {
           updateSession(); // Update session after successful registration
         } else {
           const errorData = await response.json();
-          setErrors({ api: errorData.message || "Erro no cadastro." });
+          setErrors({ api: errorData.error || "Erro no cadastro." });
         }
       } catch {
         setErrors({ api: "Ocorreu um erro de conexão." });

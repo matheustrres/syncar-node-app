@@ -18,8 +18,8 @@ model User {
   name             String
   email            String               @unique
   password         String
-  companyName      String               @map("company_name")
-  phone            String
+  companyName      String               @unique @map("company_name")
+  phone            String               @unique
   plan             String               @default("BASIC")
   stripeCustomerId String?              @unique @map("stripe_customer_id")
   vehicles         Vehicle[]
