@@ -30,8 +30,8 @@ type FormErrors = {
   api?: string;
 };
 
-const AuthForm = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthForm = ({ initialMode = "login" }: { initialMode?: "login" | "register" }) => {
+  const [isLogin, setIsLogin] = useState(initialMode === "login");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({

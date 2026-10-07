@@ -1,123 +1,104 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Car, Menu, X } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { ArrowUpRight, CarFront, Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import styles from "./landing.module.css";
+const navLinks = [
+    { href: "#beneficios", label: "Benefícios" },
+    { href: "#plataforma", label: "Plataforma" },
+    { href: "#como-funciona", label: "Como funciona" },
+    { href: "#planos", label: "Planos" },
+];
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    // Fecha o menu em mudança de rota
-    setIsMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    // Desabilita o scroll do body quando o menu está aberto
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    // Função de limpeza
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isMenuOpen]);
-
-  const navLinks = [
-    { href: '#features', label: 'Funcionalidades' },
-    { href: '#pricing', label: 'Planos' },
-    { href: '#preview', label: 'Demonstração' },
-  ];
-
-  return (
-    <>
-      <header className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
-        <nav className="container mx-auto px-4 py-4 flex justify-between items-center">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <Car className="text-blue-600" size={28} />
-            <span className="text-2xl font-bold text-gray-800">Syncar</span>
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuButtonRef = useRef<HTMLButtonElement>(null);
+    const closeButtonRef = useRef<HTMLButtonElement>(null);
+    const pathname = usePathname();
+    useEffect(() => {
+        setIsMenuOpen(false);
+    }, [pathname]);
+    useEffect(() => {
+        if (!isMenuOpen)
+            return;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        closeButtonRef.current?.focus();
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsMenuOpen(false);
+                menuButtonRef.current?.focus();
+            }
+            if (event.key === "Tab") {
+                const menu = document.getElementById("mobile-navigation");
+                const focusable = menu?.querySelectorAll<HTMLElement>("a, button");
+                if (!focusable?.length)
+                    return;
+                const first = focusable[0];
+                const last = focusable[focusable.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                    event.preventDefault();
+                    last.focus();
+                }
+                else if (!event.shiftKey && document.activeElement === last) {
+                    event.preventDefault();
+                    first.focus();
+                }
+            }
+        };
+        const desktop = window.matchMedia("(min-width: 768px)");
+        const closeOnDesktop = () => { if (desktop.matches)
+            setIsMenuOpen(false); };
+        desktop.addEventListener("change", closeOnDesktop);
+        window.addEventListener("keydown", closeOnEscape);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", closeOnEscape);
+            desktop.removeEventListener("change", closeOnDesktop);
+        };
+    }, [isMenuOpen]);
+    return (<>
+      <a href="#main-content" className={styles.skipLink}>Ir para o conteúdo</a>
+      <header className={styles.header}>
+        <nav aria-label="Navegação principal" className={`${styles.container} ${styles.headerNav}`}>
+          <Link href="/" className={styles.brand}>
+            <CarFront size={27} className={styles.logoIcon} aria-hidden="true"/>
+            syncar.
           </Link>
-
-          {/* Desktop Links */}
-          <div className="hidden md:flex items-center gap-8">
-            {navLinks.map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-gray-600 hover:text-blue-600 transition-colors font-medium"
-              >
+          <div className={styles.desktopNav}>
+            {navLinks.map((link) => (<a key={link.href} href={link.href} className={styles.navLink}>
                 {link.label}
-              </a>
-            ))}
+              </a>))}
           </div>
-
-          {/* CTA Button */}
-          <div className="hidden md:block">
-            <Link
-              href="/login"
-              className="bg-blue-600 text-white font-medium px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-            >
-              Acessar Plataforma
-            </Link>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <button
-              onClick={() => setIsMenuOpen(true)}
-              aria-label="Abrir menu"
-            >
-              <Menu size={24} />
-            </button>
-          </div>
+          <Link href="/login" className={styles.headerAccess}>
+            Acessar plataforma <ArrowUpRight size={17} aria-hidden="true"/>
+          </Link>
+          <Link href="/login?mode=register" className={styles.headerSignup}>Começar grátis <ArrowUpRight size={16} aria-hidden="true"/>
+    </Link>
+          <button ref={menuButtonRef} type="button" aria-label="Abrir menu" aria-expanded={isMenuOpen} aria-controls="mobile-navigation" onClick={() => setIsMenuOpen(true)} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-current focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700 md:hidden">
+            <Menu size={25} aria-hidden="true"/>
+          </button>
         </nav>
       </header>
 
-      {/* Mobile Menu Overlay */}
-      <div
-        className={`md:hidden fixed inset-0 bg-white z-50 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
-      >
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center border-b border-gray-200">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <Car className="text-blue-600" size={28} />
-            <span className="text-2xl font-bold text-gray-800">Syncar</span>
-          </Link>
-          <button
-            onClick={() => setIsMenuOpen(false)}
-            aria-label="Fechar menu"
-          >
-            <X size={24} />
-          </button>
-        </div>
-
-        <div className="flex flex-col items-center justify-center h-[calc(100%-80px)] gap-8 -mt-10">
-          {navLinks.map(link => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-2xl text-gray-800 hover:text-blue-600 transition-colors font-semibold"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              {link.label}
-            </a>
-          ))}
-          <Link
-            href="/login"
-            className="bg-blue-600 text-white font-semibold text-center mt-6 px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            onClick={() => setIsMenuOpen(false)}
-          >
-            Acessar Plataforma
-          </Link>
-        </div>
-      </div>
-    </>
-  );
+      {isMenuOpen && (<div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Menu de navegação" className="fixed inset-0 z-50 bg-white md:hidden">
+          <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-8">
+            <span className="inline-flex items-center gap-2 text-2xl font-bold text-slate-900">
+              <CarFront size={27} className={styles.logoIcon} aria-hidden="true"/>
+              syncar.
+            </span>
+            <button ref={closeButtonRef} type="button" aria-label="Fechar menu" onClick={() => { setIsMenuOpen(false); menuButtonRef.current?.focus(); }} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-current focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+              <X size={25} aria-hidden="true"/>
+            </button>
+          </div>
+          <nav aria-label="Navegação móvel" className="flex flex-col gap-2 px-5 py-8 sm:px-8">
+            {navLinks.map((link) => (<a key={link.href} href={link.href} onClick={() => setIsMenuOpen(false)} className="flex min-h-12 items-center rounded-lg px-3 text-lg font-semibold text-blue-950 hover:bg-blue-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+                {link.label}
+              </a>))}
+            <Link href="/login" onClick={() => setIsMenuOpen(false)} className="mt-5 flex min-h-12 items-center justify-center rounded-lg bg-blue-700 px-5 font-semibold text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
+              Acessar plataforma
+            </Link>
+          </nav>
+        </div>)}
+    </>);
 }
