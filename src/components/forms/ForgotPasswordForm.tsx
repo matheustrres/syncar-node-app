@@ -6,10 +6,12 @@ import { useToast } from "@/context/ToastContext";
 
 interface ForgotPasswordFormProps {
   onClose: () => void;
+  className?: string;
 }
 
 export default function ForgotPasswordForm({
   onClose,
+  className = "",
 }: ForgotPasswordFormProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,7 +44,7 @@ export default function ForgotPasswordForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4">
+    <form onSubmit={handleSubmit} className={`space-y-4 p-4 ${className}`}>
       <p className="text-gray-600 text-sm mb-4">
         Informe seu email para receber as instruções de recuperação de senha.
       </p>

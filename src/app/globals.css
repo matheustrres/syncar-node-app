@@ -3,6 +3,37 @@ html {
   scroll-behavior: smooth;
 }
 
+:root {
+  /* SynCar: primitives shared by marketing, authentication and product. */
+  --syncar-green-950: #102d30;
+  --syncar-green-900: #173b3c;
+  --syncar-lime-300: #d8f779;
+  --syncar-lime-400: #c9ee65;
+  --syncar-cream-50: #f7f6ef;
+  --syncar-white: #ffffff;
+
+  /* Semantic roles: use these in new product screens. */
+  --syncar-canvas: var(--syncar-cream-50);
+  --syncar-surface: var(--syncar-white);
+  --syncar-surface-subtle: #eef3ec;
+  --syncar-text: #142c2e;
+  --syncar-text-muted: #52655f;
+  --syncar-border: #dce4dc;
+  --syncar-action: var(--syncar-lime-300);
+  --syncar-action-hover: var(--syncar-lime-400);
+  --syncar-action-text: var(--syncar-green-950);
+  --syncar-focus: #32634e;
+  --syncar-success: #286747;
+  --syncar-warning: #8a4b0c;
+  --syncar-danger: #ad352a;
+  --syncar-info: #245e78;
+
+  --syncar-radius-control: 8px;
+  --syncar-radius-panel: 14px;
+  --syncar-shadow-overlay: 0 16px 44px rgba(10, 39, 39, .12);
+  --syncar-motion-fast: 150ms;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

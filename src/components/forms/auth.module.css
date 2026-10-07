@@ -1,0 +1,64 @@
+.page { min-height: 100svh; display: grid; grid-template-columns: minmax(340px, .9fr) minmax(540px, 1.1fr); background: var(--syncar-canvas); color: var(--syncar-text); }
+.page ::selection { background: var(--syncar-action); color: var(--syncar-action-text); }
+.page :is(button, a, input):focus-visible { outline: 2px solid var(--syncar-focus); outline-offset: 4px; }
+.brandPanel { background: var(--syncar-green-950); color: #fff; padding: 48px 12%; display: flex; flex-direction: column; justify-content: space-between; gap: 64px; }
+.logo { display: inline-flex; align-items: center; gap: 12px; font-size: 27px; font-weight: 750; letter-spacing: -.04em; width: fit-content; }
+.logo span { display: grid; place-items: center; width: 40px; height: 40px; background: var(--syncar-action); color: var(--syncar-action-text); border-radius: 12px; }
+.brandContent { max-width: 450px; }
+.brandContent h2 { font-size: 48px; line-height: 1.1; letter-spacing: -.04em; font-weight: 700; }
+.brandContent em { color: var(--syncar-action); font-style: normal; }
+.brandContent > p { color: #bdcfc9; font-size: 17px; line-height: 1.75; margin-top: 26px; }
+.brandContent ul { padding: 28px 0 0; margin: 32px 0 0; border-top: 1px solid #395552; display: grid; gap: 18px; }
+.brandContent li { display: flex; align-items: center; gap: 12px; font-size: 14px; color: #e1ebe5; }
+.brandContent li svg { flex-shrink: 0; color: var(--syncar-action); }
+.brandFoot { font-size: 12px; color: #b3c9c3; }
+.formPanel { padding: 42px 9% 24px; display: flex; flex-direction: column; gap: 40px; }
+.backLink { display: inline-flex; align-items: center; gap: 8px; color: #526761; font-size: 13px; width: fit-content; }
+.backLink:hover { color: var(--syncar-text); }
+.formContent { width: 100%; max-width: 530px; margin: auto; padding-block: 16px; }
+.heading { margin-bottom: 30px; }
+.heading h1 { font-size: 32px; font-weight: 700; letter-spacing: -.035em; line-height: 1.2; }
+.heading p { color: #5c6f69; font-size: 15px; line-height: 1.65; margin-top: 12px; }
+.form { display: flex; flex-direction: column; gap: 20px; }
+.fields { display: grid; gap: 20px; }
+.registerFields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 18px; }
+.field { min-width: 0; }
+.field label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.inputWrap { position: relative; }
+.inputWrap > svg { position: absolute; left: 14px; top: 17px; color: #6d7c75; pointer-events: none; }
+.inputWrap input { width: 100%; min-height: 52px; border: 1px solid #c9d3c8; border-radius: var(--syncar-radius-control); background: var(--syncar-surface); padding: 12px 14px 12px 42px; font-size: 14px; color: var(--syncar-text); caret-color: var(--syncar-focus); transition: border-color var(--syncar-motion-fast) ease; }
+.inputWrap input[name="password"] { padding-right: 44px; }
+.inputWrap input::placeholder { color: #707b75; }
+.inputWrap input:hover { border-color: #80988a; }
+.inputWrap input:focus { border-color: var(--syncar-focus); }
+.inputWrap input[aria-invalid="true"] { border-color: var(--syncar-danger); }
+.reveal { position: absolute; right: 3px; top: 4px; width: 40px; height: 44px; display: grid; place-items: center; color: #526761; border-radius: 6px; }
+.reveal:hover { background: #edf1e7; }
+.requirements { font-size: 12px; color: #596c62; padding: 16px 0; border-block: 1px solid #dce2d5; }
+.requirements > p { font-weight: 600; margin-bottom: 10px; }
+.requirements ul { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+.requirements li { display: flex; align-items: center; gap: 8px; }
+.requirements svg { flex: 0 0 14px; }
+.requirements .fulfilled { color: #2a6945; font-weight: 600; }
+.forgot { align-self: flex-end; font-size: 13px; font-weight: 600; color: var(--syncar-focus); }
+.forgot:hover, .switchMode button:hover { text-decoration: underline; text-underline-offset: 4px; }
+.error { color: var(--syncar-danger); font-size: 12px; line-height: 1.5; margin-top: 6px; }
+.submit { min-height: 52px; padding: 14px 20px; width: 100%; background: var(--syncar-action); color: var(--syncar-action-text); display: flex; align-items: center; justify-content: space-between; gap: 12px; border-radius: var(--syncar-radius-control); font-size: 14px; font-weight: 700; transition: background-color var(--syncar-motion-fast) ease; }
+.submit:hover { background: var(--syncar-action-hover); }
+.submit:disabled { opacity: .6; cursor: wait; }
+.switchMode { text-align: center; font-size: 13px; color: #5c6f69; margin-top: 26px; }
+.switchMode button { color: #244d3d; font-weight: 700; margin-left: 6px; }
+.freeNote { text-align: center; font-size: 12px; color: #5c6f69; margin-top: 16px; }
+.formFoot { text-align: center; font-size: 12px; color: #65766e; }
+.success { color: var(--syncar-text); display: grid; gap: 24px; line-height: 1.7; }
+.success > svg { color: var(--syncar-success); }
+@media (min-width: 1600px) { .brandPanel { padding-inline: 18%; } .formPanel { padding-inline: 14%; } }
+@media (max-width: 1100px) { .brandPanel { padding-inline: 40px; } .brandContent h2 { font-size: 40px; } .formPanel { padding-inline: 32px; } }
+@media (max-width: 900px) { .page { grid-template-columns: 1fr; } .brandPanel { padding: 20px 28px; gap: 0; } .brandContent, .brandFoot { display: none; } .logo { font-size: 23px; } .logo span { width: 34px; height: 34px; } .formPanel { padding: 24px; gap: 26px; min-height: calc(100svh - 74px); } .formContent { padding-block: 8px; } }
+@media (max-width: 540px) { .registerFields { grid-template-columns: 1fr; } .heading h1 { font-size: 28px; } .fields { gap: 18px; } .requirements ul { grid-template-columns: 1fr; } .formPanel { padding-inline: 22px; } }
+@media (prefers-reduced-motion: reduce) { .page * { transition: none !important; } }
+
+.recovery { color: var(--syncar-text); }
+.recovery input:focus { outline-color: var(--syncar-focus); --tw-ring-color: var(--syncar-focus); }
+.recovery button[type="submit"] { background: var(--syncar-action); color: var(--syncar-action-text); }
+.recovery button[type="submit"]:hover { background: var(--syncar-action-hover); }

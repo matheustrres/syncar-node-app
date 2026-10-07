@@ -12,11 +12,15 @@ import {
   Building,
   Eye,
   EyeOff,
-  LogIn,
-  UserPlus,
   CheckCircle,
+  ArrowLeft,
+  ArrowUpRight,
+  Check,
+  Circle,
 } from "lucide-react";
 import Modal from "../ui/Modal";
+import Link from "next/link";
+import styles from "./auth.module.css";
 import ForgotPasswordForm from "./ForgotPasswordForm";
 import { IMaskInput } from "react-imask";
 
@@ -107,7 +111,7 @@ const AuthForm = ({ initialMode = "login" }: { initialMode?: "login" | "register
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (formData.password !== formData.confirmPassword) {
+      if (!isLogin && formData.confirmPassword && formData.password !== formData.confirmPassword) {
         setErrors((prev) => ({
           ...prev,
           confirmPassword: "As senhas não coincidem",
@@ -122,7 +126,7 @@ const AuthForm = ({ initialMode = "login" }: { initialMode?: "login" | "register
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [formData.password, formData.confirmPassword]);
+  }, [formData.password, formData.confirmPassword, isLogin]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,6 +169,8 @@ const AuthForm = ({ initialMode = "login" }: { initialMode?: "login" | "register
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
+    setShowPassword(false);
+    setPasswordStrength(validatePassword(""));
     setFormData({
       name: "",
       email: "",
@@ -181,382 +187,93 @@ const AuthForm = ({ initialMode = "login" }: { initialMode?: "login" | "register
     toggleMode();
   };
 
+  const fields = [
+    ...(!isLogin ? [
+      { name: "name" as const, label: "Nome completo", type: "text", autocomplete: "name", placeholder: "Seu nome completo", Icon: User },
+      { name: "companyName" as const, label: "Nome da empresa", type: "text", autocomplete: "organization", placeholder: "Nome da sua empresa", Icon: Building },
+    ] : []),
+    { name: "email" as const, label: "Email", type: "email", autocomplete: "email", placeholder: "seu@email.com", Icon: Mail },
+    ...(!isLogin ? [{ name: "phone" as const, label: "Telefone", type: "tel", autocomplete: "tel", placeholder: "(00) 00000-0000", Icon: Phone }] : []),
+    { name: "password" as const, label: "Senha", type: showPassword ? "text" : "password", autocomplete: isLogin ? "current-password" : "new-password", placeholder: "Digite sua senha", Icon: Lock },
+    ...(!isLogin ? [{ name: "confirmPassword" as const, label: "Confirmar senha", type: showPassword ? "text" : "password", autocomplete: "new-password", placeholder: "Repita sua senha", Icon: Lock }] : []),
+  ];
+  const requirements = [
+    ["minLength", "9 caracteres ou mais"],
+    ["hasTwoSpecialChars", "2 caracteres especiais"],
+    ["hasLowerCase", "1 letra minúscula"],
+    ["hasUpperCase", "1 letra maiúscula"],
+    ["hasNumber", "1 número"],
+  ] as const;
+
   return (
-    <>
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
-          <div className="bg-blue-600 p-12 text-white flex-col justify-center hidden lg:flex">
-            <div className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <Car size={48} />
-                <h1 className="text-4xl font-bold">Syncar</h1>
-              </div>
-              <p className="text-blue-100 text-lg">
-                Sistema completo de gestão de frota
-              </p>
-            </div>
-            <div className="space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-500 p-3 rounded-lg">
-                  <Car size={24} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">
-                    Gestão de Veículos
-                  </h3>
-                  <p className="text-blue-100 text-sm">
-                    Controle total da sua frota
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-500 p-3 rounded-lg">
-                  <User size={24} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">
-                    Controle de Motoristas
-                  </h3>
-                  <p className="text-blue-100 text-sm">
-                    Gerencie documentação e histórico
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div className="bg-blue-500 p-3 rounded-lg">
-                  <Building size={24} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg mb-1">
-                    Financeiro Completo
-                  </h3>
-                  <p className="text-blue-100 text-sm">
-                    Acompanhe pagamentos e despesas
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-12 flex flex-col justify-center">
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
-              </h2>
-              <p className="text-gray-600">
-                {isLogin
-                  ? "Entre para gerenciar sua frota"
-                  : "Comece a gerenciar sua frota hoje"}
-              </p>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome completo *
-                    </label>
-                    <div className="relative">
-                      <User
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        size={20}
-                      />
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
-                          errors.name ? "border-red-500" : "border-gray-300"
-                        }`}
-                        placeholder="Seu nome completo"
-                      />
-                    </div>
-                    {errors.name && (
-                      <p className="text-red-500 text-sm mt-1">{errors.name}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome da empresa *
-                    </label>
-                    <div className="relative">
-                      <Building
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        size={20}
-                      />
-                      <input
-                        type="text"
-                        name="companyName"
-                        value={formData.companyName}
-                        onChange={handleChange}
-                        className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
-                          errors.companyName
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        placeholder="Nome da sua empresa"
-                      />
-                    </div>
-                    {errors.companyName && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {errors.companyName}
-                      </p>
-                    )}
-                  </div>
-                </>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
-                </label>
-                <div className="relative">
-                  <Mail
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={20}
-                  />
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="seu@email.com"
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
-              {!isLogin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Telefone *
-                  </label>
-                  <div className="relative">
-                    <Phone
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={20}
-                    />
-                    <IMaskInput
-                      mask="(00) 00000-0000"
-                      name="phone"
-                      value={formData.phone}
-                      onAccept={(value: string) =>
-                        handleChange({ name: "phone", value })
-                      }
-                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
-                        errors.phone ? "border-red-500" : "border-gray-300"
-                      }`}
-                      placeholder="(00) 00000-0000"
-                    />
-                  </div>
-                  {errors.phone && (
-                    <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-                  )}
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Senha *
-                </label>
-                <div className="relative">
-                  <Lock
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={20}
-                  />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className={`w-full pl-11 pr-11 py-3 border rounded-lg ${
-                      errors.password ? "border-red-500" : "border-gray-300"
-                    }`}
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                  </button>
-                </div>
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">{errors.password}</p>
-                )}
-              </div>
-              {!isLogin && (
-                <div className="mt-2 text-sm">
-                  <p
-                    className={
-                      passwordStrength.minLength
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
-                  >
-                    Pelo menos 9 caracteres
-                  </p>
-                  <p
-                    className={
-                      passwordStrength.hasTwoSpecialChars
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
-                  >
-                    Pelo menos 2 caracteres especiais
-                  </p>
-                  <p
-                    className={
-                      passwordStrength.hasLowerCase
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
-                  >
-                    Pelo menos 1 letra minúscula
-                  </p>
-                  <p
-                    className={
-                      passwordStrength.hasUpperCase
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
-                  >
-                    Pelo menos 1 letra maiúscula
-                  </p>
-                  <p
-                    className={
-                      passwordStrength.hasNumber
-                        ? "text-green-500"
-                        : "text-red-500"
-                    }
-                  >
-                    Pelo menos 1 número
-                  </p>
-                </div>
-              )}
-              {!isLogin && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Confirmar Senha *
-                  </label>
-                  <div className="relative">
-                    <Lock
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={20}
-                    />
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      onPaste={(e) => e.preventDefault()}
-                      className={`w-full pl-11 pr-4 py-3 border rounded-lg ${
-                        errors.confirmPassword
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                      placeholder="••••••••"
-                    />
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-              )}
-              {isLogin && (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsForgotPasswordModalOpen(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Esqueceu a senha?
-                  </button>
-                </div>
-              )}
-              {errors.api && (
-                <p className="text-red-500 text-sm text-center">{errors.api}</p>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <div className="w-6 h-6 border-t-2 border-r-2 border-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    {" "}
-                    {isLogin ? (
-                      <LogIn size={20} />
+    <main className={styles.page}>
+      <aside className={styles.brandPanel}>
+        <Link href="/" className={styles.logo} aria-label="SynCar — página inicial">
+          <span><Car size={24} aria-hidden="true" /></span>syncar.
+        </Link>
+        <div className={styles.brandContent}>
+          <h2>Sua operação,<br />com tudo <em>no lugar.</em></h2>
+          <p>Veículos, motoristas, contratos e financeiro conectados para acompanhar sua locadora.</p>
+          <ul>
+            <li><Check size={18} aria-hidden="true" /> Controle da frota e das manutenções</li>
+            <li><Check size={18} aria-hidden="true" /> Contratos e pagamentos organizados</li>
+            <li><Check size={18} aria-hidden="true" /> Clareza sobre receitas e despesas</li>
+          </ul>
+        </div>
+        <p className={styles.brandFoot}>Da frota ao resultado. Uma visão completa.</p>
+      </aside>
+      <section className={styles.formPanel} aria-labelledby="auth-title">
+        <Link href="/" className={styles.backLink}><ArrowLeft size={16} aria-hidden="true" /> Voltar ao início</Link>
+        <div className={styles.formContent}>
+          <header className={styles.heading}>
+            <h1 id="auth-title">{isLogin ? "Bem-vindo de volta." : "Crie sua conta"}</h1>
+            <p>{isLogin ? "Entre para acompanhar sua operação." : "Comece a organizar sua locadora em um só lugar."}</p>
+          </header>
+          <form onSubmit={handleSubmit} noValidate className={styles.form} aria-busy={loading}>
+            <div className={`${styles.fields} ${!isLogin ? styles.registerFields : ""}`}>
+              {fields.map(({name, label, type, autocomplete, placeholder, Icon}) => (
+                <div className={styles.field} key={name}>
+                  <label htmlFor={`auth-${name}`}>{label}</label>
+                  <div className={styles.inputWrap}>
+                    <Icon size={18} aria-hidden="true" />
+                    {name === "phone" ? (
+                      <IMaskInput id={`auth-${name}`} name={name} type="tel" autoComplete={autocomplete} mask="(00) 00000-0000" value={formData.phone} onAccept={(value: string) => handleChange({ name: "phone", value })} placeholder={placeholder} required aria-invalid={Boolean(errors[name])} aria-describedby={errors[name] ? `error-${name}` : undefined} />
                     ) : (
-                      <UserPlus size={20} />
-                    )}{" "}
-                    {isLogin ? "Entrar" : "Criar Conta"}{" "}
-                  </>
-                )}
-              </button>
-            </form>
-            <div className="mt-6 text-center">
-              <p className="text-gray-600">
-                {isLogin ? "Não tem uma conta?" : "Já tem uma conta?"}
-                <button
-                  onClick={toggleMode}
-                  className="ml-2 text-blue-600 hover:text-blue-700 font-semibold"
-                >
-                  {isLogin ? "Cadastre-se" : "Faça login"}
-                </button>
-              </p>
+                      <input id={`auth-${name}`} name={name} type={type} autoComplete={autocomplete} value={formData[name]} onChange={handleChange} placeholder={placeholder} required aria-invalid={Boolean(errors[name])} aria-describedby={[errors[name] ? `error-${name}` : "", name === "password" && !isLogin ? "password-requirements" : ""].filter(Boolean).join(" ") || undefined} />
+                    )}
+                    {name === "password" && <button type="button" className={styles.reveal} onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button>}
+                  </div>
+                  {errors[name] && <p id={`error-${name}`} className={styles.error}>{errors[name]}</p>}
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
-      </div>
-
-      <Modal
-        isOpen={showSuccessModal}
-        onClose={handleCloseSuccessModal}
-        title="Sucesso!"
-        size="md"
-      >
-        <div className="text-center p-4">
-          <CheckCircle className="mx-auto h-16 w-16 text-green-500" />
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">
-            Cadastro Realizado!
-          </h3>
-          <div className="mt-2 px-7 py-3">
-            <p className="text-sm text-gray-500">
-              Sua conta foi criada com sucesso. Por favor, faça o login para
-              continuar.
-            </p>
-          </div>
-          <div className="mt-4">
-            <button
-              onClick={handleCloseSuccessModal}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold"
-            >
-              Ir para Login
+            {!isLogin && <div id="password-requirements" className={styles.requirements}>
+              <p>Sua senha precisa ter:</p>
+              <ul>{requirements.map(([key, label]) => <li key={key} className={passwordStrength[key] ? styles.fulfilled : ""}>{passwordStrength[key] ? <Check size={14} aria-hidden="true" /> : <Circle size={10} aria-hidden="true" />}<span>{label}</span><span className="sr-only">{passwordStrength[key] ? ": atendido" : ": pendente"}</span></li>)}</ul>
+            </div>}
+            {isLogin && <button type="button" className={styles.forgot} onClick={() => setIsForgotPasswordModalOpen(true)}>Esqueceu a senha?</button>}
+            {errors.api && <p role="alert" className={styles.error}>{errors.api}</p>}
+            <button type="submit" disabled={loading} className={styles.submit}>
+              {loading ? "Aguarde…" : isLogin ? "Entrar na plataforma" : "Criar conta"}
+              {!loading && <ArrowUpRight size={18} aria-hidden="true" />}
             </button>
-          </div>
+          </form>
+          <p className={styles.switchMode}>{isLogin ? "Ainda não tem uma conta?" : "Já tem uma conta?"} <button type="button" onClick={toggleMode} disabled={loading}>{isLogin ? "Começar grátis" : "Faça login"}</button></p>
+          {!isLogin && <p className={styles.freeNote}>Plano gratuito para até 3 veículos e 3 motoristas.</p>}
+        </div>
+        <p className={styles.formFoot}>© {new Date().getFullYear()} SynCar</p>
+      </section>
+      <Modal isOpen={showSuccessModal} onClose={handleCloseSuccessModal} title="Conta criada" size="md">
+        <div className={styles.success}>
+          <CheckCircle size={48} aria-hidden="true" />
+          <p>Sua conta foi criada com sucesso. Faça login para continuar.</p>
+          <button onClick={handleCloseSuccessModal} className={styles.submit}>Ir para login <ArrowUpRight size={18} /></button>
         </div>
       </Modal>
-
-      <Modal
-        isOpen={isForgotPasswordModalOpen}
-        onClose={() => setIsForgotPasswordModalOpen(false)}
-        title="Recuperar Senha"
-        size="md"
-      >
-        <ForgotPasswordForm
-          onClose={() => setIsForgotPasswordModalOpen(false)}
-        />
+      <Modal isOpen={isForgotPasswordModalOpen} onClose={() => setIsForgotPasswordModalOpen(false)} title="Recuperar senha" size="md">
+        <ForgotPasswordForm className={styles.recovery} onClose={() => setIsForgotPasswordModalOpen(false)} />
       </Modal>
-    </>
+    </main>
   );
 };
 
