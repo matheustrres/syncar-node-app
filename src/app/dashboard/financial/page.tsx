@@ -1,3 +1,4 @@
+import { getFinancialSummary } from "@/lib/financial-summary";
 import {
   getPendingPayments,
   getPaidPayments,
@@ -10,13 +11,16 @@ export default async function FinancialPage() {
     pendingPaymentsData,
     paidPaymentsData,
     recentExpensesData,
+    summary,
   ] = await Promise.all([
     getPendingPayments(1, 10),
     getPaidPayments(1, 10),
     getRecentExpenses(1, 10),
+    getFinancialSummary(),
   ]);
   return (
     <FinancialClientPage
+      initialSummary={summary}
       initialPendingPayments={pendingPaymentsData}
       initialPaidPayments={paidPaymentsData}
       initialRecentExpenses={recentExpensesData}

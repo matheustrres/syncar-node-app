@@ -1,3 +1,4 @@
+import { FinancialFilters, dateRange, financialToday } from "./financial-filters";
 import { cache } from "react";
 import { prisma } from "./prisma";
 import { getServerSession } from "next-auth";
@@ -297,7 +298,8 @@ export const getPendingPayments = cache(
     limit = 10,
     search = "",
     sortColumn = "dueDate",
-    sortDirection: "asc" | "desc" = "asc"
+    sortDirection: "asc" | "desc" = "asc",
+    filters: FinancialFilters = {}
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { payments: [], total: 0 };
@@ -306,6 +308,11 @@ export const getPendingPayments = cache(
       contract: { userId: session.user.id },
       status: "Pendente",
     };
+    const range = dateRange(filters);
+    if (range) where.dueDate = range;
+    const today = financialToday();
+    if (filters.situation === "overdue") where.AND = [{ dueDate: { lt: today } }];
+    if (filters.situation === "upcoming") where.AND = [{ dueDate: { gte: today, lt: new Date(today.getTime() + 7 * 86400000) } }];
     if (search) {
       where.OR = [
         {
@@ -342,7 +349,7 @@ export const getPendingPayments = cache(
         },
         skip,
         take: limit,
-        orderBy: { [sortColumn]: sortDirection },
+        orderBy: [{ [sortColumn]: sortDirection }, { id: "asc" }],
       }),
       prisma.payment.count({ where }),
     ]);
@@ -363,7 +370,8 @@ export const getPaidPayments = cache(
     limit = 10,
     search = "",
     sortColumn = "paymentDate",
-    sortDirection: "asc" | "desc" = "desc"
+    sortDirection: "asc" | "desc" = "desc",
+    filters: FinancialFilters = {}
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { payments: [], total: 0 };
@@ -372,6 +380,7 @@ export const getPaidPayments = cache(
       contract: { userId: session.user.id },
       status: "Pago",
     };
+    if (dateRange(filters)) where.paymentDate = dateRange(filters);
     if (search) {
       where.OR = [
         {
@@ -420,7 +429,7 @@ export const getPaidPayments = cache(
         },
         skip,
         take: limit,
-        orderBy,
+        orderBy: [orderBy, { id: "asc" }],
       }),
       prisma.payment.count({ where }),
     ]);
@@ -441,12 +450,15 @@ export const getRecentExpenses = cache(
     limit = 10,
     search = "",
     sortColumn = "date",
-    sortDirection: "asc" | "desc" = "desc"
+    sortDirection: "asc" | "desc" = "desc",
+    filters: FinancialFilters = {}
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { expenses: [], total: 0 };
     const skip = (page - 1) * limit;
     const where: Prisma.ExpenseWhereInput = { userId: session.user.id };
+    if (dateRange(filters)) where.date = dateRange(filters);
+    if (filters.category) where.type = filters.category;
     if (search) {
       where.OR = [
         { type: { contains: search, mode: "insensitive" } },
@@ -466,7 +478,7 @@ export const getRecentExpenses = cache(
         include: { vehicle: { select: { plate: true } } },
         skip,
         take: limit,
-        orderBy,
+        orderBy: [orderBy, { id: "asc" }],
       }),
       prisma.expense.count({ where }),
     ]);

@@ -86,11 +86,18 @@ O repositório já possui `src/components/ui`. Reaproveitar e alinhar esses comp
 
 A composição de `/dashboard/financial` é a referência visual para páginas novas e para revisar telas já migradas:
 
-1. **Cabeçalho:** painel verde profundo, cantos de 14 px, detalhe geométrico discreto, marcador lima e eyebrow curto em caixa alta. Título claro, frase de contexto e ações no mesmo bloco. A ação principal usa lima; a secundária usa verde elevado com borda. Mostrar apenas ações disponíveis naquela tela. No celular, empilhar texto e ações sem truncar rótulos.
+1. **Cabeçalho:** painel verde profundo, cantos de 14 px, composição compacta. Título claro, frase de contexto e ações no mesmo bloco. A ação principal usa lima; a secundária usa verde elevado com borda. Mostrar apenas ações disponíveis naquela tela. No celular, empilhar texto e ações sem truncar rótulos.
 2. **Seções:** ícone de domínio em um quadrado de 44 px sobre superfície verde pálida, título e descrição lado a lado. Contagem, quando útil, em badge discreto à direita. A contagem deve corresponder aos dados exibidos e nunca representar carregamento como zero.
 3. **Conteúdo:** painéis brancos com borda `--syncar-border`, sombra `--syncar-shadow-panel` e espaçamento de 24 px no desktop. Linhas e grupos devem favorecer leitura rápida. Evitar altura mínima grande em listas vazias.
 4. **Estados vazios:** usar ícone em tile de aproximadamente 62 px, título específico, explicação curta e próximo passo real. Distinguir ausência inicial, filtros sem resultado, erro e carregamento. O componente `EmptyState` cobre os estados reutilizáveis; estados vinculados a uma seção podem seguir a mesma composição localmente.
 5. **Dados presentes:** preservar os mesmos cabeçalhos e contêineres quando os dados chegam. Valores monetários mostram moeda, período e estado; ações por item permanecem próximas ao item. Não introduzir cartões decorativos que concorram com a informação operacional.
+
+### Financeiro
+
+- Resumo clicável: parcelas vencidas, próximas sete datas (incluindo hoje), recebimentos e despesas do mês até hoje.
+- Abas “A receber”, “Recebimentos” e “Despesas” compartilham a largura disponível. Cada aba preserva seus filtros e página durante a navegação.
+- Busca, período e filtros de situação/categoria operam no conjunto completo no servidor. Paginação de 10, 25 ou 50 registros.
+- Tabelas no desktop; linhas rotuladas e empilhadas no celular. Detalhes abrem em painel lateral com foco protegido e fechamento por Escape.
 
 O verde escuro identifica contexto e navegação; o lima destaca a ação prioritária. Ícones e bordas dão estrutura, mas não criam uma nova cor para cada módulo. A tela financeira demonstra o padrão, não autoriza repetir literalmente conteúdo ou ilustrações entre domínios.
 
