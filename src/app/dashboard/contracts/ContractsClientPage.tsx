@@ -28,6 +28,7 @@ interface Props {
 }
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const contractDate = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
 const limit = 10;
 
 export default function ContractsClientPage({ initialContracts, total: initialTotal, initialDrivers, initialVehicles, userPlan }: Props) {
@@ -234,6 +235,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
                   <ContractStatus status={contract.status} />
                 </div>
                 <div className={contractStyles.mobileDetails}>
+                  <span><strong>Início</strong> {contractDate.format(new Date(contract.startDate))}</span>
                   <span><strong>{currency.format(contract.weeklyValue)}</strong> por semana</span>
                   <span>{contract.duration ? contract.duration + " semanas" : "Duração indeterminada"}</span>
                 </div>

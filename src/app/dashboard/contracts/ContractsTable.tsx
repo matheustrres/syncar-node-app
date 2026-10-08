@@ -8,9 +8,11 @@ import styles from "../vehicles/vehicles.module.css";
 import contractStyles from "./contracts.module.css";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+const contractDate = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
 const sortableColumns = [
   { key: "driver.name", label: "Motorista" },
   { key: "vehicle.plate", label: "Veículo" },
+  { key: "startDate", label: "Data de início" },
   { key: "weeklyValue", label: "Valor semanal" },
   { key: "duration", label: "Duração" },
   { key: "status", label: "Status" },
@@ -48,6 +50,7 @@ export default function ContractsTable({ contracts, onOpen, onEdit, onDelete, on
             <td className={styles.checkboxCell}><input type="checkbox" aria-label={`Selecionar contrato de ${contract.driver.name}`} checked={visibleSelected.includes(contract.id)} onChange={() => toggleOne(contract.id)} /></td>
             <td><button type="button" className={styles.plateLink} onClick={() => onOpen(contract.id)}>{contract.driver.name}</button></td>
             <td>{contract.vehicle.plate}<span className={contractStyles.vehicleModel}>{contract.vehicle.model}</span></td>
+            <td>{contractDate.format(new Date(contract.startDate))}</td>
             <td className={contractStyles.value}>{currency.format(contract.weeklyValue)}</td>
             <td>{contract.duration ? `${contract.duration} semanas` : "Indeterminada"}</td>
             <td><ContractStatus status={contract.status} /></td>
