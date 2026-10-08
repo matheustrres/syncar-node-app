@@ -1,0 +1,7 @@
+.status { display: inline-flex; align-items: center; min-height: 26px; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.active { color: var(--syncar-success); background: color-mix(in srgb, var(--syncar-success) 12%, var(--syncar-surface)); }
+.finished { color: var(--syncar-text-muted); background: var(--syncar-surface-subtle); }
+.vehicleModel { display: block; margin-top: 2px; color: var(--syncar-text-muted); font-size: 12px; }
+.value { font-weight: 750; font-variant-numeric: tabular-nums; }
+.mobileDetails { display: flex; flex-wrap: wrap; gap: 5px 18px; margin-top: 14px; color: var(--syncar-text-muted); font-size: 13px; }
+.mobileDetails strong { color: var(--syncar-text); font-variant-numeric: tabular-nums; }

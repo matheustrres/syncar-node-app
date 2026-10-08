@@ -159,7 +159,7 @@ export function useFetchContracts(
     total: number;
   }>(`/api/contracts?${queryParams.toString()}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
   return {
     contracts: data?.contracts || [],
