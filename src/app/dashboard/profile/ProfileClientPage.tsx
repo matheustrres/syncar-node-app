@@ -1,148 +1,105 @@
 "use client";
 
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useState, FormEvent, useEffect, ChangeEvent } from "react";
+import { ArrowUpRight, Building2, Check, CreditCard, ExternalLink, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
 import { User as UserType } from "@/types";
 import { useFetchProfile } from "@/hooks/useData";
-import { User, Mail, Lock, Building, Star, ExternalLink } from "lucide-react";
-import ProfileSkeleton from "./ProfileSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { useToast } from "@/context/ToastContext";
+import ProfileSkeleton from "./ProfileSkeleton";
+import styles from "./profile.module.css";
 
-const ProfileForm = ({
-  profile,
-  mutateProfile,
-}: {
-  profile: UserType;
-  mutateProfile: () => void;
-}) => {
-  const { update: updateSession } = useSession();
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    companyName: "",
-  });
+async function responseError(response: Response, fallback: string) {
+  try {
+    const data = await response.json();
+    return data.error || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function ProfileForm({ profile, mutateProfile }: { profile: UserType; mutateProfile: () => void }) {
+  const { update } = useSession();
+  const [formData, setFormData] = useState({ name: "", email: "", companyName: "" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (profile) {
-      setFormData({
-        name: profile.name || "",
-        email: profile.email || "",
-        companyName: profile.companyName || "",
-      });
-    }
+    setFormData({ name: profile.name || "", email: profile.email || "", companyName: profile.companyName || "" });
   }, [profile]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setFormData((previous) => ({ ...previous, [name]: value }));
+    setMessage("");
+    setError("");
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setIsSubmitting(true);
-    setMessage("Salvando...");
+    setMessage("");
     setError("");
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(formData),
-    });
-    setIsSubmitting(false);
-    if (res.ok) {
-      await updateSession({ name: formData.name, email: formData.email });
+    try {
+      const response = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) {
+        setError(await responseError(response, "Não foi possível atualizar o perfil."));
+        return;
+      }
+      await update({ name: formData.name, email: formData.email });
       mutateProfile();
-      setMessage("Perfil atualizado com sucesso!");
-    } else {
-      const data = await res.json();
-      setError(data.error || "Ocorreu um erro ao atualizar.");
-      setMessage("");
+      setMessage("Dados atualizados com sucesso.");
+    } catch {
+      setError("Não foi possível salvar os dados. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nome completo *
-        </label>
-        <User className="absolute left-3 top-9 text-gray-400 z-10" size={20} />
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.field}>
+        <label htmlFor="profile-name">Nome completo <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><UserRound size={18} aria-hidden="true" /><input id="profile-name" name="name" type="text" autoComplete="name" value={formData.name} onChange={handleChange} required /></div>
       </div>
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Email *
-        </label>
-        <Mail className="absolute left-3 top-9 text-gray-400 z-10" size={20} />
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+      <div className={styles.field}>
+        <label htmlFor="profile-email">E-mail <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><Mail size={18} aria-hidden="true" /><input id="profile-email" name="email" type="email" autoComplete="email" value={formData.email} onChange={handleChange} required /></div>
       </div>
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nome da empresa *
-        </label>
-        <Building
-          className="absolute left-3 top-9 text-gray-400 z-10"
-          size={20}
-        />
-        <input
-          type="text"
-          name="companyName"
-          value={formData.companyName}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+      <div className={styles.field}>
+        <label htmlFor="profile-company">Nome da empresa <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><Building2 size={18} aria-hidden="true" /><input id="profile-company" name="companyName" type="text" autoComplete="organization" value={formData.companyName} onChange={handleChange} required /></div>
       </div>
-
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:bg-blue-400 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? "Salvando..." : "Salvar alterações"}
-        </button>
-        {message && <p className="text-sm text-green-600 mt-2">{message}</p>}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      <div className={styles.formFooter}>
+        <button type="submit" className={styles.saveButton} disabled={isSubmitting}>{isSubmitting ? "Salvando..." : "Salvar alterações"}</button>
+        {message && <p className={styles.successMessage} role="status"><Check size={16} aria-hidden="true" />{message}</p>}
+        {error && <p className={styles.errorMessage} role="alert">{error}</p>}
       </div>
     </form>
   );
-};
+}
 
-const PasswordForm = () => {
-  const [passwords, setPasswords] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmNewPassword: "",
-  });
+function PasswordForm() {
+  const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswords((prev) => ({ ...prev, [name]: value }));
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setPasswords((previous) => ({ ...previous, [name]: value }));
+    setMessage("");
+    setError("");
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setMessage("");
     setError("");
     if (passwords.newPassword.length < 8) {
@@ -154,96 +111,50 @@ const PasswordForm = () => {
       return;
     }
     setIsSubmitting(true);
-    setMessage("Alterando senha...");
-    const res = await fetch("/api/profile/password", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        currentPassword: passwords.currentPassword,
-        newPassword: passwords.newPassword,
-      }),
-    });
-    setIsSubmitting(false);
-    if (res.ok) {
-      setMessage("Senha alterada com sucesso!");
-      setError("");
-      setPasswords({
-        currentPassword: "",
-        newPassword: "",
-        confirmNewPassword: "",
+    try {
+      const response = await fetch("/api/profile/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword: passwords.currentPassword, newPassword: passwords.newPassword }),
       });
-    } else {
-      const data = await res.json();
-      setError(data.error || "Ocorreu um erro ao alterar a senha.");
-      setMessage("");
+      if (!response.ok) {
+        setError(await responseError(response, "Não foi possível alterar a senha."));
+        return;
+      }
+      setPasswords({ currentPassword: "", newPassword: "", confirmNewPassword: "" });
+      setMessage("Senha alterada com sucesso.");
+    } catch {
+      setError("Não foi possível alterar a senha. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Senha atual *
-        </label>
-        <Lock className="absolute left-3 top-9 text-gray-400 z-10" size={20} />
-        <input
-          type="password"
-          name="currentPassword"
-          value={passwords.currentPassword}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+    <form onSubmit={handleSubmit} className={styles.form}>
+      <div className={styles.field}>
+        <label htmlFor="current-password">Senha atual <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><LockKeyhole size={18} aria-hidden="true" /><input id="current-password" name="currentPassword" type="password" autoComplete="current-password" value={passwords.currentPassword} onChange={handleChange} required /></div>
       </div>
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Nova senha *
-        </label>
-        <Lock className="absolute left-3 top-9 text-gray-400 z-10" size={20} />
-        <input
-          type="password"
-          name="newPassword"
-          value={passwords.newPassword}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+      <div className={styles.field}>
+        <label htmlFor="new-password">Nova senha <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><LockKeyhole size={18} aria-hidden="true" /><input id="new-password" name="newPassword" type="password" autoComplete="new-password" minLength={8} value={passwords.newPassword} onChange={handleChange} required aria-describedby="password-hint" /></div>
+        <p id="password-hint" className={styles.fieldHint}>Use pelo menos 8 caracteres.</p>
       </div>
-      <div className="relative">
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Confirmar nova senha *
-        </label>
-        <Lock className="absolute left-3 top-9 text-gray-400 z-10" size={20} />
-        <input
-          type="password"
-          name="confirmNewPassword"
-          value={passwords.confirmNewPassword}
-          onChange={handleChange}
-          required
-          className="pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white"
-        />
+      <div className={styles.field}>
+        <label htmlFor="confirm-password">Confirmar nova senha <span aria-hidden="true">*</span></label>
+        <div className={styles.inputWrap}><LockKeyhole size={18} aria-hidden="true" /><input id="confirm-password" name="confirmNewPassword" type="password" autoComplete="new-password" value={passwords.confirmNewPassword} onChange={handleChange} required /></div>
       </div>
-
-      <div className="pt-2">
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 font-semibold disabled:bg-blue-400 disabled:cursor-not-allowed"
-        >
-          {isSubmitting ? "Alterando..." : "Alterar senha"}
-        </button>
-        {message && <p className="text-sm text-green-600 mt-2">{message}</p>}
-        {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+      <div className={styles.formFooter}>
+        <button type="submit" className={styles.saveButton} disabled={isSubmitting}>{isSubmitting ? "Alterando..." : "Alterar senha"}</button>
+        {message && <p className={styles.successMessage} role="status"><Check size={16} aria-hidden="true" />{message}</p>}
+        {error && <p className={styles.errorMessage} role="alert">{error}</p>}
       </div>
     </form>
   );
-};
+}
 
-export default function ProfileClientPage({
-  initialProfile,
-}: {
-  initialProfile: UserType | null;
-}) {
+export default function ProfileClientPage({ initialProfile }: { initialProfile: UserType | null }) {
   const { data: session, status: sessionStatus, update } = useSession();
   const { profile, isError, mutateProfile } = useFetchProfile(initialProfile);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -251,38 +162,24 @@ export default function ProfileClientPage({
   const { showToast } = useToast();
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("upgrade") === "success") {
-      update(); // Use the destructured 'update' function
-      showToast("Upgrade realizado com sucesso!", "success");
-      // Clean up the URL
-      urlParams.delete("upgrade");
-      window.history.replaceState(
-        { path: window.location.pathname },
-        "",
-        `${window.location.pathname}?${urlParams.toString()}`
-      );
-    }
-  }, [update, showToast]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgrade") !== "success") return;
+    update();
+    mutateProfile();
+    showToast("Upgrade realizado com sucesso!", "success");
+    params.delete("upgrade");
+    const query = params.toString();
+    window.history.replaceState({ path: window.location.pathname }, "", window.location.pathname + (query ? `?${query}` : ""));
+  }, [update, mutateProfile, showToast]);
 
   if (!profile && !isError) return <ProfileSkeleton />;
-  if (isError || !profile) {
-    return (
-      <div className="text-center text-red-500">Erro ao carregar o perfil.</div>
-    );
-  }
+  if (isError || !profile) return <div className={styles.loadError} role="alert">Não foi possível carregar o perfil. Atualize a página para tentar novamente.</div>;
 
   const handleManageSubscription = async () => {
     setIsPortalLoading(true);
     try {
-      const response = await fetch("/api/stripe/create-portal-session", {
-        method: "POST",
-      });
-
-      if (!response.ok) {
-        throw new Error("Falha ao abrir o portal de gerenciamento.");
-      }
-
+      const response = await fetch("/api/stripe/create-portal-session", { method: "POST" });
+      if (!response.ok) throw new Error("Falha ao abrir o portal de gerenciamento.");
       const { url } = await response.json();
       window.location.href = url;
     } catch {
@@ -293,90 +190,50 @@ export default function ProfileClientPage({
 
   const userPlan = session?.user?.plan || "BASIC";
   const isBasicPlan = userPlan === "BASIC";
-
-  const planNames: { [key: string]: string } = {
-    BASIC: "Básico",
-    PROFESSIONAL: "Profissional",
-  };
-
-  const translatedPlan = planNames[userPlan] || userPlan;
-  const PlanSection = () => {
-    if (sessionStatus === "loading") {
-      return (
-        <div className="h-10 bg-gray-200 rounded-md animate-pulse w-1/3"></div>
-      );
-    }
-
-    return (
-      <div className="flex items-center justify-between">
-        <div>
-          <span className="text-gray-600 mr-2">Seu plano atual:</span>
-          <span
-            className={`font-bold text-lg px-3 py-1 rounded-full ${
-              isBasicPlan
-                ? "bg-gray-200 text-gray-800"
-                : "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-            }`}
-          >
-            {translatedPlan}
-          </span>
-        </div>
-        <div>
-          {isBasicPlan ? (
-            <button
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 font-semibold inline-flex items-center gap-2 transition-colors"
-            >
-              <Star size={16} />
-              Fazer upgrade
-            </button>
-          ) : (
-            <button
-              onClick={handleManageSubscription}
-              disabled={isPortalLoading}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 font-semibold inline-flex items-center gap-2 transition-colors disabled:opacity-50"
-            >
-              {isPortalLoading ? "Carregando..." : "Gerenciar assinatura"}
-              {!isPortalLoading && <ExternalLink size={16} />}
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  };
+  const planName = userPlan === "PROFESSIONAL" ? "Profissional" : isBasicPlan ? "Básico" : userPlan;
 
   return (
-    <div>
-      <UpgradeModal
-        isOpen={isUpgradeModalOpen}
-        onClose={() => setIsUpgradeModalOpen(false)}
-        resourceName="seu plano atual"
-        monthlyPrice="R$ 49,90"
-        annualPrice="R$ 499"
-        annualSavings="Economize R$ 99,80"
-      />
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Meu Perfil</h2>
+    <main className={styles.page}>
+      <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} resourceName="seu plano atual" monthlyPrice="R$ 49,90" annualPrice="R$ 499" annualSavings="Economize R$ 99,80" />
+      <header className={styles.intro}>
+        <div>
+          <span className={styles.eyebrow}>Conta e acesso</span>
+          <h1>Meu perfil</h1>
+          <p>Gerencie os dados da conta, sua assinatura e a segurança do acesso.</p>
+        </div>
+        <div className={styles.introMark} aria-hidden="true"><UserRound size={30} strokeWidth={1.7} /></div>
+      </header>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-4 mb-6">
-          Plano e assinatura
-        </h3>
-        <PlanSection />
-      </div>
+      <section className={styles.subscription} aria-labelledby="subscription-title">
+        <div className={styles.planIcon}><CreditCard size={23} aria-hidden="true" /></div>
+        <div className={styles.planCopy}>
+          <span className={styles.planLabel}>Plano e assinatura</span>
+          {sessionStatus === "loading" ? (
+            <h2 id="subscription-title" className={styles.planLoading} aria-label="Carregando plano" />
+          ) : (
+            <>
+              <div className={styles.planTitleRow}><h2 id="subscription-title">{planName}</h2><span className={styles.planBadge}>{isBasicPlan ? "Gratuito" : "Ativo"}</span></div>
+              <p>{isBasicPlan ? "Organize sua operação gratuitamente. Amplie os recursos quando precisar." : "Gerencie sua assinatura e acompanhe os recursos do seu plano."}</p>
+            </>
+          )}
+        </div>
+        {sessionStatus !== "loading" && (isBasicPlan ? (
+          <button type="button" className={styles.planAction} onClick={() => setIsUpgradeModalOpen(true)}>Conhecer o Profissional <ArrowUpRight size={18} aria-hidden="true" /></button>
+        ) : (
+          <button type="button" className={styles.planAction} onClick={handleManageSubscription} disabled={isPortalLoading}>{isPortalLoading ? "Abrindo..." : "Gerenciar assinatura"}{!isPortalLoading && <ExternalLink size={17} aria-hidden="true" />}</button>
+        ))}
+      </section>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-4 mb-6">
-          Informações do perfil
-        </h3>
-        <ProfileForm profile={profile} mutateProfile={mutateProfile} />
+      <div className={styles.sections}>
+        <section className={styles.section} aria-labelledby="account-title">
+          <div className={styles.sectionHeading}><span className={styles.headingIcon}><UserRound size={21} aria-hidden="true" /></span><div><h2 id="account-title">Dados da conta</h2><p>Informações usadas no seu perfil e na operação.</p></div></div>
+          <div className={styles.panel}><ProfileForm profile={profile} mutateProfile={mutateProfile} /></div>
+        </section>
+        <section className={styles.section} aria-labelledby="security-title">
+          <div className={styles.sectionHeading}><span className={styles.headingIcon}><ShieldCheck size={21} aria-hidden="true" /></span><div><h2 id="security-title">Segurança</h2><p>Atualize a senha para manter seu acesso protegido.</p></div></div>
+          <div className={styles.panel}><PasswordForm /></div>
+        </section>
       </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-4 mb-6">
-          Alterar senha
-        </h3>
-        <PasswordForm />
-      </div>
-    </div>
+    </main>
   );
 }
