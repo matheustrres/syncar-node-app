@@ -12,7 +12,7 @@ import {
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import MaintenanceForm from "@/components/forms/MaintenanceForm";
-import { Plus, Edit2, Trash2, Wrench, ArrowRight } from "lucide-react";
+import { Plus, Edit2, Trash2, Wrench, ArrowRight, CircleAlert } from "lucide-react";
 import MaintenanceSkeleton from "./MaintenanceSkeleton";
 import MaintenanceFilterBar, { emptyMaintenanceFilters, MaintenanceFilterDraft } from "./MaintenanceFilterBar";
 import MaintenanceTable, { formatCost, formatDate, formatMileage, maintenanceTypeLabels } from "./MaintenanceTable";
@@ -21,6 +21,7 @@ import UpgradeModal from "@/components/ui/UpgradeModal";
 import useCrud from "@/hooks/useCrud";
 import styles from "../vehicles/vehicles.module.css";
 import local from "./maintenance.module.css";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface MaintenanceClientPageProps {
   initialMaintenance: MaintenanceWithRelations[];
@@ -279,6 +280,7 @@ export default function MaintenanceClientPage({
     <div className={styles.page}>
       <header className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Cuidado com a frota</span>
           <h1>Manutenções</h1>
           <p>Registre serviços, custos e quilometragem de cada veículo.</p>
         </div>
@@ -305,11 +307,7 @@ export default function MaintenanceClientPage({
       {isLoading ? (
         <MaintenanceSkeleton />
       ) : isError ? (
-        <section className={styles.messagePanel} role="alert">
-          <h2>Não foi possível carregar as manutenções</h2>
-          <p>Verifique a conexão e tente novamente.</p>
-          <button type="button" className={styles.secondaryAction} onClick={() => mutateMaintenance()}>Tentar novamente</button>
-        </section>
+        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar as manutenções" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateMaintenance()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><Wrench size={28} strokeWidth={1.8} aria-hidden="true" /></div>
@@ -331,11 +329,7 @@ export default function MaintenanceClientPage({
           {userPlan === "BASIC" && hasVehicles && <span className={styles.firstRunNote}>Plano Básico: até 3 manutenções cadastradas.</span>}
         </section>
       ) : total === 0 ? (
-        <section className={styles.messagePanel}>
-          <h2>Nenhuma manutenção encontrada</h2>
-          <p>Altere os filtros para consultar outros registros.</p>
-          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>
-        </section>
+        <EmptyState Icon={Wrench} title="Nenhuma manutenção encontrada" description="Altere os filtros para consultar outros registros." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
       ) : (
         <>
           <div className={styles.resultsHeader}>

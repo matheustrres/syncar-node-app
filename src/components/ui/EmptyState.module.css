@@ -1,0 +1,10 @@
+.panel { display: flex; align-items: center; gap: 20px; min-height: 142px; padding: 26px 30px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-panel); background: var(--syncar-surface); box-shadow: var(--syncar-shadow-panel); color: var(--syncar-text); }
+.visual { display: grid; width: 62px; height: 62px; flex: none; place-items: center; border: 1px solid var(--syncar-border); border-radius: 16px; background: var(--syncar-surface-subtle); color: var(--syncar-success); }
+.copy { min-width: 0; }
+.copy h2 { margin: 0; font-size: 15px; line-height: 1.4; font-weight: 700; }
+.copy p { margin: 4px 0 0; color: var(--syncar-text-muted); font-size: 14px; line-height: 1.5; }
+.action { margin-top: 8px; }
+.action :is(a, button) { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0; border: 0; background: transparent; color: var(--syncar-success); font-size: 13px; font-weight: 700; }
+.action :is(a, button):hover { text-decoration: underline; text-underline-offset: 3px; }
+.action :is(a, button):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+@media (max-width: 640px) { .panel { align-items: flex-start; gap: 14px; padding: 22px 18px; } .visual { width: 48px; height: 48px; border-radius: 12px; } }

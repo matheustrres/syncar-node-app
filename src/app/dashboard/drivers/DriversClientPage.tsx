@@ -8,7 +8,7 @@ import { Driver, WithoutBaseItem } from "@/types";
 import { DriverFilters, useFetchDrivers } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
-import { Plus, Edit2, Trash2, UsersRound, Download, ArrowRight } from "lucide-react";
+import { Plus, Edit2, Trash2, UsersRound, Download, ArrowRight, CircleAlert } from "lucide-react";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
@@ -17,6 +17,7 @@ import DriversTable from "./DriversTable";
 import DriverStatus from "./DriverStatus";
 import styles from "../vehicles/vehicles.module.css";
 import driverStyles from "./drivers.module.css";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface ClientPageProps {
   initialDrivers: Driver[];
@@ -299,6 +300,7 @@ export default function DriversClientPage({
     <div className={styles.page}>
       <header className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Equipe da operação</span>
           <h1>Motoristas</h1>
           <p>Consulte os dados e a situação dos motoristas da sua frota.</p>
         </div>
@@ -319,11 +321,7 @@ export default function DriversClientPage({
       {isLoading ? (
         <DriversSkeleton />
       ) : isError ? (
-        <section className={styles.messagePanel} role="alert">
-          <h2>Não foi possível carregar os motoristas</h2>
-          <p>Verifique a conexão e tente novamente.</p>
-          <button type="button" className={styles.secondaryAction} onClick={() => mutateDrivers()}>Tentar novamente</button>
-        </section>
+        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os motoristas" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateDrivers()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><UsersRound size={28} strokeWidth={1.8} aria-hidden="true" /></div>
@@ -337,11 +335,7 @@ export default function DriversClientPage({
           {userPlan === "BASIC" && <span className={styles.firstRunNote}>Plano Básico: até 3 motoristas cadastrados.</span>}
         </section>
       ) : total === 0 ? (
-        <section className={styles.messagePanel}>
-          <h2>Nenhum motorista encontrado</h2>
-          <p>Altere os filtros para ver outros motoristas da frota.</p>
-          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>
-        </section>
+        <EmptyState Icon={UsersRound} title="Nenhum motorista encontrado" description="Altere os filtros para ver outros motoristas da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
       ) : (
         <>
           <div className={styles.resultsHeader}>

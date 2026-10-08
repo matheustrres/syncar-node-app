@@ -30,6 +30,7 @@ html {
 
   --syncar-radius-control: 8px;
   --syncar-radius-panel: 14px;
+  --syncar-shadow-panel: 0 2px 8px rgb(16 45 48 / 4%);
   --syncar-shadow-overlay: 0 16px 44px rgba(10, 39, 39, .12);
   --syncar-motion-fast: 150ms;
 }

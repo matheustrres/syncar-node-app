@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
-import { ArrowRight, Download, Edit2, FileText, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CircleAlert, Download, Edit2, FileText, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { Contract, Driver, Vehicle, WithoutBaseItem } from "@/types";
 import { ContractFilters, ContractWithRelations, useAllDrivers, useAllVehicles, useFetchContracts } from "@/hooks/useData";
@@ -17,6 +17,7 @@ import ContractStatus from "./ContractStatus";
 import ContractsSkeleton from "./ContractsSkeleton";
 import styles from "../vehicles/vehicles.module.css";
 import contractStyles from "./contracts.module.css";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Props {
   initialContracts: ContractWithRelations[];
@@ -173,6 +174,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
     <div className={styles.page}>
       <header className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Operação de locações</span>
           <h1>Contratos</h1>
           <p>Acompanhe locações, valores e a situação dos contratos da sua frota.</p>
         </div>
@@ -193,11 +195,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
       {isLoading ? (
         <ContractsSkeleton />
       ) : isError ? (
-        <section className={styles.messagePanel} role="alert">
-          <h2>Não foi possível carregar os contratos</h2>
-          <p>Verifique a conexão e tente novamente.</p>
-          <button type="button" className={styles.secondaryAction} onClick={() => mutateContracts()}>Tentar novamente</button>
-        </section>
+        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os contratos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateContracts()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><FileText size={28} strokeWidth={1.8} aria-hidden="true" /></div>
@@ -210,13 +208,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
           </div>
         </section>
       ) : total === 0 ? (
-        <section className={styles.messagePanel}>
-          <h2>Nenhum contrato encontrado</h2>
-          <p>Altere os filtros para ver outros contratos da frota.</p>
-          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>
-            Limpar filtros <ArrowRight size={17} aria-hidden="true" />
-          </button>
-        </section>
+        <EmptyState Icon={FileText} title="Nenhum contrato encontrado" description="Altere os filtros para ver outros contratos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
       ) : (
         <>
           <div className={styles.resultsHeader}>

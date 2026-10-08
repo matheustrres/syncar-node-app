@@ -1,13 +1,13 @@
-'use client';
-
-import React from 'react';
-import { LucideIcon } from 'lucide-react';
+import type { ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
+import styles from "./EmptyState.module.css";
 
 interface EmptyStateProps {
   Icon: LucideIcon;
   title: string;
   description: string;
-  actionButton: React.ReactNode;
+  actionButton?: ReactNode;
+  role?: "alert" | "status";
 }
 
 export default function EmptyState({
@@ -15,13 +15,16 @@ export default function EmptyState({
   title,
   description,
   actionButton,
+  role,
 }: EmptyStateProps) {
   return (
-    <div className="text-center flex flex-col items-center justify-center p-12 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 h-full">
-      <Icon className="w-16 h-16 text-gray-400 mb-4" />
-      <h3 className="text-xl font-semibold text-gray-800 mb-2">{title}</h3>
-      <p className="text-gray-500 mb-6 max-w-md">{description}</p>
-      {actionButton}
-    </div>
+    <section className={styles.panel} role={role}>
+      <span className={styles.visual}><Icon size={26} strokeWidth={1.8} aria-hidden="true" /></span>
+      <div className={styles.copy}>
+        <h2>{title}</h2>
+        <p>{description}</p>
+        {actionButton && <div className={styles.action}>{actionButton}</div>}
+      </div>
+    </section>
   );
 }

@@ -25,6 +25,7 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <div className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Painel da operação</span>
           <h1>Visão geral</h1>
           <p>O que precisa da sua atenção na frota e no financeiro.</p>
         </div>
@@ -134,10 +135,14 @@ export default async function DashboardPage() {
               </dl>
             ) : (
               <div className={styles.fleetEmpty}>
-                <p>Cadastre o primeiro veículo para acompanhar a disponibilidade da frota.</p>
-                <Link className={styles.textLink} href="/dashboard/vehicles">
-                  Ir para veículos <ArrowRight size={16} aria-hidden="true" />
-                </Link>
+                <span className={styles.emptyIcon}><CarFront size={24} aria-hidden="true" /></span>
+                <div>
+                  <strong>Nenhum veículo cadastrado</strong>
+                  <p>Cadastre o primeiro veículo para acompanhar a disponibilidade da frota.</p>
+                  <Link className={styles.textLink} href="/dashboard/vehicles">
+                    Ir para veículos <ArrowRight size={16} aria-hidden="true" />
+                  </Link>
+                </div>
               </div>
             )}
           </section>

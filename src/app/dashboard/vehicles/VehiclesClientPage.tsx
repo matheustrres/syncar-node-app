@@ -16,6 +16,7 @@ import {
   Car,
   Download,
   ArrowRight,
+  CircleAlert,
 } from "lucide-react";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
@@ -24,6 +25,7 @@ import VehicleStatus from "./VehicleStatus";
 import VehiclesFilterBar, { emptyVehicleFilters, VehicleFilterDraft } from "./VehiclesFilterBar";
 import VehiclesTable from "./VehiclesTable";
 import styles from "./vehicles.module.css";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface ClientPageProps {
   initialVehicles: Vehicle[];
@@ -306,6 +308,7 @@ export default function VehiclesClientPage({
     <div className={styles.page}>
       <header className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Gestão da frota</span>
           <h1>Veículos</h1>
           <p>Acompanhe a disponibilidade e os dados da sua frota.</p>
         </div>
@@ -331,11 +334,7 @@ export default function VehiclesClientPage({
       {isLoading ? (
         <VehiclesSkeleton />
       ) : isError ? (
-        <section className={styles.messagePanel} role="alert">
-          <h2>Não foi possível carregar os veículos</h2>
-          <p>Verifique a conexão e tente novamente.</p>
-          <button type="button" className={styles.secondaryAction} onClick={() => mutateVehicles()}>Tentar novamente</button>
-        </section>
+        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os veículos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateVehicles()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><Car size={28} strokeWidth={1.8} aria-hidden="true" /></div>
@@ -349,11 +348,7 @@ export default function VehiclesClientPage({
           {userPlan === "BASIC" && <span className={styles.firstRunNote}>Plano Básico: até 3 veículos cadastrados.</span>}
         </section>
       ) : total === 0 ? (
-        <section className={styles.messagePanel}>
-          <h2>Nenhum veículo encontrado</h2>
-          <p>Altere os filtros para ver outros veículos da frota.</p>
-          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>
-        </section>
+        <EmptyState Icon={Car} title="Nenhum veículo encontrado" description="Altere os filtros para ver outros veículos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
       ) : (
         <>
           <div className={styles.resultsHeader}>
