@@ -12,7 +12,7 @@ import {
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import MaintenanceForm from "@/components/forms/MaintenanceForm";
-import { Plus, Edit2, Trash2, Wrench, ArrowRight, CircleAlert } from "lucide-react";
+import { Plus, Edit2, Trash2, Wrench, ArrowRight, CircleAlert, Download } from "lucide-react";
 import MaintenanceSkeleton from "./MaintenanceSkeleton";
 import MaintenanceFilterBar, { emptyMaintenanceFilters, MaintenanceFilterDraft } from "./MaintenanceFilterBar";
 import MaintenanceTable, { formatCost, formatDate, formatMileage, maintenanceTypeLabels } from "./MaintenanceTable";
@@ -267,6 +267,31 @@ export default function MaintenanceClientPage({
     setSortDirection(direction);
   };
 
+  const handleExport = async () => {
+    if (userPlan !== "PROFESSIONAL") {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/export/maintenance");
+      if (!response.ok) throw new Error("Falha ao exportar manutenções.");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `manutencoes-${Date.now()}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      showToast("Manutenções exportadas com sucesso!", "success");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "Erro ao exportar manutenções.", "error");
+    }
+  };
+
   const isFiltersEmpty = Object.keys(filters).length === 0;
   const activeFilterCount = Object.values(filterDraft).filter((value) => value.trim() !== "").length;
   const showFirstRun = maintenanceCount === 0 && isFiltersEmpty && activeFilterCount === 0;
@@ -285,15 +310,20 @@ export default function MaintenanceClientPage({
           <h1>Manutenções</h1>
           <p>Registre serviços, custos e quilometragem de cada veículo.</p>
         </div>
-        {hasVehicles ? (
-          <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}>
-            <Plus size={19} aria-hidden="true" /> Nova manutenção
+        <div className={styles.headerActions}>
+          <button type="button" className={styles.secondaryAction} onClick={handleExport}>
+            <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
-        ) : (
-          <Link href="/dashboard/vehicles" className={styles.primaryAction}>
-            <Plus size={19} aria-hidden="true" /> Cadastrar veículo
-          </Link>
-        )}
+          {hasVehicles ? (
+            <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}>
+              <Plus size={19} aria-hidden="true" /> Nova manutenção
+            </button>
+          ) : (
+            <Link href="/dashboard/vehicles" className={styles.primaryAction}>
+              <Plus size={19} aria-hidden="true" /> Cadastrar veículo
+            </Link>
+          )}
+        </div>
       </header>
 
       {(!showFirstRun || isLoading) && (
