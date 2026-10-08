@@ -238,7 +238,7 @@ export function useFetchVehicles(
     total: number;
   }>(`/api/vehicles?${queryParams.toString()}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: fallbackData ? false : true,
   });
   return {
     vehicles: data?.vehicles || [],

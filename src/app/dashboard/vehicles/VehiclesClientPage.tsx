@@ -11,122 +11,24 @@ import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import {
   Plus,
-  Edit,
+  Edit2,
   Trash2,
   Car,
-  Hash,
-  Calendar,
-  Gauge,
-  CheckSquare,
   Download,
+  ArrowRight,
 } from "lucide-react";
-import DataTable, { Column } from "@/components/ui/DataTable";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
-import AdvancedFilterBar, {
-  FilterConfig,
-} from "@/components/ui/AdvancedFilterBar";
-import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
-import EmptyState from "@/components/ui/EmptyState";
-
-const columns: Column<Vehicle>[] = [
-  {
-    header: "Placa",
-    accessor: "plate",
-    className: "font-medium text-gray-900",
-    sortable: true,
-  },
-  {
-    header: "Marca",
-    accessor: "brand",
-    sortable: true,
-  },
-  {
-    header: "Modelo",
-    accessor: "model",
-    sortable: true,
-  },
-  {
-    header: "Status",
-    accessor: (vehicle) => (
-      <span
-        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          vehicle.status === "Disponível"
-            ? "bg-green-100 text-green-800"
-            : vehicle.status === "Manutenção"
-              ? "bg-yellow-100 text-yellow-800"
-              : "bg-blue-100 text-blue-800"
-        }`}
-      >
-        {vehicle.status}
-      </span>
-    ),
-    sortable: true,
-  },
-];
-
-const statusOptions = [
-  { value: "", label: "Todos os status" },
-  { value: "Disponível", label: "Disponível" },
-  { value: "Alugado", label: "Alugado" },
-  { value: "Manutenção", label: "Manutenção" },
-];
+import VehicleStatus from "./VehicleStatus";
+import VehiclesFilterBar, { emptyVehicleFilters, VehicleFilterDraft } from "./VehiclesFilterBar";
+import VehiclesTable from "./VehiclesTable";
+import styles from "./vehicles.module.css";
 
 interface ClientPageProps {
   initialVehicles: Vehicle[];
   total: number;
 }
-
-const filtersConfig: FilterConfig[] = [
-  {
-    id: "searchPlate",
-    label: "Buscar por placa",
-    type: "text",
-    field: "plate",
-    placeholder: "Ex: ABC1234",
-    icon: Hash,
-  },
-  {
-    id: "searchBrand",
-    label: "Buscar por marca",
-    type: "text",
-    field: "brand",
-    placeholder: "Ex: Toyota",
-    icon: Car,
-  },
-  {
-    id: "searchModel",
-    label: "Buscar por modelo",
-    type: "text",
-    field: "model",
-    placeholder: "Ex: Corolla",
-    icon: Car,
-  },
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    field: "status",
-    options: statusOptions,
-    placeholder: "Todos os status",
-    icon: CheckSquare,
-  },
-  {
-    id: "yearRange",
-    label: "Ano",
-    type: "number-range",
-    field: "year",
-    icon: Calendar,
-  },
-  {
-    id: "kmRange",
-    label: "Quilometragem",
-    type: "number-range",
-    field: "km",
-    icon: Gauge,
-  },
-];
 
 export default function VehiclesClientPage({
   initialVehicles,
@@ -137,6 +39,8 @@ export default function VehiclesClientPage({
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<VehicleFilters>({});
+  const [fleetCount, setFleetCount] = useState(initialTotal);
+  const [filterDraft, setFilterDraft] = useState<VehicleFilterDraft>(emptyVehicleFilters);
   const [sortColumn, setSortColumn] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const limit = 10;
@@ -145,11 +49,22 @@ export default function VehiclesClientPage({
     setPage(1);
   }, [filters]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const active = Object.fromEntries(
+        Object.entries(filterDraft).filter(([, value]) => value.trim() !== "")
+      ) as VehicleFilters;
+      setFilters((current) => JSON.stringify(current) === JSON.stringify(active) ? current : active);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [filterDraft]);
+
+  const useInitialData = page === 1 && Object.keys(filters).length === 0 && sortColumn === "createdAt" && sortDirection === "desc";
   const { vehicles, total, isError, isLoading, mutateVehicles } =
-    useFetchVehicles(page, limit, filters, sortColumn, sortDirection, {
+    useFetchVehicles(page, limit, filters, sortColumn, sortDirection, useInitialData ? {
       vehicles: initialVehicles,
       total: initialTotal,
-    });
+    } : undefined);
 
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -160,7 +75,7 @@ export default function VehiclesClientPage({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isAtLimit = userPlan === "BASIC" && total >= 3;
+  const isAtLimit = userPlan === "BASIC" && fleetCount >= 3;
 
   const { deleteMany: deleteManyVehicles } = useCrud<Vehicle>("/api/vehicles");
 
@@ -225,6 +140,7 @@ export default function VehiclesClientPage({
           throw new Error(error);
         }
         const savedVehicle = await response.json();
+        if (!editingItem) setFleetCount((count) => count + 1);
         showToast(
           `Veículo ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
           "success"
@@ -276,6 +192,7 @@ export default function VehiclesClientPage({
         if (!response.ok) {
           throw new Error("Falha ao excluir");
         }
+        setFleetCount((count) => Math.max(0, count - 1));
         showToast("Veículo excluído com sucesso!", "success");
         return { vehicles: optimisticData, total: total - 1 };
       }, options);
@@ -291,13 +208,14 @@ export default function VehiclesClientPage({
   };
 
   const handleConfirmBulkDelete = async () => {
+    const idsToDelete = [...itemsToDelete];
     const optimisticData = vehicles.filter(
-      (vehicle) => !itemsToDelete.includes(vehicle.id)
+      (vehicle) => !idsToDelete.includes(vehicle.id)
     );
     const options = {
       optimisticData: {
         vehicles: optimisticData,
-        total: total - itemsToDelete.length,
+        total: total - idsToDelete.length,
       },
       rollbackOnError: true,
       populateCache: true,
@@ -309,11 +227,12 @@ export default function VehiclesClientPage({
 
     try {
       await mutateVehicles(async () => {
-        await deleteManyVehicles(itemsToDelete);
+        await deleteManyVehicles(idsToDelete);
+        setFleetCount((count) => Math.max(0, count - idsToDelete.length));
         showToast("Veículos excluídos com sucesso!", "success");
         return {
           vehicles: optimisticData,
-          total: total - itemsToDelete.length,
+          total: total - idsToDelete.length,
         };
       }, options);
     } catch {
@@ -327,14 +246,8 @@ export default function VehiclesClientPage({
     router.push(`/dashboard/vehicles/${itemId}`);
   };
 
-  const handleActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
-  const { data: session } = useSession();
-
   const handleExportClick = () => {
-    if (session?.user?.plan?.toUpperCase() !== "PRO") {
+    if (dataSession?.user?.plan?.toUpperCase() !== "PRO") {
       setIsUpgradeModalOpen(true);
     } else {
       handleExport();
@@ -368,15 +281,11 @@ export default function VehiclesClientPage({
 
   const totalPages = Math.ceil(total / limit);
 
-  const addButton = (
-    <button
-      onClick={handleAddClick}
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
-    >
-      <Plus size={20} />
-      <span>Criar veículo</span>
-    </button>
-  );
+  useEffect(() => {
+    if (!isLoading && totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [isLoading, page, totalPages]);
 
   const handleSort = (column: string, direction: "asc" | "desc") => {
     setSortColumn(column);
@@ -384,161 +293,101 @@ export default function VehiclesClientPage({
   };
 
   const isFiltersEmpty = Object.keys(filters).length === 0;
+  const activeFilterCount = Object.values(filterDraft).filter((value) => value.trim() !== "").length;
+  const showFirstRun = total === 0 && isFiltersEmpty && activeFilterCount === 0;
+  const showFilters = !showFirstRun || isLoading;
+  const clearFilters = () => {
+    setFilterDraft({ ...emptyVehicleFilters });
+    setFilters({});
+    setPage(1);
+  };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center flex-wrap gap-4 mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Veículos
-        </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={handleExportClick}
-            className="bg-green-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 w-full sm:w-auto"
-          >
-            <Download size={20} />
-            <span className="hidden sm:inline whitespace-nowrap">
-              Exportar CSV
-            </span>
-            <span className="sm:hidden">Exportar</span>
+    <div className={styles.page}>
+      <header className={styles.intro}>
+        <div>
+          <h1>Veículos</h1>
+          <p>Acompanhe a disponibilidade e os dados da sua frota.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <button type="button" onClick={handleExportClick} className={styles.secondaryAction}>
+            <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
-          <button
-            onClick={handleAddClick}
-            className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"
-          >
-            <Plus size={20} />
-            <span className="hidden sm:inline whitespace-nowrap">
-              Adicionar veículo
-            </span>
-            <span className="sm:hidden">Adicionar</span>
+          <button type="button" onClick={handleAddClick} className={styles.primaryAction}>
+            <Plus size={19} aria-hidden="true" /> Adicionar veículo
           </button>
         </div>
-      </div>
+      </header>
 
-      <AdvancedFilterBar
-        filtersConfig={filtersConfig}
-        onFilterChange={setFilters}
-      />
+      {showFilters && (
+        <VehiclesFilterBar
+          value={filterDraft}
+          onChange={setFilterDraft}
+          onClear={clearFilters}
+          activeCount={activeFilterCount}
+        />
+      )}
 
       {isLoading ? (
         <VehiclesSkeleton />
       ) : isError ? (
-        <ErrorDisplay
-          errorMessage="Falha ao carregar os veículos."
-          onRetry={mutateVehicles}
-        />
-      ) : total === 0 && isFiltersEmpty ? (
-        <>
-          <EmptyState
-            Icon={Car}
-            title="Nenhum veículo cadastrado"
-            description="Comece cadastrando o primeiro veículo da sua frota para poder gerenciá-los."
-            actionButton={addButton}
-          />
-          <Modal
-            isOpen={isFormModalOpen}
-            onClose={handleCloseFormModal}
-            title={editingItem ? "Editar veículo" : "Criar veículo"}
-            size="4xl"
-          >
-            <VehicleForm
-              initialData={editingItem}
-              isSaving={isSaving}
-              onSave={handleSave}
-              onCancel={handleCloseFormModal}
-            />
-          </Modal>
-        </>
+        <section className={styles.messagePanel} role="alert">
+          <h2>Não foi possível carregar os veículos</h2>
+          <p>Verifique a conexão e tente novamente.</p>
+          <button type="button" className={styles.secondaryAction} onClick={() => mutateVehicles()}>Tentar novamente</button>
+        </section>
+      ) : showFirstRun ? (
+        <section className={styles.firstRun}>
+          <div className={styles.firstRunIcon}><Car size={28} strokeWidth={1.8} aria-hidden="true" /></div>
+          <div className={styles.firstRunCopy}>
+            <h2>Sua frota começa aqui</h2>
+            <p>Cadastre o primeiro veículo para acompanhar disponibilidade, contratos e manutenção em um só lugar.</p>
+            <button type="button" className={styles.primaryAction} onClick={handleAddClick}>
+              <Plus size={19} aria-hidden="true" /> Cadastrar primeiro veículo
+            </button>
+          </div>
+          {userPlan === "BASIC" && <span className={styles.firstRunNote}>Plano Básico: até 3 veículos cadastrados.</span>}
+        </section>
+      ) : total === 0 ? (
+        <section className={styles.messagePanel}>
+          <h2>Nenhum veículo encontrado</h2>
+          <p>Altere os filtros para ver outros veículos da frota.</p>
+          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>
+        </section>
       ) : (
         <>
-          <div className="hidden lg:block">
-            <DataTable
-              columns={columns}
-              data={vehicles || []}
-              onRowClick={handleRowClick}
-              onEdit={handleOpenFormModal}
-              onDelete={handleDeleteClick}
-              onSort={handleSort}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              onBulkDelete={handleBulkDelete}
-            />
+          <div className={styles.resultsHeader}>
+            <h2>Frota cadastrada</h2>
+            <span>{total} {total === 1 ? "veículo" : "veículos"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
           </div>
-
-          <div className="lg:hidden grid grid-cols-1 gap-4">
-            {(vehicles || []).map((vehicle) => (
-              <div
-                key={vehicle.id}
-                onClick={() => handleRowClick(vehicle.id)}
-                className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
-              >
-                <div className="flex justify-between items-start">
+          <div className={styles.desktopTable}>
+            <VehiclesTable vehicles={vehicles} onOpen={handleRowClick} onEdit={handleOpenFormModal} onDelete={handleDeleteClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
+          </div>
+          <div className={styles.mobileList}>
+            {vehicles.map((vehicle) => (
+              <article key={vehicle.id} className={styles.mobileItem}>
+                <div className={styles.mobileItemTop}>
                   <div>
-                    <p className="font-bold text-gray-900">{vehicle.plate}</p>
-                    <p className="text-sm text-gray-500">{vehicle.brand}</p>
-                    <p className="text-sm text-gray-500">{vehicle.model}</p>
+                    <button type="button" className={styles.plateLink} onClick={() => handleRowClick(vehicle.id)}>{vehicle.plate}</button>
+                    <p>{vehicle.brand} {vehicle.model}</p>
                   </div>
-                  <span
-                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                      vehicle.status === "Disponível"
-                        ? "bg-green-100 text-green-800"
-                        : vehicle.status === "Manutenção"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-blue-100 text-blue-800"
-                    }`}
-                  >
-                    {vehicle.status}
-                  </span>
+                  <VehicleStatus status={vehicle.status} />
                 </div>
-                <div
-                  className="border-t pt-2 flex justify-end items-center"
-                  onClick={handleActionClick}
-                >
-                  <div className="flex gap-2">
-                    <button
-                      title="Editar veículo"
-                      onClick={() => handleOpenFormModal(vehicle)}
-                      className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      title="Excluir veículo"
-                      onClick={() => handleDeleteClick(vehicle)}
-                      className="text-red-600 p-2 rounded-full hover:bg-gray-100"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                <div className={styles.mobileActions}>
+                  <button type="button" onClick={() => handleOpenFormModal(vehicle)}><Edit2 size={17} aria-hidden="true" /> Editar</button>
+                  <button type="button" onClick={() => handleDeleteClick(vehicle)}><Trash2 size={17} aria-hidden="true" /> Excluir</button>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
-
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Mostrando {vehicles.length} de {total} veículos.
+          <nav className={styles.pagination} aria-label="Paginação de veículos">
+            <span>Mostrando {vehicles.length} de {total} veículos</span>
+            <div>
+              <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
+              <span>Página {page} de {totalPages}</span>
+              <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>Próximo</button>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-700">
-                Página {page} de {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages || total === 0}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
+          </nav>
         </>
       )}
 
