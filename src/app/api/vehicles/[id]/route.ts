@@ -42,6 +42,8 @@ export async function PUT(
   if (data.model) {
     data.modelNormalized = normalizeString(data.model);
   }
+  if ("renavam" in data) data.renavam = data.renavam?.trim() || null;
+  if ("chassis" in data) data.chassis = data.chassis?.trim() || null;
   const updatedVehicle = await prisma.vehicle.update({
     where: { id, userId: session.user.id },
     data,

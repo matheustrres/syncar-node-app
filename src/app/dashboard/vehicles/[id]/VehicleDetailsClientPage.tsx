@@ -256,8 +256,8 @@ export default function VehicleDetailsClientPage({
               label="Quilometragem"
               value={`${vehicle.km.toLocaleString("pt-BR")} km`}
             />
-            <DetailItem label="RENAVAM" value={vehicle.renavam} />
-            <DetailItem label="Chassi" value={vehicle.chassis} />
+            <DetailItem label="RENAVAM" value={vehicle.renavam || "Não informado"} />
+            <DetailItem label="Chassi" value={vehicle.chassis || "Não informado"} />
           </div>
         </div>
       </div>

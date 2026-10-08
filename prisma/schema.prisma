@@ -70,8 +70,8 @@ model Vehicle {
   modelNormalized String?       @map("model_normalized")
   year            Int
   color           String
-  renavam         String        @unique
-  chassis         String        @unique
+  renavam         String?       @unique
+  chassis         String?       @unique
   km              Int
   status          String        @default("Disponível")
   userId          String        @map("user_id")

@@ -13,10 +13,13 @@ import {
   Calendar,
   Car,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 import CustomSelect, { SelectOption } from "../ui/CustomSelect";
 
 import { normalizeString } from "@/lib/string-utils";
+
+type CatalogItem = { code: string; name: string };
 
 interface VehicleFormProps {
   initialData?: Vehicle | null;
@@ -44,6 +47,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     km: 0,
     status: "Disponível",
   });
+  const [brands, setBrands] = useState<CatalogItem[]>([]);
+  const [models, setModels] = useState<CatalogItem[]>([]);
+  const [isLoadingBrands, setIsLoadingBrands] = useState(true);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [brandsError, setBrandsError] = useState(false);
+  const [modelsError, setModelsError] = useState(false);
+  const [catalogRetry, setCatalogRetry] = useState(0);
 
   const statusOptions: SelectOption[] = [
     { value: "Disponível", label: "Disponível" },
@@ -66,6 +76,58 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       });
     }
   }, [initialData]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsLoadingBrands(true);
+    setBrandsError(false);
+    fetch("/api/vehicles/catalog", { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Falha ao carregar marcas");
+        return response.json() as Promise<CatalogItem[]>;
+      })
+      .then((items) => {
+        if (items.length === 0) throw new Error("Nenhuma marca disponível");
+        setBrands(items);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setBrandsError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingBrands(false);
+      });
+    return () => controller.abort();
+  }, [catalogRetry]);
+
+  const selectedBrandCode = brands.find(
+    (brand) =>
+      brand.name.toLocaleLowerCase("pt-BR") === formData.brand.toLocaleLowerCase("pt-BR") ||
+      (brand.name === "Chevrolet" && formData.brand === "GM - Chevrolet"),
+  )?.code;
+
+  useEffect(() => {
+    if (!selectedBrandCode) return;
+    const controller = new AbortController();
+    setIsLoadingModels(true);
+    setModelsError(false);
+    setModels([]);
+    fetch(`/api/vehicles/catalog?brand=${selectedBrandCode}`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Falha ao carregar modelos");
+        return response.json() as Promise<CatalogItem[]>;
+      })
+      .then((items) => {
+        if (items.length === 0) throw new Error("Nenhum modelo disponível");
+        setModels(items);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setModelsError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingModels(false);
+      });
+    return () => controller.abort();
+  }, [selectedBrandCode, catalogRetry]);
 
   const handlePlateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value.toUpperCase();
@@ -112,6 +174,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
       km: parseInt(String(formData.km).replace(/\./g, "")) || 0,
       plateNormalized: normalizeString(formData.plate),
       modelNormalized: normalizeString(formData.model),
+      renavam: formData.renavam.trim() || null,
+      chassis: formData.chassis.trim() || null,
     });
   };
 
@@ -119,6 +183,9 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     "h-11 w-full rounded-[var(--syncar-radius-control)] border border-syncar-border bg-syncar-surface pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
   const labelStyle = "mb-1.5 block text-sm font-semibold text-syncar-text";
   const iconStyle = "pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]";
+  const selectStyle = `${inputStyle} appearance-none pr-10`;
+  const currentBrandIsListed = brands.some((brand) => brand.name === formData.brand);
+  const currentModelIsListed = models.some((model) => model.name === formData.model);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -147,16 +214,47 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             Marca *
           </label>
           <Car className={iconStyle} size={18} aria-hidden="true" />
-          <input
-            type="text"
-            id="vehicle-brand"
-            name="brand"
-            value={formData.brand}
-            onChange={handleChange}
-            required
-            placeholder="Ex: Toyota"
-            className={inputStyle}
-          />
+          {brandsError ? (
+            <input
+              type="text"
+              id="vehicle-brand"
+              name="brand"
+              value={formData.brand}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Toyota"
+              className={inputStyle}
+            />
+          ) : (
+            <>
+              <select
+                id="vehicle-brand"
+                name="brand"
+                value={formData.brand}
+                onChange={(event) =>
+                  setFormData((prev) => ({ ...prev, brand: event.target.value, model: "" }))
+                }
+                required
+                disabled={isLoadingBrands}
+                className={selectStyle}
+              >
+                <option value="">
+                  {isLoadingBrands ? "Carregando marcas..." : "Selecione a marca"}
+                </option>
+                {formData.brand && !currentBrandIsListed && (
+                  <option value={formData.brand}>{formData.brand}</option>
+                )}
+                {brands.map((brand) => (
+                  <option key={brand.code} value={brand.name}>{brand.name}</option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 top-9 text-syncar-text-muted"
+                size={18}
+                aria-hidden="true"
+              />
+            </>
+          )}
         </div>
 
         <div className="relative">
@@ -164,16 +262,49 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             Modelo *
           </label>
           <Car className={iconStyle} size={18} aria-hidden="true" />
-          <input
-            type="text"
-            id="vehicle-model"
-            name="model"
-            value={formData.model}
-            onChange={handleChange}
-            required
-            placeholder="Ex: Corolla"
-            className={inputStyle}
-          />
+          {brandsError || modelsError || (formData.brand && !selectedBrandCode && !isLoadingBrands) ? (
+            <input
+              type="text"
+              id="vehicle-model"
+              name="model"
+              value={formData.model}
+              onChange={handleChange}
+              required
+              placeholder="Ex: Corolla"
+              className={inputStyle}
+            />
+          ) : (
+            <>
+              <select
+                id="vehicle-model"
+                name="model"
+                value={formData.model}
+                onChange={(event) =>
+                  setFormData((prev) => ({ ...prev, model: event.target.value }))
+                }
+                required
+                disabled={!selectedBrandCode || isLoadingModels}
+                className={selectStyle}
+              >
+                <option value="">
+                  {!formData.brand
+                    ? "Selecione a marca primeiro"
+                    : isLoadingModels ? "Carregando modelos..." : "Selecione o modelo"}
+                </option>
+                {formData.model && !currentModelIsListed && (
+                  <option value={formData.model}>{formData.model}</option>
+                )}
+                {models.map((model) => (
+                  <option key={model.code} value={model.name}>{model.name}</option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 top-9 text-syncar-text-muted"
+                size={18}
+                aria-hidden="true"
+              />
+            </>
+          )}
         </div>
 
         <div className="relative">
@@ -238,7 +369,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
 
         <div className="relative">
           <label htmlFor="vehicle-renavam" className={labelStyle}>
-            RENAVAM *
+            RENAVAM (opcional)
           </label>
           <FileText
             className={iconStyle}
@@ -253,7 +384,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onAccept={(value) =>
               handleMaskedInputChange("renavam", String(value))
             }
-            required
             placeholder="00000000000"
             className={inputStyle}
           />
@@ -261,7 +391,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
 
         <div className="relative">
           <label htmlFor="vehicle-chassis" className={labelStyle}>
-            Chassi *
+            Chassi (opcional)
           </label>
           <Shield className={iconStyle} size={18} aria-hidden="true" />
           <IMaskInput
@@ -273,7 +403,6 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
             onAccept={(value) =>
               handleMaskedInputChange("chassis", String(value))
             }
-            required
             placeholder="9BW..."
             className={inputStyle}
           />
@@ -293,6 +422,18 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           />
         </div>
       </div>
+      {(brandsError || modelsError) && (
+        <p role="status" className="text-sm text-syncar-text-muted">
+          Não foi possível carregar a lista. Você pode preencher o campo manualmente.
+          <button
+            type="button"
+            onClick={() => setCatalogRetry((value) => value + 1)}
+            className="ml-2 font-semibold text-syncar-text underline"
+          >
+            Tentar novamente
+          </button>
+        </p>
+      )}
       {apiError && (
         <div role="alert" className="mt-1 flex items-center gap-2 text-sm text-syncar-danger">
           <AlertCircle size={16} />

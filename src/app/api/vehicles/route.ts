@@ -83,6 +83,8 @@ export async function POST(request: Request) {
     const newVehicle = await prisma.vehicle.create({
       data: {
         ...data,
+        renavam: data.renavam?.trim() || null,
+        chassis: data.chassis?.trim() || null,
         userId: session.user.id,
         plateNormalized: normalizeString(data.plate),
         modelNormalized: normalizeString(data.model),
