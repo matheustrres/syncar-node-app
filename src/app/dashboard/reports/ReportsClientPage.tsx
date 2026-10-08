@@ -1,20 +1,14 @@
 "use client";
 
-import { CheckCircle } from "lucide-react";
-import {
-  CashFlowReportItem,
-  DriverSummaryReportItem,
-  OverduePaymentReportItem,
-  VehiclePerformanceReportItem,
-  ExpenseAnalysisReport,
-} from "@/types";
-import {
-  useFetchCashFlow,
-  useFetchDriverSummary,
-  useFetchOverduePayments,
-} from "@/hooks/useData";
+import Link from "next/link";
+import { useState, type ReactNode } from "react";
+import { ArrowRight, ChartColumnIncreasing, CircleCheck, CircleAlert, FileChartColumnIncreasing, UsersRound } from "lucide-react";
+import { useToast } from "@/context/ToastContext";
+import { CashFlowReportItem, DriverSummaryReportItem, OverduePaymentReportItem, VehiclePerformanceReportItem, ExpenseAnalysisReport } from "@/types";
+import { useFetchCashFlow, useFetchDriverSummary, useFetchOverduePayments } from "@/hooks/useData";
 import ReportsSkeleton from "./ReportsSkeleton";
 import AdvancedReports from "./AdvancedReports";
+import styles from "./reports.module.css";
 
 interface ClientPageProps {
   initialCashFlow: CashFlowReportItem[];
@@ -24,219 +18,61 @@ interface ClientPageProps {
   initialExpenseAnalysis: ExpenseAnalysisReport;
 }
 
-export default function ReportsClientPage({
-  initialCashFlow,
-  initialOverduePayments,
-  initialDriverSummary,
-  initialVehiclePerformance,
-  initialExpenseAnalysis,
-}: ClientPageProps) {
-  const {
-    data: monthlyCashFlow,
-    isError: isCashFlowError,
-    mutate: mutateCashFlow,
-  } = useFetchCashFlow(initialCashFlow);
+const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+const formatDate = (value: Date | string) => new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(value));
+const formatMonth = (value: string) => new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${value}-02T12:00:00Z`));
 
-  const {
-    data: overduePayments,
-    isError: isOverdueError,
-    mutate: mutateOverdue,
-  } = useFetchOverduePayments(initialOverduePayments);
+type SectionHeadingProps = { icon: ReactNode; title: string; description: string; count?: string };
+function SectionHeading({ icon, title, description, count }: SectionHeadingProps) {
+  return <div className={styles.sectionHeading}>
+    <div className={styles.sectionTitle}><span className={styles.headingIcon} aria-hidden="true">{icon}</span><div><h2>{title}</h2><p>{description}</p></div></div>
+    {count && <span className={styles.count}>{count}</span>}
+  </div>;
+}
 
-  const {
-    data: driverSummaries,
-    isError: isSummaryError,
-    mutate: mutateSummary,
-  } = useFetchDriverSummary(initialDriverSummary);
+function EmptyReport({ icon, title, description, href, linkText }: { icon: ReactNode; title: string; description: string; href?: string; linkText?: string }) {
+  return <div className={styles.empty}><span className={styles.emptyVisual} aria-hidden="true">{icon}</span><div className={styles.emptyCopy}><strong>{title}</strong><p>{description}</p>{href && linkText && <Link className={styles.textAction} href={href}>{linkText}<ArrowRight size={15} /></Link>}</div></div>;
+}
 
-  const handleMarkAsPaid = async (paymentId: string) => {
-    await fetch(`/api/payments/${paymentId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        status: "Pago",
-        paymentDate: new Date().toISOString(),
-      }),
-    });
-    mutateCashFlow();
-    mutateOverdue();
-    mutateSummary();
-  };
-
-  const isLoading = !monthlyCashFlow || !overduePayments || !driverSummaries;
+export default function ReportsClientPage({ initialCashFlow, initialOverduePayments, initialDriverSummary, initialVehiclePerformance, initialExpenseAnalysis }: ClientPageProps) {
+  const { data: monthlyCashFlow, isError: isCashFlowError, mutate: mutateCashFlow } = useFetchCashFlow(initialCashFlow);
+  const { data: overduePayments, isError: isOverdueError, mutate: mutateOverdue } = useFetchOverduePayments(initialOverduePayments);
+  const { data: driverSummaries, isError: isSummaryError, mutate: mutateSummary } = useFetchDriverSummary(initialDriverSummary);
+  const [updatingPaymentId, setUpdatingPaymentId] = useState<string | null>(null);
+  const { showToast } = useToast();
   const hasError = isCashFlowError || isOverdueError || isSummaryError;
+  const isLoading = !monthlyCashFlow || !overduePayments || !driverSummaries;
 
-  if (isLoading) {
-    return <ReportsSkeleton />;
+  async function handleMarkAsPaid(paymentId: string) {
+    if (updatingPaymentId) return;
+    setUpdatingPaymentId(paymentId);
+    try {
+      const response = await fetch(`/api/payments/${paymentId}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Pago", paymentDate: new Date().toISOString() }),
+      });
+      if (!response.ok) throw new Error("Falha ao confirmar o pagamento.");
+      await Promise.all([mutateCashFlow(), mutateOverdue(), mutateSummary()]);
+      showToast("Pagamento confirmado.", "success");
+    } catch {
+      showToast("Não foi possível confirmar o pagamento. Tente novamente.", "error");
+    } finally {
+      setUpdatingPaymentId(null);
+    }
   }
 
-  if (hasError) {
-    return (
-      <div className="text-center text-red-500">
-        Falha ao carregar dados para os relatórios.
+  return <main className={styles.page}>
+    <header className={styles.intro}><div><span className={styles.eyebrow}>Análise da operação</span><h1>Relatórios</h1><p>Acompanhe o caixa, identifique atrasos e veja o resultado de cada motorista e veículo.</p></div><ChartColumnIncreasing className={styles.introIcon} size={92} strokeWidth={1.1} aria-hidden="true" /></header>
+    {hasError ? <div className={styles.panel}><EmptyReport icon={<CircleAlert size={28} />} title="Não foi possível carregar os relatórios." description="Verifique a conexão e tente novamente." /><button className={styles.retry} onClick={() => { void Promise.all([mutateCashFlow(), mutateOverdue(), mutateSummary()]); }}>Tentar novamente</button></div> : isLoading ? <ReportsSkeleton /> : <>
+      <section className={styles.section} aria-label="Fluxo de caixa mensal">
+        <SectionHeading icon={<ChartColumnIncreasing size={21} />} title="Fluxo de caixa mensal" description="Receitas, despesas e resultado por mês." count={`${monthlyCashFlow.length} ${monthlyCashFlow.length === 1 ? "mês" : "meses"}`} />
+        <div className={styles.panel}>{monthlyCashFlow.length ? <div className={styles.tableScroll}><table className={styles.table}><thead><tr><th scope="col">Mês</th><th scope="col">Receita</th><th scope="col">Despesas</th><th scope="col">Resultado</th></tr></thead><tbody>{monthlyCashFlow.map(({ month, revenue, expense }) => { const profit = revenue - expense; return <tr key={month}><th scope="row">{formatMonth(month)}</th><td className={styles.positive}>{formatCurrency(revenue)}</td><td>{formatCurrency(expense)}</td><td className={profit >= 0 ? styles.positive : styles.negative}>{formatCurrency(profit)}</td></tr>; })}</tbody></table></div> : <EmptyReport icon={<ChartColumnIncreasing size={28} />} title="Ainda não há movimentações para mostrar." description="Receitas e despesas aparecerão aqui quando a operação tiver lançamentos." href="/dashboard/financial" linkText="Ir para Financeiro" />}</div>
+      </section>
+      <div className={styles.lowerGrid}>
+        <section className={styles.section} aria-label="Relatório de inadimplência"><SectionHeading icon={<CircleAlert size={21} />} title="Inadimplência" description="Cobranças vencidas que precisam de atenção." count={`${overduePayments.length} ${overduePayments.length === 1 ? "atraso" : "atrasos"}`} /><div className={styles.panel}>{overduePayments.length ? <div className={styles.rows}>{overduePayments.map((payment) => <div className={styles.paymentRow} key={payment.id}><div className={styles.rowMain}><strong>{payment.driverName}</strong><span>{payment.vehicleInfo}</span><small>Período: {formatDate(payment.weekStart)} a {formatDate(payment.weekEnd)}</small><small className={styles.negative}>Venceu em {formatDate(payment.dueDate)} · {payment.daysOverdue} {payment.daysOverdue === 1 ? "dia" : "dias"} de atraso</small></div><div className={styles.rowEnd}><strong className={styles.amount}>{formatCurrency(payment.value)}</strong><button className={styles.rowButton} onClick={() => void handleMarkAsPaid(payment.id)} disabled={updatingPaymentId !== null}>{updatingPaymentId === payment.id ? "Confirmando..." : "Confirmar recebimento"}<ArrowRight size={14} /></button></div></div>)}</div> : <EmptyReport icon={<CircleCheck size={28} />} title="Nenhum pagamento em atraso." description="As cobranças vencidas aparecerão aqui para acompanhamento." />}</div></section>
+        <section className={styles.section} aria-label="Resumo por motorista"><SectionHeading icon={<UsersRound size={21} />} title="Resumo por motorista" description="Valores recebidos por motorista." count={`${driverSummaries.length} ${driverSummaries.length === 1 ? "motorista" : "motoristas"}`} /><div className={styles.panel}>{driverSummaries.length ? <div className={styles.rows}>{driverSummaries.map((summary) => <div className={styles.summaryRow} key={summary.driverId}><div className={styles.rowMain}><strong>{summary.driverName}</strong><span>{summary.vehicleInfo}</span></div><div className={styles.rowEnd}><small>Total recebido</small><strong className={styles.amount}>{formatCurrency(summary.totalPaid)}</strong></div></div>)}</div> : <EmptyReport icon={<UsersRound size={28} />} title="Ainda não há recebimentos por motorista." description="O resumo será exibido após pagamentos vinculados a contratos." href="/dashboard/contracts" linkText="Ver contratos" />}</div></section>
       </div>
-    );
-  }
-
-  return (
-    <div>
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Relatórios</h2>
-
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-lg font-semibold mb-4">Fluxo de caixa mensal</h3>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Mês
-                </th>
-
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Receita
-                </th>
-
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Despesas
-                </th>
-
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Lucro
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="bg-white divide-y divide-gray-200">
-              {monthlyCashFlow.map(({ month, revenue, expense }) => {
-                const profit = revenue - expense;
-
-                return (
-                  <tr key={month}>
-                    <td className="px-6 py-4 whitespace-nowrap font-medium">
-                      {new Date(`${month}-02`).toLocaleDateString("pt-BR", {
-                        month: "long",
-
-                        year: "numeric",
-                      })}
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-green-600">
-                      R$ {revenue.toFixed(2)}
-                    </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-red-600">
-                      R$ {expense.toFixed(2)}
-                    </td>
-
-                    <td
-                      className={`px-6 py-4 whitespace-nowrap font-bold ${
-                        profit >= 0 ? "text-green-700" : "text-red-700"
-                      }`}
-                    >
-                      R$ {profit.toFixed(2)}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h3 className="text-lg font-semibold mb-4 text-orange-700">
-          Relatório de inadimplência
-        </h3>
-
-        <div className="space-y-4">
-          {overduePayments.length > 0 ? (
-            overduePayments.map((p) => (
-              <div
-                key={p.id}
-                className="p-4 bg-red-50 rounded-lg border-l-4 border-red-500"
-              >
-                <div className="flex flex-wrap justify-between items-center gap-4">
-                  <div className="flex-1">
-                    <p className="font-semibold text-lg">{p.driverName}</p>
-
-                    <p className="text-sm text-gray-500">{p.vehicleInfo}</p>
-
-                    <p className="text-sm text-gray-500">
-                      Período:{" "}
-                      {new Date(p.weekStart).toLocaleDateString("pt-BR")} -{" "}
-                      {new Date(p.weekEnd).toLocaleDateString("pt-BR")}
-                    </p>
-
-                    <p className="text-sm font-medium text-red-600 mt-1">
-                      Vencimento:{" "}
-                      {new Date(p.dueDate).toLocaleDateString("pt-BR")} (
-                      {p.daysOverdue} dias de atraso)
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-red-600">
-                      R$ {p.value.toFixed(2)}
-                    </p>
-
-                    <button
-                      onClick={() => handleMarkAsPaid(p.id)}
-                      className="mt-2 bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
-                    >
-                      Marcar como Pago
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <CheckCircle className="mx-auto mb-2 text-green-500" size={48} />
-
-              <p className="text-lg font-medium">Nenhum pagamento atrasado!</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-4">Resumo por motorista</h3>
-
-        <div className="space-y-3">
-          {driverSummaries.map((summary) => (
-            <div
-              key={summary.driverId}
-              className="p-4 bg-blue-50 rounded-lg flex justify-between items-center"
-            >
-              <div>
-                <p className="font-semibold text-lg">{summary.driverName}</p>
-
-                <p className="text-sm text-gray-500">{summary.vehicleInfo}</p>
-              </div>
-
-              <div className="text-right">
-                <p className="text-sm text-gray-500">Total pago</p>
-
-                <p className="text-2xl font-bold text-blue-600">
-                  R$ {summary.totalPaid.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">
-          Relatórios avançados
-        </h2>
-
-        <AdvancedReports
-          initialVehiclePerformance={initialVehiclePerformance}
-          initialExpenseAnalysis={initialExpenseAnalysis}
-        />
-      </div>
-    </div>
-  );
+      <section className={`${styles.section} ${styles.advancedSection}`} aria-label="Relatórios avançados"><SectionHeading icon={<FileChartColumnIncreasing size={21} />} title="Relatórios avançados" description="Desempenho dos veículos e composição das despesas." /><AdvancedReports initialVehiclePerformance={initialVehiclePerformance} initialExpenseAnalysis={initialExpenseAnalysis} /></section>
+    </>}
+  </main>;
 }

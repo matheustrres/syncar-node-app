@@ -1,0 +1,74 @@
+.page { max-width: 1440px; margin: 0 auto; color: var(--syncar-text); }
+.intro { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; margin-bottom: 36px; padding: 32px 36px; border-radius: var(--syncar-radius-panel); background: var(--syncar-green-950); color: var(--syncar-surface); }
+.intro::before, .intro::after { content: ""; position: absolute; z-index: -1; width: 330px; height: 330px; border: 1px solid var(--syncar-green-900); border-radius: 50%; pointer-events: none; }
+.intro::before { right: 36px; top: -235px; }
+.intro::after { right: -195px; bottom: -235px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 10px; color: var(--syncar-action); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px var(--syncar-green-900); }
+.intro h1 { margin: 0; font-size: clamp(28px, 2.8vw, 38px); line-height: 1.12; font-weight: 750; letter-spacing: -.04em; }
+.intro p { margin: 10px 0 0; max-width: 650px; color: var(--syncar-border); font-size: 14px; line-height: 1.55; }
+.introIcon { flex: none; color: var(--syncar-action); opacity: .8; }
+.section { min-width: 0; }
+.sectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.sectionTitle { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.headingIcon { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border: 1px solid var(--syncar-border); border-radius: 12px; background: var(--syncar-surface-subtle); color: var(--syncar-success); }
+.sectionHeading h2 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.02em; }
+.sectionHeading p { margin: 2px 0 0; color: var(--syncar-text-muted); font-size: 13px; line-height: 1.4; }
+.count { flex: none; padding: 7px 10px; border: 1px solid var(--syncar-border); border-radius: 999px; background: var(--syncar-surface); color: var(--syncar-text-muted); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.panel { overflow: hidden; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-panel); background: var(--syncar-surface); box-shadow: var(--syncar-shadow-panel); }
+.tableScroll { overflow-x: auto; }
+.table { width: 100%; min-width: 590px; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.table thead { background: var(--syncar-surface-subtle); }
+.table th, .table td { padding: 15px 24px; text-align: right; white-space: nowrap; }
+.table th:first-child, .table td:first-child { text-align: left; }
+.table thead th { color: var(--syncar-text-muted); font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.table tbody tr:not(:last-child) { border-bottom: 1px solid var(--syncar-border); }
+.table tbody tr:hover { background: var(--syncar-surface-subtle); }
+.table tbody th { font-weight: 700; text-transform: capitalize; }
+.positive { color: var(--syncar-success); font-weight: 700; }
+.negative { color: var(--syncar-danger) !important; font-weight: 700; }
+.lowerGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
+.rows > :not(:last-child) { border-bottom: 1px solid var(--syncar-border); }
+.paymentRow, .summaryRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 18px 22px; }
+.paymentRow:hover, .summaryRow:hover { background: var(--syncar-surface-subtle); }
+.rowMain { display: grid; gap: 4px; min-width: 0; }
+.rowMain strong { font-size: 14px; font-weight: 750; }
+.rowMain span, .rowMain small, .rowEnd small { color: var(--syncar-text-muted); font-size: 12px; line-height: 1.4; }
+.rowEnd { display: flex; align-items: flex-end; flex-direction: column; gap: 3px; flex: none; text-align: right; }
+.amount { font-size: 16px; font-weight: 750; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rowButton, .textAction { display: inline-flex; align-items: center; gap: 5px; min-height: 36px; color: var(--syncar-success); font-size: 12px; font-weight: 750; }
+.rowButton:hover:not(:disabled), .textAction:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rowButton:disabled { opacity: .55; cursor: wait; }
+.empty { display: flex; align-items: center; gap: 20px; min-height: 142px; padding: 26px 30px; }
+.emptyVisual { width: 62px; height: 62px; display: grid; place-items: center; flex: none; border: 1px solid var(--syncar-border); border-radius: 16px; background: var(--syncar-surface-subtle); color: var(--syncar-success); }
+.emptyCopy { min-width: 0; }
+.emptyCopy strong { display: block; font-size: 14px; font-weight: 750; }
+.emptyCopy p { margin: 4px 0 0; color: var(--syncar-text-muted); font-size: 13px; line-height: 1.5; }
+.retry { display: block; margin: 0 30px 24px 112px; color: var(--syncar-success); font-size: 13px; font-weight: 750; }
+.retry:hover { text-decoration: underline; }
+.advancedSection { margin-top: 36px; }
+.gate { display: flex; justify-content: space-between; align-items: center; gap: 26px; min-height: 172px; padding: 28px 32px; background: linear-gradient(115deg, var(--syncar-surface), var(--syncar-surface-subtle)); }
+.gateCopy { display: flex; align-items: flex-start; gap: 20px; }
+.gateIcon { display: grid; place-items: center; width: 54px; height: 54px; flex: none; border-radius: 14px; background: var(--syncar-green-950); color: var(--syncar-action); }
+.gate h3 { margin: 0; font-size: 20px; font-weight: 750; letter-spacing: -.02em; }
+.gate p { max-width: 530px; margin: 7px 0 0; color: var(--syncar-text-muted); font-size: 13px; line-height: 1.55; }
+.gate button { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 9px; flex: none; padding: 0 18px; border-radius: var(--syncar-radius-control); background: var(--syncar-action); color: var(--syncar-action-text); font-size: 13px; font-weight: 750; }
+.gate button:hover { background: var(--syncar-action-hover); }
+.advancedGrid { display: grid; gap: 24px; }
+.advancedPanelHeader { padding: 22px 24px 0; }
+.advancedPanelHeader h3 { margin: 0; font-size: 17px; font-weight: 750; letter-spacing: -.02em; }
+.advancedPanelHeader p { margin: 4px 0 0; color: var(--syncar-text-muted); font-size: 13px; }
+.chartGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; padding: 20px 24px 24px; }
+.chartCard { min-width: 0; border: 1px solid var(--syncar-border); border-radius: 12px; padding: 16px; }
+.chartCard h4 { margin: 0 0 8px; font-size: 14px; font-weight: 700; }
+.chartCanvas { height: 310px; }
+.chartEmpty { display: flex; align-items: center; justify-content: center; gap: 10px; height: 310px; color: var(--syncar-text-muted); font-size: 13px; text-align: center; }
+.skeleton { display: grid; gap: 24px; }
+.skeletonPanel { padding: 24px; }
+.skeletonLine { height: 16px; margin: 12px 0; border-radius: 6px; background: var(--syncar-surface-subtle); animation: pulse 1.5s ease-in-out infinite; }
+.skeletonLine:first-child { width: 40%; height: 22px; }
+.skeletonLine:nth-child(3) { width: 70%; }
+@keyframes pulse { 50% { opacity: .45; } }
+.page :is(a, button):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+@media (max-width: 1100px) { .lowerGrid, .chartGrid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .intro { padding: 26px 22px; } .introIcon { display: none; } .sectionHeading { align-items: flex-start; } .count { margin-top: 5px; } .empty { align-items: flex-start; gap: 14px; padding: 22px 18px; } .emptyVisual { width: 48px; height: 48px; border-radius: 12px; } .paymentRow, .summaryRow { flex-wrap: wrap; padding: 16px; } .rowEnd { align-items: flex-start; width: 100%; text-align: left; } .gate { flex-direction: column; align-items: stretch; padding: 24px 20px; } .gateCopy { gap: 14px; } .gateIcon { width: 46px; height: 46px; } .gate button { width: 100%; } .chartGrid { padding: 16px; } .chartCanvas, .chartEmpty { height: 260px; } }
