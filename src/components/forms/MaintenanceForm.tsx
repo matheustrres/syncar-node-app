@@ -128,8 +128,6 @@ export default function MaintenanceForm({
     const newErrors: Record<string, string> = {};
     if (!formData.vehicleId) newErrors.vehicleId = "Veículo é obrigatório.";
     if (!formData.type) newErrors.type = "Tipo de manutenção é obrigatório.";
-    if (!formData.description)
-      newErrors.description = "Descrição é obrigatória.";
     if (!formData.cost || parseFloat(String(formData.cost)) <= 0)
       newErrors.cost = "Custo deve ser maior que zero.";
     if (!formData.date) newErrors.date = "Data é obrigatória.";
@@ -156,6 +154,7 @@ export default function MaintenanceForm({
     };
     onSave({
       ...formData,
+      description: formData.description?.trim() || "",
       cost: parseCurrency(String(formData.cost)),
       date: formData.date
         ? new Date(formData.date).toISOString()
@@ -240,7 +239,7 @@ export default function MaintenanceForm({
             htmlFor="description"
             className={labelStyle}
           >
-            Descrição *
+            Descrição (opcional)
           </label>
           <FileText
             className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
@@ -255,9 +254,6 @@ export default function MaintenanceForm({
             onChange={handleChange}
             className={`${fieldStyle} resize-y py-2.5 pl-11`}
           ></textarea>
-          {errors.description && (
-            <p className={errorStyle}>{errors.description}</p>
-          )}
         </div>
 
         <div className="relative">

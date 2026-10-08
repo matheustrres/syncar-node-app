@@ -90,16 +90,17 @@ export async function POST(request: Request) {
       nextServiceDate,
       notes,
     } = body;
-    if (!vehicleId || !type || !description || !cost || !date || !mileage) {
+    if (!vehicleId || !type || !cost || !date || !mileage) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
+    const normalizedDescription = typeof description === "string" ? description.trim() : "";
 
     const newMaintenance = await prisma.$transaction(async (tx) => {
       const maintenance = await tx.maintenance.create({
         data: {
           vehicleId,
           type,
-          description,
+          description: normalizedDescription,
           cost: parseFloat(cost),
           date: new Date(date),
           mileage: parseInt(mileage),
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
           userId: session.user.id,
           vehicleId: maintenance.vehicleId,
           type: maintenance.type,
-          description: `Manutenção: ${maintenance.description}`,
+          description: normalizedDescription ? `Manutenção: ${normalizedDescription}` : "Manutenção",
           value: maintenance.cost,
           date: maintenance.date,
         },

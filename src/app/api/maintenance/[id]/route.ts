@@ -55,9 +55,10 @@ export async function PUT(
       nextServiceDate,
       notes,
     } = body;
-    if (!vehicleId || !type || !description || !cost || !date || !mileage) {
+    if (!vehicleId || !type || !cost || !date || !mileage) {
       return new NextResponse("Missing required fields", { status: 400 });
     }
+    const normalizedDescription = typeof description === "string" ? description.trim() : "";
     const updatedMaintenance = await prisma.maintenance.update({
       where: {
         id,
@@ -66,7 +67,7 @@ export async function PUT(
       data: {
         vehicleId,
         type,
-        description,
+        description: normalizedDescription,
         cost: parseFloat(cost),
         date: new Date(date),
         mileage: parseInt(mileage),

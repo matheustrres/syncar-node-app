@@ -54,7 +54,7 @@ export default function MaintenanceTable({ maintenance, onEdit, onDelete, onBulk
             <td className={styles.checkboxCell}><input type="checkbox" aria-label={`Selecionar manutenção do veículo ${item.vehicle.plate}`} checked={selected.includes(item.id)} onChange={() => toggleOne(item.id)} /></td>
             <td><span className={local.vehiclePlate}>{item.vehicle.plate}</span><span className={local.vehicleModel}>{item.vehicle.model}</span></td>
             <td><span className={local.typeBadge}>{maintenanceTypeLabels[item.type] || item.type}</span></td>
-            <td className={local.descriptionCell} title={item.description}>{item.description}</td>
+            <td className={local.descriptionCell} title={item.description || "Não informada"}>{item.description || "Não informada"}</td>
             <td>{formatDate(item.date)}</td>
             <td>{formatMileage(item.mileage)}</td>
             <td className={local.costCell}>{formatCost(item.cost)}</td>
