@@ -116,20 +116,23 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   };
 
   const inputStyle =
-    "pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100";
+    "h-11 w-full rounded-[var(--syncar-radius-control)] border border-syncar-border bg-syncar-surface pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
+  const labelStyle = "mb-1.5 block text-sm font-semibold text-syncar-text";
+  const iconStyle = "pointer-events-none absolute left-3 top-9 text-syncar-text-muted";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-plate" className={labelStyle}>
             Placa *
           </label>
 
-          <Hash className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Hash className={iconStyle} size={18} aria-hidden="true" />
 
           <input
             type="text"
+            id="vehicle-plate"
             name="plate"
             value={formData.plate}
             onChange={handlePlateChange}
@@ -140,12 +143,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-brand" className={labelStyle}>
             Marca *
           </label>
-          <Car className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Car className={iconStyle} size={18} aria-hidden="true" />
           <input
             type="text"
+            id="vehicle-brand"
             name="brand"
             value={formData.brand}
             onChange={handleChange}
@@ -156,12 +160,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-model" className={labelStyle}>
             Modelo *
           </label>
-          <Car className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Car className={iconStyle} size={18} aria-hidden="true" />
           <input
             type="text"
+            id="vehicle-model"
             name="model"
             value={formData.model}
             onChange={handleChange}
@@ -172,12 +177,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-year" className={labelStyle}>
             Ano *
           </label>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar className={iconStyle} size={18} aria-hidden="true" />
           <input
             type="number"
+            id="vehicle-year"
             name="year"
             value={formData.year}
             onChange={handleChange}
@@ -190,12 +196,13 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-color" className={labelStyle}>
             Cor *
           </label>
-          <Palette className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Palette className={iconStyle} size={18} aria-hidden="true" />
           <input
             type="text"
+            id="vehicle-color"
             name="color"
             value={formData.color.toUpperCase()}
             onChange={handleChange}
@@ -206,11 +213,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-km" className={labelStyle}>
             Quilometragem (km) *
           </label>
-          <Gauge className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Gauge className={iconStyle} size={18} aria-hidden="true" />
           <IMaskInput
+            id="vehicle-km"
             mask={Number}
             thousandsSeparator="."
             name="km"
@@ -225,18 +233,20 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="md:col-span-2">
-          <hr className="border-gray-200" />
+          <hr className="border-syncar-border" />
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-renavam" className={labelStyle}>
             RENAVAM *
           </label>
           <Milestone
-            className="absolute left-3 top-9 text-gray-400"
-            size={20}
+            className={iconStyle}
+            size={18}
+            aria-hidden="true"
           />
           <IMaskInput
+            id="vehicle-renavam"
             mask="00000000000"
             name="renavam"
             value={formData.renavam}
@@ -250,11 +260,12 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="vehicle-chassis" className={labelStyle}>
             Chassi *
           </label>
-          <Shield className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Shield className={iconStyle} size={18} aria-hidden="true" />
           <IMaskInput
+            id="vehicle-chassis"
             mask={/^[A-HJ-NP-Z0-9]{0,17}$/}
             prepare={(str: string) => str.toUpperCase()}
             name="chassis"
@@ -270,6 +281,8 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
 
         <div className="md:col-span-2">
           <CustomSelect
+            id="vehicle-status"
+            variant="platform"
             label="Status *"
             value={formData.status}
             onChange={(value) =>
@@ -281,24 +294,24 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
         </div>
       </div>
       {apiError && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
+        <div role="alert" className="mt-1 flex items-center gap-2 text-sm text-syncar-danger">
           <AlertCircle size={16} />
           <span>{apiError}</span>
         </div>
       )}
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="flex flex-wrap justify-end gap-3 border-t border-syncar-border pt-5">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-[var(--syncar-radius-control)] border border-syncar-border bg-syncar-surface px-5 text-sm font-semibold text-syncar-text hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-[var(--syncar-radius-control)] bg-syncar-action px-6 text-sm font-bold text-syncar-action-text hover:bg-syncar-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? "Salvando..." : "Salvar"}
         </button>

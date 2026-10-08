@@ -391,6 +391,7 @@ export default function VehiclesClientPage({
         onClose={handleCloseFormModal}
         title={editingItem ? "Editar veículo" : "Criar veículo"}
         size="4xl"
+        variant="platform"
       >
         <VehicleForm
           initialData={editingItem}

@@ -8,15 +8,31 @@ import {
   ChartColumnIncreasing, Settings, Wrench, X,
 } from "lucide-react";
 
-const navItems = [
-  { href: "/dashboard", icon: ChartNoAxesCombined, label: "Visão geral" },
-  { href: "/dashboard/vehicles", icon: CarFront, label: "Veículos" },
-  { href: "/dashboard/maintenance", icon: Wrench, label: "Manutenções" },
-  { href: "/dashboard/drivers", icon: Users, label: "Motoristas" },
-  { href: "/dashboard/contracts", icon: FileText, label: "Contratos" },
-  { href: "/dashboard/financial", icon: Wallet, label: "Financeiro" },
-  { href: "/dashboard/reports", icon: ChartColumnIncreasing, label: "Relatórios" },
-  { href: "/dashboard/profile", icon: Settings, label: "Meu perfil" },
+const navGroups = [
+  {
+    label: "Painel",
+    items: [{ href: "/dashboard", icon: ChartNoAxesCombined, label: "Visão geral" }],
+  },
+  {
+    label: "Operação",
+    items: [
+      { href: "/dashboard/vehicles", icon: CarFront, label: "Veículos" },
+      { href: "/dashboard/maintenance", icon: Wrench, label: "Manutenções" },
+      { href: "/dashboard/drivers", icon: Users, label: "Motoristas" },
+      { href: "/dashboard/contracts", icon: FileText, label: "Contratos" },
+    ],
+  },
+  {
+    label: "Gestão",
+    items: [
+      { href: "/dashboard/financial", icon: Wallet, label: "Financeiro" },
+      { href: "/dashboard/reports", icon: ChartColumnIncreasing, label: "Relatórios" },
+    ],
+  },
+  {
+    label: "Conta",
+    items: [{ href: "/dashboard/profile", icon: Settings, label: "Meu perfil" }],
+  },
 ];
 
 interface SidebarProps {
@@ -64,24 +80,34 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 overflow-y-auto px-3 py-5" aria-label="Seções da plataforma">
-          <ul className="space-y-1">
-            {navItems.map((item) => {
-              const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    aria-current={active ? "page" : undefined}
-                    className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
-                  >
-                    <item.icon size={19} strokeWidth={1.8} aria-hidden="true" />
-                    <span>{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="space-y-5">
+            {navGroups.map((group) => (
+              <section key={group.label} aria-label={group.label}>
+                <div className="mb-2 flex items-center gap-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#afc6bd]" aria-hidden="true">
+                  <span>{group.label}</span>
+                  <span className="h-px flex-1 bg-white/15" />
+                </div>
+                <ul className="space-y-1">
+                  {group.items.map((item) => {
+                    const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={onClose}
+                          aria-current={active ? "page" : undefined}
+                          className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
+                        >
+                          <item.icon size={19} strokeWidth={1.8} aria-hidden="true" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
         </nav>
         <div className="border-t border-white/10 px-5 py-4 text-xs text-[#afc6bd]">Gestão de frota e locações</div>
       </aside>
