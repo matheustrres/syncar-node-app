@@ -99,7 +99,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
     try {
       const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
       const data = await res.json();
-      console.log("Dados do CEP:", data);
       if (data.erro) {
         setCepError("CEP inválido! Preencha o endereço manualmente.");
         setAddressFieldsEnabled(true); // Habilita campos em caso de erro
@@ -184,33 +183,29 @@ const DriverForm: React.FC<DriverFormProps> = ({
     });
   };
 
-  // Estilos para os inputs
+  const labelStyle = "mb-1.5 block text-sm font-semibold text-syncar-text";
   const inputStyle =
-    "pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white";
+    "min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2.5 pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
   const inputWithoutIconStyle =
-    "px-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:bg-white";
-
-  // NOVO ESTILO para campos autocompletados (sem focus:bg-white)
-  const autoFilledInputStyle =
-    "pl-11 pr-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500";
-  const autoFilledInputWithoutIconStyle =
-    "px-4 py-2 w-full border border-gray-200 bg-gray-100 rounded-lg focus:ring-2 focus:ring-blue-500";
+    "min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface px-4 py-2.5 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
   const disabledInputStyle =
-    "disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-500";
+    "disabled:cursor-not-allowed disabled:bg-syncar-surface-subtle disabled:text-syncar-text-muted";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4">
-        <div className="lg:col-span-4 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="relative md:col-span-2 lg:col-span-4">
+          <label htmlFor="name" className={labelStyle}>
             Nome Completo *
           </label>
           <User
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <input
             type="text"
+            id="name"
             name="name"
             value={formData.name}
             onChange={handleChange}
@@ -221,15 +216,17 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="cpf" className={labelStyle}>
             CPF *
           </label>
           <FileText
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <IMaskInput
             mask="000.000.000-00"
+            id="cpf"
             name="cpf"
             value={formData.cpf}
             onAccept={(value) => handleMaskedInputChange("cpf", String(value))}
@@ -240,15 +237,17 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="phone" className={labelStyle}>
             Telefone *
           </label>
           <Phone
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <IMaskInput
             mask="(00) 00000-0000"
+            id="phone"
             name="phone"
             value={formData.phone}
             onAccept={(value) =>
@@ -260,16 +259,18 @@ const DriverForm: React.FC<DriverFormProps> = ({
           />
         </div>
 
-        <div className="lg:col-span-4 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="relative md:col-span-2 lg:col-span-4">
+          <label htmlFor="email" className={labelStyle}>
             Email *
           </label>
           <Mail
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <input
             type="email"
+            id="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
@@ -280,16 +281,18 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="cnh" className={labelStyle}>
             CNH *
           </label>
           <FileText
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <IMaskInput
             mask="00000000000"
             type="text"
+            id="cnh"
             name="cnh"
             value={formData.cnh}
             onAccept={(value) => handleMaskedInputChange("cnh", String(value))}
@@ -300,15 +303,17 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="cnhValidity" className={labelStyle}>
             Validade CNH *
           </label>
           <Calendar
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <input
             type="date"
+            id="cnhValidity"
             name="cnhValidity"
             value={formData.cnhValidity}
             onChange={handleChange}
@@ -317,136 +322,153 @@ const DriverForm: React.FC<DriverFormProps> = ({
           />
         </div>
 
-        <div className="lg:col-span-4">
-          <hr className="my-2 border-gray-200" />
+        <div className="md:col-span-2 lg:col-span-4">
+          <hr className="my-2 border-syncar-border" />
         </div>
 
         <div className="lg:col-span-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="cep" className={labelStyle}>
             CEP *
           </label>
           <MapPin
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <IMaskInput
             mask="00000-000"
+            id="cep"
             name="cep"
             value={formData.cep}
             onAccept={(value) => handleMaskedInputChange("cep", String(value))}
             onBlur={handleCepBlur}
             required
             placeholder="00000-000"
-            className={`${inputStyle} ${cepError ? "border-red-500" : "border-gray-200"}`}
+            aria-invalid={!!cepError}
+            aria-describedby={cepError ? "cep-error" : undefined}
+            className={`${inputStyle} ${cepError ? "border-syncar-danger focus:border-syncar-danger focus:ring-syncar-danger/20" : ""}`}
           />
           {cepError && (
-            <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
-              <AlertCircle size={16} />
+            <div
+              id="cep-error"
+              className="mt-1 flex items-center gap-1 text-sm text-syncar-danger"
+            >
+              <AlertCircle size={16} aria-hidden="true" />
               <span>{cepError}</span>
             </div>
           )}
         </div>
 
         <div className="lg:col-span-3 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="logradouro" className={labelStyle}>
             Logradouro *
           </label>
           <Home
-            className="absolute left-3 top-9 text-gray-400 z-10"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            aria-hidden="true"
             size={20}
           />
           <input
             type="text"
+            id="logradouro"
             name="logradouro"
             value={formData.logradouro}
             onChange={handleChange}
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            className={`${autoFilledInputStyle} ${disabledInputStyle}`}
+            className={`${inputStyle} ${disabledInputStyle}`}
           />
         </div>
 
         <div className="lg:col-span-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="numero" className={labelStyle}>
             Número *
           </label>
           <input
             type="text"
+            id="numero"
             name="numero"
             value={formData.numero}
             onChange={handleChange}
             required
             placeholder="123"
             ref={numeroRef}
-            className={`${inputWithoutIconStyle}`}
+            className={inputWithoutIconStyle}
           />
         </div>
 
         <div className="lg:col-span-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="complemento" className={labelStyle}>
             Complemento
           </label>
           <input
             type="text"
+            id="complemento"
             name="complemento"
             value={formData.complemento}
             onChange={handleChange}
             placeholder="Apto 101"
-            className={`${inputWithoutIconStyle}`}
+            className={inputWithoutIconStyle}
           />
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="bairro" className={labelStyle}>
             Bairro *
           </label>
           <input
             type="text"
+            id="bairro"
             name="bairro"
             value={formData.bairro}
             onChange={handleChange}
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
+            className={`${inputWithoutIconStyle} ${disabledInputStyle}`}
           />
         </div>
 
         <div className="lg:col-span-2 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="cidade" className={labelStyle}>
             Cidade *
           </label>
           <input
             type="text"
+            id="cidade"
             name="cidade"
             value={formData.cidade}
             onChange={handleChange}
             required
             placeholder="Preenchimento automático"
             disabled={!addressFieldsEnabled}
-            className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
-          />{" "}
+            className={`${inputWithoutIconStyle} ${disabledInputStyle}`}
+          />
         </div>
 
         <div className="lg:col-span-1 relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="uf" className={labelStyle}>
             UF *
           </label>
           <input
             type="text"
+            id="uf"
             name="uf"
             value={formData.uf}
             onChange={handleChange}
             required
             placeholder="UF"
             disabled={!addressFieldsEnabled}
-            className={`${autoFilledInputWithoutIconStyle} ${disabledInputStyle}`}
+            className={`${inputWithoutIconStyle} ${disabledInputStyle}`}
           />
         </div>
 
         <div className="lg:col-span-1">
           <CustomSelect
+            variant="platform"
+            id="status"
+            name="status"
             label="Status *"
             value={formData.status}
             onChange={(value) =>
@@ -458,19 +480,19 @@ const DriverForm: React.FC<DriverFormProps> = ({
         </div>
       </div>
 
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="flex flex-wrap justify-end gap-3 border-t border-syncar-border pt-5">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-syncar-control border border-syncar-border bg-syncar-surface px-5 text-sm font-semibold text-syncar-text hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-syncar-control bg-syncar-action px-6 text-sm font-bold text-syncar-action-text hover:bg-syncar-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? "Salvando..." : "Salvar"}
         </button>

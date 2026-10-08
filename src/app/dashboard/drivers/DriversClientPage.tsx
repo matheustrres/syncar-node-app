@@ -382,6 +382,7 @@ export default function DriversClientPage({
         onClose={handleCloseFormModal}
         title={editingItem ? "Editar motorista" : "Criar motorista"}
         size="4xl"
+        variant="platform"
       >
         <DriverForm
           initialData={editingItem}
