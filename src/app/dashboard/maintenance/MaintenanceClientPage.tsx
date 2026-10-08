@@ -378,6 +378,7 @@ export default function MaintenanceClientPage({
         onClose={handleCloseFormModal}
         title={editingItem ? "Editar Manutenção" : "Nova Manutenção"}
         size="4xl"
+        variant="platform"
       >
         <MaintenanceForm
           initialData={editingItem}

@@ -6,6 +6,7 @@ import { LucideIcon } from "lucide-react";
 interface CustomCurrencyInputProps extends CurrencyInputProps {
   label: string;
   Icon: LucideIcon;
+  variant?: "default" | "platform";
 }
 
 const CustomCurrencyInput: React.FC<CustomCurrencyInputProps> = ({
@@ -15,17 +16,18 @@ const CustomCurrencyInput: React.FC<CustomCurrencyInputProps> = ({
   value,
   onValueChange,
   required,
+  variant = "default",
 }) => {
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor={name} className={`mb-1.5 block text-sm font-semibold ${variant === "platform" ? "text-syncar-text" : "text-gray-700"}`}>
         {label}
       </label>
-      <Icon className="absolute left-3 top-9 text-gray-400" size={20} />
+      <Icon className={`pointer-events-none absolute left-3 top-9 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`} size={20} aria-hidden="true" />
       <CurrencyInput
         id={name}
         name={name}
-        className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100"
+        className={`h-11 w-full rounded-lg border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 ${variant === "platform" ? "border-syncar-border bg-syncar-surface text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:ring-syncar-focus/20" : "border-gray-300 bg-gray-100 focus:ring-blue-500"}`}
         value={value}
         onValueChange={onValueChange}
         intlConfig={{ locale: "pt-BR", currency: "BRL" }}
