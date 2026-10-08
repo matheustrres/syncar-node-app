@@ -279,10 +279,12 @@ export default function DriverDetailsClientPage({
             <DetailItem label="CPF" value={driver.cpf} />
             <DetailItem label="Telefone" value={driver.phone} />
             <DetailItem label="Email" value={driver.email} />
-            <DetailItem label="CNH" value={driver.cnh} />
+            <DetailItem label="CNH" value={driver.cnh || "Não informada"} />
             <DetailItem
               label="Validade da CNH"
-              value={new Date(driver.cnhValidity).toLocaleDateString("pt-BR")}
+              value={driver.cnhValidity
+                ? new Date(driver.cnhValidity).toLocaleDateString("pt-BR")
+                : "Não informada"}
             />
             {fullAddress && (
               <div className="md:col-span-2 lg:col-span-3">

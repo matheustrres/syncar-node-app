@@ -207,7 +207,7 @@ export const getDrivers = cache(
       ...driver,
       createdAt: driver.createdAt.toISOString(),
       updatedAt: driver.updatedAt.toISOString(),
-      cnhValidity: driver.cnhValidity.toISOString(),
+      cnhValidity: driver.cnhValidity?.toISOString() ?? null,
     }));
     return { drivers, total };
   }

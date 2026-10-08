@@ -86,6 +86,8 @@ export async function POST(request: Request) {
         ...data,
         userId: session.user.id,
         nameNormalized: normalizeString(data.name),
+        cnh: typeof data.cnh === "string" ? data.cnh.trim() || null : null,
+        cnhValidity: data.cnhValidity ? new Date(data.cnhValidity) : null,
       },
     });
     return NextResponse.json(newDriver, { status: 201 });

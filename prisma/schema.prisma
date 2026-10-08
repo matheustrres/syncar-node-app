@@ -94,8 +94,8 @@ model Driver {
   cpf            String     @unique
   phone          String
   email          String
-  cnh            String     @unique
-  cnhValidity    DateTime   @map("cnh_validity")
+  cnh            String?    @unique
+  cnhValidity    DateTime?  @map("cnh_validity")
   cep            String?
   logradouro     String?
   numero         String?

@@ -1,0 +1,2 @@
+ALTER TABLE "drivers" ALTER COLUMN "cnh" DROP NOT NULL;
+ALTER TABLE "drivers" ALTER COLUMN "cnh_validity" DROP NOT NULL;

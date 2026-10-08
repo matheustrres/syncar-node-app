@@ -41,7 +41,15 @@ export async function PUT(
   }
   const updatedDriver = await prisma.driver.update({
     where: { id, userId: session.user.id },
-    data,
+    data: {
+      ...data,
+      ...(data.cnh !== undefined && {
+        cnh: typeof data.cnh === "string" ? data.cnh.trim() || null : null,
+      }),
+      ...(data.cnhValidity !== undefined && {
+        cnhValidity: data.cnhValidity ? new Date(data.cnhValidity) : null,
+      }),
+    },
   });
   return NextResponse.json(updatedDriver);
 }

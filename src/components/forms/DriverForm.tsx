@@ -171,8 +171,8 @@ const DriverForm: React.FC<DriverFormProps> = ({
       cpf,
       phone,
       email,
-      cnh,
-      cnhValidity: new Date(cnhValidity).toISOString(),
+      cnh: cnh || null,
+      cnhValidity: cnhValidity ? new Date(cnhValidity).toISOString() : null,
       cep,
       logradouro,
       numero,
@@ -283,7 +283,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
 
         <div className="lg:col-span-2 relative">
           <label htmlFor="cnh" className={labelStyle}>
-            CNH *
+            CNH (opcional)
           </label>
           <IdCard
             className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
@@ -297,7 +297,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
             name="cnh"
             value={formData.cnh}
             onAccept={(value) => handleMaskedInputChange("cnh", String(value))}
-            required
             placeholder="00000000000"
             className={inputStyle}
           />
@@ -305,7 +304,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
 
         <div className="lg:col-span-2 relative">
           <label htmlFor="cnhValidity" className={labelStyle}>
-            Validade CNH *
+            Validade CNH (opcional)
           </label>
           <Calendar
             className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
@@ -318,7 +317,6 @@ const DriverForm: React.FC<DriverFormProps> = ({
             name="cnhValidity"
             value={formData.cnhValidity}
             onChange={handleChange}
-            required
             className={inputStyle}
           />
         </div>
