@@ -311,7 +311,7 @@ export default function MaintenanceClientPage({
           <p>Registre serviços, custos e quilometragem de cada veículo.</p>
         </div>
         <div className={styles.headerActions}>
-          <button type="button" className={styles.secondaryAction} onClick={handleExport}>
+          <button type="button" className={styles.secondaryAction} onClick={handleExport} disabled={maintenanceCount === 0} title={maintenanceCount === 0 ? "Cadastre uma manutenção para exportar o CSV" : undefined}>
             <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
           {hasVehicles ? (

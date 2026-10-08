@@ -12,7 +12,8 @@
 .primaryAction { background: var(--syncar-action); color: var(--syncar-action-text); }
 .primaryAction:hover { background: var(--syncar-action-hover); }
 .secondaryAction { background: var(--syncar-green-900); color: var(--syncar-surface); border: 1px solid var(--syncar-text-muted); }
-.secondaryAction:hover { background: var(--syncar-focus); }
+.secondaryAction:hover:not(:disabled) { background: var(--syncar-focus); }
+.secondaryAction:disabled { opacity: .5; cursor: not-allowed; }
 .intro :is(a, button):focus-visible { outline-color: var(--syncar-action); }
 .filters, .tablePanel, .firstRun, .mobileItem { background: var(--syncar-surface); border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-panel); box-shadow: var(--syncar-shadow-panel); }
 .filters { margin-bottom: 28px; }

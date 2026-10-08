@@ -315,7 +315,7 @@ export default function VehiclesClientPage({
           <p>Acompanhe a disponibilidade e os dados da sua frota.</p>
         </div>
         <div className={styles.headerActions}>
-          <button type="button" onClick={handleExportClick} className={styles.secondaryAction}>
+          <button type="button" onClick={handleExportClick} className={styles.secondaryAction} disabled={fleetCount === 0} title={fleetCount === 0 ? "Cadastre um veículo para exportar o CSV" : undefined}>
             <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
           <button type="button" onClick={handleAddClick} className={styles.primaryAction}>

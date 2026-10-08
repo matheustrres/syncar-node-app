@@ -35,6 +35,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
   const { showToast } = useToast();
   const { mutate } = useSWRConfig();
   const [page, setPage] = useState(1);
+  const [contractCount, setContractCount] = useState(initialTotal);
   const [filters, setFilters] = useState<ContractFilters>({});
   const [filterDraft, setFilterDraft] = useState<ContractFilterDraft>(emptyContractFilters);
   const [sortColumn, setSortColumn] = useState("createdAt");
@@ -106,6 +107,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
         const body = await response.json().catch(() => ({}));
         throw new Error(body.error || "Falha ao salvar contrato.");
       }
+      if (!editingItem) setContractCount((count) => count + 1);
       await mutateContracts();
       void mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
       showToast(editingItem ? "Contrato atualizado com sucesso!" : "Contrato cadastrado com sucesso!", "success");
@@ -135,6 +137,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
         const body = await response.json().catch(() => ({}));
         throw new Error(body.error || "Falha ao excluir contratos.");
       }
+      setContractCount((count) => Math.max(0, count - ids.length));
       await mutateContracts();
       void mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
       showToast(ids.length === 1 ? "Contrato excluído com sucesso!" : "Contratos excluídos com sucesso!", "success");
@@ -179,7 +182,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
           <p>Acompanhe locações, valores e a situação dos contratos da sua frota.</p>
         </div>
         <div className={styles.headerActions}>
-          <button type="button" onClick={handleExport} className={styles.secondaryAction}>
+          <button type="button" onClick={handleExport} className={styles.secondaryAction} disabled={contractCount === 0} title={contractCount === 0 ? "Cadastre um contrato para exportar o CSV" : undefined}>
             <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
           <button type="button" onClick={() => openForm()} className={styles.primaryAction}>

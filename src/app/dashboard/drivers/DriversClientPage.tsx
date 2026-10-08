@@ -305,7 +305,7 @@ export default function DriversClientPage({
           <p>Consulte os dados e a situação dos motoristas da sua frota.</p>
         </div>
         <div className={styles.headerActions}>
-          <button type="button" onClick={handleExportClick} className={styles.secondaryAction}>
+          <button type="button" onClick={handleExportClick} className={styles.secondaryAction} disabled={driverCount === 0} title={driverCount === 0 ? "Cadastre um motorista para exportar o CSV" : undefined}>
             <Download size={18} aria-hidden="true" /> Exportar CSV
           </button>
           <button type="button" onClick={handleAddClick} className={styles.primaryAction}>
