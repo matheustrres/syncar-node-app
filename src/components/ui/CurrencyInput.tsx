@@ -23,7 +23,7 @@ const CustomCurrencyInput: React.FC<CustomCurrencyInputProps> = ({
       <label htmlFor={name} className={`mb-1.5 block text-sm font-semibold ${variant === "platform" ? "text-syncar-text" : "text-gray-700"}`}>
         {label}
       </label>
-      <Icon className={`pointer-events-none absolute left-3 top-9 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`} size={20} aria-hidden="true" />
+      <Icon className={`pointer-events-none absolute left-3 top-9 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`} size={variant === "platform" ? 18 : 20} strokeWidth={variant === "platform" ? 1.75 : 2} aria-hidden="true" />
       <CurrencyInput
         id={name}
         name={name}

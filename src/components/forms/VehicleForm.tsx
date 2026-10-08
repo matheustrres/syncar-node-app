@@ -4,12 +4,12 @@ import { Vehicle, WithoutBaseItem } from "@/types";
 import { useState, useEffect, FormEvent, FocusEvent } from "react";
 import { IMaskInput } from "react-imask";
 import {
-  CheckSquare,
+  CircleCheck,
+  FileText,
   Hash,
   Palette,
   Gauge,
   Shield,
-  Milestone,
   Calendar,
   Car,
   AlertCircle,
@@ -118,7 +118,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
   const inputStyle =
     "h-11 w-full rounded-[var(--syncar-radius-control)] border border-syncar-border bg-syncar-surface pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
   const labelStyle = "mb-1.5 block text-sm font-semibold text-syncar-text";
-  const iconStyle = "pointer-events-none absolute left-3 top-9 text-syncar-text-muted";
+  const iconStyle = "pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
@@ -240,7 +240,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
           <label htmlFor="vehicle-renavam" className={labelStyle}>
             RENAVAM *
           </label>
-          <Milestone
+          <FileText
             className={iconStyle}
             size={18}
             aria-hidden="true"
@@ -289,7 +289,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
               setFormData((prev) => ({ ...prev, status: value }))
             }
             options={statusOptions}
-            Icon={CheckSquare}
+            Icon={CircleCheck}
           />
         </div>
       </div>

@@ -105,7 +105,7 @@ export default function FinancialClientPage({ initialPendingPayments, initialPai
     </div>
     <p className={styles.footerNote}>Os pagamentos ficam vinculados aos <Link href="/dashboard/contracts">contratos</Link>.</p>
     <Modal isOpen={modal === "payment"} onClose={close} title="Registrar pagamento"><PaymentForm contracts={contracts || []} drivers={drivers || []} vehicles={vehicles || []} onSave={(data) => void save("/api/payments", data)} onCancel={close} /></Modal>
-    <Modal isOpen={modal === "expense"} onClose={close} title={editing ? "Editar despesa" : "Adicionar despesa"}><ExpenseForm initialData={editing} isSaving={saving} vehicles={vehicles || []} onSave={(data) => void save("/api/expenses", data)} onCancel={close} /></Modal>
+    <Modal isOpen={modal === "expense"} onClose={close} title={editing ? "Editar despesa" : "Adicionar despesa"} variant="platform"><ExpenseForm initialData={editing} isSaving={saving} vehicles={vehicles || []} onSave={(data) => void save("/api/expenses", data)} onCancel={close} /></Modal>
     <DeleteConfirmationModal isOpen={!!toDelete} onClose={() => setToDelete(null)} onConfirm={deleteExpense} resourceName="despesa" resourceIdentifier={toDelete?.description} isDeleting={deleting} />
   </main>;
 }

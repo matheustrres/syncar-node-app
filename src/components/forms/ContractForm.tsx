@@ -9,6 +9,7 @@ import {
   Calendar,
   Shield,
   Hash,
+  CircleCheck,
   AlertCircle,
 } from "lucide-react";
 import CurrencyInput from "../ui/CurrencyInput";
@@ -181,8 +182,8 @@ const ContractForm: React.FC<ContractFormProps> = ({
             Data de início *
           </label>
           <Calendar
-            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted"
-            size={20}
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
             aria-hidden="true"
           />
           <input
@@ -217,7 +218,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
               setFormData((prev) => ({ ...prev, status: value }))
             }
             options={statusOptions}
-            Icon={Hash}
+            Icon={CircleCheck}
           />
         </div>
 
@@ -226,8 +227,8 @@ const ContractForm: React.FC<ContractFormProps> = ({
             Duração (semanas) *
           </label>
           <Hash
-            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted"
-            size={20}
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
             aria-hidden="true"
           />
           <input

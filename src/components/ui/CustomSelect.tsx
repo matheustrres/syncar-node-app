@@ -48,8 +48,10 @@ export default function CustomSelect({
 
           {Icon && (
             <Icon
-              className={`absolute left-3 top-9 z-10 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
-              size={20}
+              className={`absolute left-3 ${label ? "top-9" : "top-3"} z-10 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
+              size={variant === "platform" ? 18 : 20}
+              strokeWidth={variant === "platform" ? 1.75 : 2}
+              aria-hidden="true"
             />
           )}
 
@@ -67,8 +69,9 @@ export default function CustomSelect({
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronsUpDown
-                className={`h-5 w-5 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
+                className={`${variant === "platform" ? "h-4 w-4" : "h-5 w-5"} ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
                 aria-hidden="true"
+                strokeWidth={variant === "platform" ? 1.75 : 2}
               />
             </span>
           </Listbox.Button>
@@ -96,7 +99,11 @@ export default function CustomSelect({
                       </span>
                       {selected ? (
                         <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${variant === "platform" ? "text-syncar-success" : "text-blue-600"}`}>
-                          <Check className="h-5 w-5" aria-hidden="true" />
+                          <Check
+                            className={variant === "platform" ? "h-[18px] w-[18px]" : "h-5 w-5"}
+                            strokeWidth={variant === "platform" ? 1.75 : 2}
+                            aria-hidden="true"
+                          />
                         </span>
                       ) : null}
                     </>

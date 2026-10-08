@@ -7,10 +7,11 @@ import {
   User,
   Mail,
   Phone,
-  FileText,
+  Fingerprint,
+  IdCard,
+  CircleCheck,
   Calendar,
   MapPin,
-  CheckSquare,
   Home,
   AlertCircle,
 } from "lucide-react";
@@ -199,9 +200,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             Nome Completo *
           </label>
           <User
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <input
             type="text"
@@ -219,10 +220,10 @@ const DriverForm: React.FC<DriverFormProps> = ({
           <label htmlFor="cpf" className={labelStyle}>
             CPF *
           </label>
-          <FileText
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+          <Fingerprint
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <IMaskInput
             mask="000.000.000-00"
@@ -241,9 +242,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             Telefone *
           </label>
           <Phone
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <IMaskInput
             mask="(00) 00000-0000"
@@ -264,9 +265,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             Email *
           </label>
           <Mail
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <input
             type="email"
@@ -284,10 +285,10 @@ const DriverForm: React.FC<DriverFormProps> = ({
           <label htmlFor="cnh" className={labelStyle}>
             CNH *
           </label>
-          <FileText
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+          <IdCard
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <IMaskInput
             mask="00000000000"
@@ -307,9 +308,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             Validade CNH *
           </label>
           <Calendar
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <input
             type="date"
@@ -331,9 +332,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             CEP *
           </label>
           <MapPin
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <IMaskInput
             mask="00000-000"
@@ -364,9 +365,9 @@ const DriverForm: React.FC<DriverFormProps> = ({
             Logradouro *
           </label>
           <Home
-            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted"
+            className="pointer-events-none absolute left-3 top-9 z-10 text-syncar-text-muted [stroke-width:1.75]"
             aria-hidden="true"
-            size={20}
+            size={18}
           />
           <input
             type="text"
@@ -475,7 +476,7 @@ const DriverForm: React.FC<DriverFormProps> = ({
               setFormData((prev) => ({ ...prev, status: value }))
             }
             options={statusOptions}
-            Icon={CheckSquare}
+            Icon={CircleCheck}
           />
         </div>
       </div>

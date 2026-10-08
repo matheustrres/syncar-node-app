@@ -3,7 +3,15 @@ import { useToast } from "@/context/ToastContext";
 import { Maintenance, Vehicle, WithoutBaseItem } from "@/types";
 import CustomSelect from "@/components/ui/CustomSelect";
 import CurrencyInput from "@/components/ui/CurrencyInput";
-import { DollarSign } from "lucide-react";
+import {
+  CalendarDays,
+  CarFront,
+  DollarSign,
+  FileText,
+  Gauge,
+  MessageSquare,
+  Wrench,
+} from "lucide-react";
 
 interface MaintenanceFormProps {
   initialData?: Maintenance | null;
@@ -181,7 +189,7 @@ export default function MaintenanceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
-        <div>
+        <div className="relative">
           <label
             htmlFor="vehicleId"
             className={labelStyle}
@@ -197,6 +205,7 @@ export default function MaintenanceForm({
             onChange={(value) => handleSelectChange("vehicleId", value)}
             placeholder="Selecione um veículo"
             className="block w-full"
+            Icon={CarFront}
           />
           {errors.vehicleId && (
             <p className={errorStyle}>{errors.vehicleId}</p>
@@ -219,33 +228,39 @@ export default function MaintenanceForm({
             onChange={(value) => handleSelectChange("type", value)}
             placeholder="Selecione o tipo"
             className="block w-full"
+            Icon={Wrench}
           />
           {errors.type && (
             <p className={errorStyle}>{errors.type}</p>
           )}
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <label
             htmlFor="description"
             className={labelStyle}
           >
             Descrição *
           </label>
+          <FileText
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <textarea
             id="description"
             name="description"
             rows={3}
             value={formData.description}
             onChange={handleChange}
-            className={`${fieldStyle} resize-y py-2.5`}
+            className={`${fieldStyle} resize-y py-2.5 pl-11`}
           ></textarea>
           {errors.description && (
             <p className={errorStyle}>{errors.description}</p>
           )}
         </div>
 
-        <div>
+        <div className="relative">
           <CurrencyInput
             variant="platform"
             id="cost"
@@ -261,70 +276,90 @@ export default function MaintenanceForm({
           )}
         </div>
 
-        <div>
+        <div className="relative">
           <label
             htmlFor="date"
             className={labelStyle}
           >
             Data da manutenção *
           </label>
+          <CalendarDays
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <input
             type="date"
             id="date"
             name="date"
             value={formData.date ? String(formData.date) : ""}
             onChange={handleDateChange}
-            className={fieldStyle}
+            className={`${fieldStyle} syncar-date-input-left-icon pl-11`}
           />
           {errors.date && (
             <p className={errorStyle}>{errors.date}</p>
           )}
         </div>
 
-        <div>
+        <div className="relative">
           <label
             htmlFor="mileage"
             className={labelStyle}
           >
             Quilometragem *
           </label>
+          <Gauge
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <input
             type="text"
             id="mileage"
             name="mileage"
             value={formatNumber(formData.mileage)}
             onChange={handleNumericChange}
-            className={fieldStyle}
+            className={`${fieldStyle} pl-11`}
           />
           {errors.mileage && (
             <p className={errorStyle}>{errors.mileage}</p>
           )}
         </div>
 
-        <div>
+        <div className="relative">
           <label
             htmlFor="nextServiceMileage"
             className={labelStyle}
           >
             Próxima manutenção (KM)
           </label>
+          <Gauge
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <input
             type="text"
             id="nextServiceMileage"
             name="nextServiceMileage"
             value={formatNumber(formData.nextServiceMileage ?? undefined)}
             onChange={handleNumericChange}
-            className={fieldStyle}
+            className={`${fieldStyle} pl-11`}
           />
         </div>
 
-        <div>
+        <div className="relative">
           <label
             htmlFor="nextServiceDate"
             className={labelStyle}
           >
             Próxima manutenção (Data)
           </label>
+          <CalendarDays
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <input
             type="date"
             id="nextServiceDate"
@@ -333,24 +368,29 @@ export default function MaintenanceForm({
               formData.nextServiceDate ? String(formData.nextServiceDate) : ""
             }
             onChange={handleDateChange}
-            className={fieldStyle}
+            className={`${fieldStyle} syncar-date-input-left-icon pl-11`}
           />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 relative">
           <label
             htmlFor="notes"
             className={labelStyle}
           >
             Observações
           </label>
+          <MessageSquare
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted [stroke-width:1.75]"
+            size={18}
+            aria-hidden="true"
+          />
           <textarea
             id="notes"
             name="notes"
             rows={3}
             value={formData.notes || ""}
             onChange={handleChange}
-            className={`${fieldStyle} resize-y py-2.5`}
+            className={`${fieldStyle} resize-y py-2.5 pl-11`}
           ></textarea>
         </div>
       </div>
