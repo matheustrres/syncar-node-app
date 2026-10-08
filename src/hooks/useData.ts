@@ -72,6 +72,7 @@ export interface ContractFilters {
 }
 
 export interface MaintenanceFilters {
+  vehicle?: string;
   vehicleId?: string;
   type?: string;
   description?: string;
@@ -116,7 +117,7 @@ export function useFetchMaintenance(
     total: number;
   }>(`/api/maintenance?${queryParams.toString()}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
 
   return {

@@ -1,18 +1,13 @@
 export default function MaintenanceSkeleton() {
   return (
-    <div className="bg-white p-4 rounded-lg shadow animate-pulse">
-      <div className="h-8 bg-gray-200 rounded w-3/4 mb-4"></div>
-      <div className="space-y-3">
-        {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-6 gap-4 py-2 border-b border-gray-200"
-          >
-            <div className="h-4 bg-gray-200 rounded col-span-2"></div>
-            <div className="h-4 bg-gray-200 rounded col-span-1"></div>
-            <div className="h-4 bg-gray-200 rounded col-span-1"></div>
-            <div className="h-4 bg-gray-200 rounded col-span-1"></div>
-            <div className="h-4 bg-gray-200 rounded col-span-1"></div>
+    <div className="animate-pulse overflow-hidden rounded-xl border border-[var(--syncar-border)] bg-[var(--syncar-surface)]" aria-label="Carregando manutenções" role="status">
+      <div className="h-12 border-b border-[var(--syncar-border)] bg-[var(--syncar-surface-subtle)]" />
+      <div className="space-y-0 px-5">
+        {Array.from({ length: 5 }, (_, index) => (
+          <div key={index} className="grid grid-cols-4 gap-5 border-b border-[var(--syncar-border)] py-5 last:border-0">
+            {Array.from({ length: 4 }, (_, cell) => (
+              <div key={cell} className="h-4 rounded bg-[var(--syncar-surface-subtle)]" />
+            ))}
           </div>
         ))}
       </div>

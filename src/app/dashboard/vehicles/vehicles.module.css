@@ -71,7 +71,7 @@
 .firstRun h2 { margin: 0; font-size: clamp(21px, 2.4vw, 26px); line-height: 1.25; letter-spacing: -.025em; font-weight: 750; }
 .firstRun p { margin: 10px 0 22px; color: var(--syncar-text-muted); font-size: 14px; line-height: 1.6; }
 .firstRunNote { position: absolute; right: 32px; bottom: 24px; color: var(--syncar-text-muted); font-size: 12px; }
-.page :is(button, input, select):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+.page :is(a, button, input, select):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
 
 @media (max-width: 1100px) { .filterGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 800px) {

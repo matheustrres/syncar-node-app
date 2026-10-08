@@ -1,0 +1,4 @@
+.status { display: inline-flex; align-items: center; min-height: 26px; padding: 2px 9px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+.active { color: var(--syncar-success); background: color-mix(in srgb, var(--syncar-success) 12%, var(--syncar-surface)); }
+.inactive { color: var(--syncar-text-muted); background: var(--syncar-surface-subtle); }
+.mobileDetails { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 11px; color: var(--syncar-text-muted); font-size: 13px; overflow-wrap: anywhere; }

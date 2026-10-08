@@ -1,0 +1,10 @@
+.vehiclePlate { display: block; color: var(--syncar-text); font-weight: 750; letter-spacing: .01em; }
+.vehicleModel { display: block; margin-top: 2px; color: var(--syncar-text-muted); font-size: 12px; }
+.typeBadge { display: inline-flex; align-items: center; min-height: 26px; padding: 3px 9px; border-radius: 6px; background: var(--syncar-surface-subtle); color: var(--syncar-success); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.descriptionCell { max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.costCell { font-weight: 700; font-variant-numeric: tabular-nums; }
+.mobileDescription { margin: 16px 0; color: var(--syncar-text); font-size: 14px; line-height: 1.5; }
+.mobileDetails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 13px 0; border-top: 1px solid var(--syncar-border); }
+.mobileDetails dt { color: var(--syncar-text-muted); font-size: 11px; }
+.mobileDetails dd { margin: 3px 0 0; color: var(--syncar-text); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) { .mobileDetails { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

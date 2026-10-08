@@ -1,122 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useToast } from "@/context/ToastContext";
 import { Maintenance, Vehicle, WithoutBaseItem } from "@/types";
 import {
   useFetchMaintenance,
   useAllVehicles,
   MaintenanceWithRelations,
+  MaintenanceFilters,
 } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import MaintenanceForm from "@/components/forms/MaintenanceForm";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Car,
-  Wrench,
-  Calendar,
-  DollarSign,
-  Gauge,
-} from "lucide-react";
-import DataTable, { Column } from "@/components/ui/DataTable";
+import { Plus, Edit2, Trash2, Wrench, ArrowRight } from "lucide-react";
 import MaintenanceSkeleton from "./MaintenanceSkeleton";
-import AdvancedFilterBar, {
-  FilterConfig,
-} from "@/components/ui/AdvancedFilterBar";
-import ErrorDisplay from "@/components/ui/ErrorDisplay";
+import MaintenanceFilterBar, { emptyMaintenanceFilters, MaintenanceFilterDraft } from "./MaintenanceFilterBar";
+import MaintenanceTable, { formatCost, formatDate, formatMileage, maintenanceTypeLabels } from "./MaintenanceTable";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
-import EmptyState from "@/components/ui/EmptyState";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import useCrud from "@/hooks/useCrud";
-
-const columns: Column<MaintenanceWithRelations>[] = [
-  {
-    header: "Veículo",
-    accessor: (maintenance) =>
-      `${maintenance.vehicle.plate} - ${maintenance.vehicle.model}`,
-    className: "font-medium text-gray-900",
-    sortable: true,
-  },
-  {
-    header: "Tipo",
-    accessor: "type",
-    sortable: true,
-  },
-  {
-    header: "Descrição",
-    accessor: "description",
-    sortable: true,
-  },
-  {
-    header: "Custo",
-    accessor: (maintenance) => `R$ ${maintenance.cost.toFixed(2)}`,
-    sortable: true,
-  },
-  {
-    header: "Data",
-    accessor: (maintenance) =>
-      new Date(maintenance.date).toLocaleDateString("pt-BR"),
-    sortable: true,
-  },
-  {
-    header: "KM",
-    accessor: "mileage",
-    sortable: true,
-  },
-];
-
-const maintenanceTypeOptions = [
-  { value: "", label: "Todos os tipos" },
-  { value: "PREVENTIVA", label: "Preventiva" },
-  { value: "CORRETIVA", label: "Corretiva" },
-  { value: "TROCA_OLEO", label: "Troca de Óleo" },
-  { value: "PNEUS", label: "Pneus" },
-  { value: "FREIOS", label: "Freios" },
-  { value: "OUTROS", label: "Outros" },
-];
-
-const filtersConfig: FilterConfig[] = [
-  {
-    id: "searchVehicle",
-    label: "Buscar por veículo",
-    type: "text",
-    field: "vehicle",
-    placeholder: "Ex: ABC1234 ou Corolla",
-    icon: Car,
-  },
-  {
-    id: "type",
-    label: "Tipo de Manutenção",
-    type: "select",
-    field: "type",
-    options: maintenanceTypeOptions,
-    placeholder: "Todos os tipos",
-    icon: Wrench,
-  },
-  {
-    id: "costRange",
-    label: "Custo",
-    type: "number-range",
-    field: "cost",
-    icon: DollarSign,
-  },
-  {
-    id: "dateRange",
-    label: "Data",
-    type: "date-range",
-    field: "date",
-    icon: Calendar,
-  },
-  {
-    id: "mileageRange",
-    label: "Quilometragem",
-    type: "number-range",
-    field: "mileage",
-    icon: Gauge,
-  },
-];
+import styles from "../vehicles/vehicles.module.css";
+import local from "./maintenance.module.css";
 
 interface MaintenanceClientPageProps {
   initialMaintenance: MaintenanceWithRelations[];
@@ -132,8 +36,10 @@ export default function MaintenanceClientPage({
   userPlan,
 }: MaintenanceClientPageProps) {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [maintenanceCount, setMaintenanceCount] = useState(initialTotal);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState({});
+  const [filterDraft, setFilterDraft] = useState<MaintenanceFilterDraft>({ ...emptyMaintenanceFilters });
+  const [filters, setFilters] = useState<MaintenanceFilters>({});
   const [sortColumn, setSortColumn] = useState("date");
   const [sortDirection, setSortDirection] = useState<"desc" | "asc">("desc");
   const limit = 10;
@@ -142,11 +48,21 @@ export default function MaintenanceClientPage({
     setPage(1);
   }, [filters]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const active = Object.fromEntries(Object.entries(filterDraft).filter(([, value]) => value.trim() !== "")) as MaintenanceFilters;
+      setFilters((current) => JSON.stringify(current) === JSON.stringify(active) ? current : active);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [filterDraft]);
+
+  const useInitialData = page === 1 && Object.keys(filters).length === 0 && sortColumn === "date" && sortDirection === "desc";
+
   const { maintenance, total, isLoading, isError, mutateMaintenance } =
-    useFetchMaintenance(page, limit, filters, sortColumn, sortDirection, {
+    useFetchMaintenance(page, limit, filters, sortColumn, sortDirection, useInitialData ? {
       maintenance: initialMaintenance,
       total: initialTotal,
-    });
+    } : undefined);
 
   const { vehicles: allVehicles } = useAllVehicles(initialVehicles);
 
@@ -166,7 +82,7 @@ export default function MaintenanceClientPage({
   const handleOpenFormModal = (
     item: MaintenanceWithRelations | null = null
   ) => {
-    if (userPlan === "BASIC" && total >= 3 && !item) {
+    if (userPlan === "BASIC" && maintenanceCount >= 3 && !item) {
       setIsUpgradeModalOpen(true);
       return;
     }
@@ -239,6 +155,7 @@ export default function MaintenanceClientPage({
           throw new Error(error);
         }
         const savedMaintenance = await response.json();
+        if (!editingItem) setMaintenanceCount((count) => count + 1);
         showToast(
           `Manutenção ${editingItem ? "atualizada" : "cadastrada"} com sucesso!`,
           "success"
@@ -289,6 +206,7 @@ export default function MaintenanceClientPage({
         if (!response.ok) {
           throw new Error("Falha ao excluir");
         }
+        setMaintenanceCount((count) => Math.max(0, count - 1));
         showToast("Manutenção excluída com sucesso!", "success");
         return { maintenance: optimisticData, total: total - 1 };
       }, options);
@@ -303,13 +221,14 @@ export default function MaintenanceClientPage({
   };
 
   const handleConfirmBulkDelete = async () => {
+    const idsToDelete = [...itemsToDelete];
     const optimisticData = maintenance.filter(
-      (m) => !itemsToDelete.includes(m.id)
+      (m) => !idsToDelete.includes(m.id)
     );
     const options = {
       optimisticData: {
         maintenance: optimisticData,
-        total: total - itemsToDelete.length,
+        total: total - idsToDelete.length,
       },
       rollbackOnError: true,
       populateCache: true,
@@ -319,11 +238,12 @@ export default function MaintenanceClientPage({
     setItemsToDelete([]);
     try {
       await mutateMaintenance(async () => {
-        await deleteManyMaintenance(itemsToDelete);
+        await deleteManyMaintenance(idsToDelete);
+        setMaintenanceCount((count) => Math.max(0, count - idsToDelete.length));
         showToast("Manutenções excluídas com sucesso!", "success");
         return {
           maintenance: optimisticData,
-          total: total - itemsToDelete.length,
+          total: total - idsToDelete.length,
         };
       }, options);
     } catch {
@@ -332,25 +252,13 @@ export default function MaintenanceClientPage({
     setIsDeleting(false);
   };
 
-  const handleRowClick = (itemId: string) => {
-    // router.push(`/dashboard/maintenance/${itemId}`); // No detail page for now
-  };
-
-  const handleActionClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   const totalPages = Math.ceil(total / limit);
 
-  const addButton = (
-    <button
-      onClick={() => handleOpenFormModal()}
-      className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700"
-    >
-      <Plus size={20} />
-      <span>Nova manutenção</span>
-    </button>
-  );
+  useEffect(() => {
+    if (!isLoading && totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [isLoading, page, totalPages]);
 
   const handleSort = (column: string, direction: "asc" | "desc") => {
     setSortColumn(column);
@@ -358,142 +266,116 @@ export default function MaintenanceClientPage({
   };
 
   const isFiltersEmpty = Object.keys(filters).length === 0;
+  const activeFilterCount = Object.values(filterDraft).filter((value) => value.trim() !== "").length;
+  const showFirstRun = maintenanceCount === 0 && isFiltersEmpty && activeFilterCount === 0;
+  const hasVehicles = (allVehicles?.length ?? 0) > 0;
+  const clearFilters = () => {
+    setFilterDraft({ ...emptyMaintenanceFilters });
+    setFilters({});
+    setPage(1);
+  };
 
   return (
-    <div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
-          Manutenções
-        </h2>
-        <button
-          onClick={() => handleOpenFormModal()}
-          className="bg-blue-600 text-white px-3 py-2 md:px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 w-full sm:w-auto"
-        >
-          <Plus size={20} />
-          <span className="hidden sm:inline whitespace-nowrap">
-            Nova manutenção
-          </span>
-          <span className="sm:hidden">Adicionar</span>
-        </button>
-      </div>
+    <div className={styles.page}>
+      <header className={styles.intro}>
+        <div>
+          <h1>Manutenções</h1>
+          <p>Registre serviços, custos e quilometragem de cada veículo.</p>
+        </div>
+        {hasVehicles ? (
+          <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}>
+            <Plus size={19} aria-hidden="true" /> Nova manutenção
+          </button>
+        ) : (
+          <Link href="/dashboard/vehicles" className={styles.primaryAction}>
+            <Plus size={19} aria-hidden="true" /> Cadastrar veículo
+          </Link>
+        )}
+      </header>
 
-      <AdvancedFilterBar
-        filtersConfig={filtersConfig}
-        onFilterChange={setFilters}
-      />
+      {(!showFirstRun || isLoading) && (
+        <MaintenanceFilterBar
+          value={filterDraft}
+          onChange={setFilterDraft}
+          onClear={clearFilters}
+          activeCount={activeFilterCount}
+        />
+      )}
 
       {isLoading ? (
         <MaintenanceSkeleton />
       ) : isError ? (
-        <ErrorDisplay
-          errorMessage="Falha ao carregar as manutenções."
-          onRetry={mutateMaintenance}
-        />
-      ) : total === 0 && isFiltersEmpty ? (
-        <>
-          <EmptyState
-            Icon={Wrench}
-            title="Nenhuma manutenção cadastrada"
-            description="Comece cadastrando a primeira manutenção para poder gerenciá-las."
-            actionButton={addButton}
-          />
-
-          <Modal
-            isOpen={isFormModalOpen}
-            onClose={handleCloseFormModal}
-            title={editingItem ? "Editar Manutenção" : "Nova Manutenção"}
-            size="4xl"
-          >
-            <MaintenanceForm
-              initialData={editingItem}
-              vehicles={allVehicles || []}
-              isSaving={isSaving}
-              onSave={handleSave}
-              onCancel={handleCloseFormModal}
-            />
-          </Modal>
-        </>
+        <section className={styles.messagePanel} role="alert">
+          <h2>Não foi possível carregar as manutenções</h2>
+          <p>Verifique a conexão e tente novamente.</p>
+          <button type="button" className={styles.secondaryAction} onClick={() => mutateMaintenance()}>Tentar novamente</button>
+        </section>
+      ) : showFirstRun ? (
+        <section className={styles.firstRun}>
+          <div className={styles.firstRunIcon}><Wrench size={28} strokeWidth={1.8} aria-hidden="true" /></div>
+          <div className={styles.firstRunCopy}>
+            <h2>{hasVehicles ? "Cuide da frota com tudo registrado" : "Comece cadastrando sua frota"}</h2>
+            <p>{hasVehicles
+              ? "Registre a primeira manutenção para acompanhar serviços, custos e próximos cuidados em um só lugar."
+              : "Cadastre um veículo para começar a acompanhar seu histórico de manutenções."}</p>
+            {hasVehicles ? (
+              <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}>
+                <Plus size={19} aria-hidden="true" /> Registrar primeira manutenção
+              </button>
+            ) : (
+              <Link href="/dashboard/vehicles" className={styles.primaryAction}>
+                Cadastrar primeiro veículo <ArrowRight size={18} aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+          {userPlan === "BASIC" && hasVehicles && <span className={styles.firstRunNote}>Plano Básico: até 3 manutenções cadastradas.</span>}
+        </section>
+      ) : total === 0 ? (
+        <section className={styles.messagePanel}>
+          <h2>Nenhuma manutenção encontrada</h2>
+          <p>Altere os filtros para consultar outros registros.</p>
+          <button type="button" className={styles.secondaryAction} onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>
+        </section>
       ) : (
         <>
-          <div className="hidden lg:block">
-            <DataTable
-              columns={columns}
-              data={maintenance || []}
-              onRowClick={handleRowClick}
-              onEdit={handleOpenFormModal}
-              onDelete={handleDeleteClick}
-              onSort={handleSort}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              onBulkDelete={handleBulkDelete}
-            />
+          <div className={styles.resultsHeader}>
+            <h2>Histórico de manutenção</h2>
+            <span>{total} {total === 1 ? "manutenção" : "manutenções"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
           </div>
-
-          <div className="lg:hidden grid grid-cols-1 gap-4">
-            {(maintenance || []).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => handleRowClick(item.id)}
-                className="bg-white rounded-lg shadow-md p-4 space-y-3 cursor-pointer"
-              >
-                <div className="flex justify-between items-start">
+          <div className={styles.desktopTable}>
+            <MaintenanceTable maintenance={maintenance} onEdit={handleOpenFormModal} onDelete={handleDeleteClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
+          </div>
+          <div className={styles.mobileList}>
+            {maintenance.map((item) => (
+              <article key={item.id} className={styles.mobileItem}>
+                <div className={styles.mobileItemTop}>
                   <div>
-                    <p className="font-bold text-gray-900">
-                      {item.vehicle.plate} - {item.vehicle.model}
-                    </p>
-                    <p className="text-sm text-gray-500">Tipo: {item.type}</p>
-                    <p className="text-sm text-gray-500">
-                      Custo: R$ {item.cost.toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Data: {new Date(item.date).toLocaleDateString("pt-BR")}
-                    </p>
+                    <strong className={local.vehiclePlate}>{item.vehicle.plate}</strong>
+                    <p>{item.vehicle.model}</p>
                   </div>
-                  <div className="flex gap-2" onClick={handleActionClick}>
-                    <button
-                      title="Editar Manutenção"
-                      onClick={() => handleOpenFormModal(item)}
-                      className="text-indigo-600 p-2 rounded-full hover:bg-gray-100"
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      title="Excluir Manutenção"
-                      onClick={() => handleDeleteClick(item)}
-                      className="text-red-600 p-2 rounded-full hover:bg-gray-100"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
+                  <span className={local.typeBadge}>{maintenanceTypeLabels[item.type] || item.type}</span>
                 </div>
-              </div>
+                <p className={local.mobileDescription}>{item.description}</p>
+                <dl className={local.mobileDetails}>
+                  <div><dt>Data</dt><dd>{formatDate(item.date)}</dd></div>
+                  <div><dt>Quilometragem</dt><dd>{formatMileage(item.mileage)}</dd></div>
+                  <div><dt>Custo</dt><dd>{formatCost(item.cost)}</dd></div>
+                </dl>
+                <div className={styles.mobileActions}>
+                  <button type="button" onClick={() => handleOpenFormModal(item)}><Edit2 size={17} aria-hidden="true" /> Editar</button>
+                  <button type="button" onClick={() => handleDeleteClick(item)}><Trash2 size={17} aria-hidden="true" /> Excluir</button>
+                </div>
+              </article>
             ))}
           </div>
-
-          <div className="mt-6 flex items-center justify-between">
-            <div className="text-sm text-gray-700">
-              Mostrando {maintenance.length} de {total} manutenções.
+          <nav className={styles.pagination} aria-label="Paginação de manutenções">
+            <span>Mostrando {maintenance.length} de {total} manutenções</span>
+            <div>
+              <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
+              <span>Página {page} de {totalPages}</span>
+              <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>Próximo</button>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage(page - 1)}
-                disabled={page === 1}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Anterior
-              </button>
-              <span className="text-sm text-gray-700">
-                Página {page} de {totalPages}
-              </span>
-              <button
-                onClick={() => setPage(page + 1)}
-                disabled={page === totalPages || total === 0}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Próximo
-              </button>
-            </div>
-          </div>
+          </nav>
         </>
       )}
 
