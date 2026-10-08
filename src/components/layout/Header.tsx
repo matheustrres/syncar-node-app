@@ -26,7 +26,7 @@ const NotificationIcon = ({
 }) => {
   const iconProps = {
     size: 18,
-    className: isRead ? "text-gray-500" : "text-blue-600",
+    className: isRead ? "text-syncar-muted" : "text-syncar-success",
   };
 
   switch (type) {
@@ -59,25 +59,26 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="bg-white h-16 flex justify-between items-center px-6 border-b border-gray-200 sticky top-0 z-20">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-syncar-border bg-syncar-surface px-4 sm:px-6">
       <button
         onClick={onMenuClick}
-        className="lg:hidden text-gray-600"
-        title="Abrir menu"
+        className="flex h-11 w-11 items-center justify-center rounded-syncar-control text-syncar-text hover:bg-syncar-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus lg:hidden"
+        aria-label="Abrir menu de navegação"
+        aria-controls="dashboard-navigation"
       >
         <MenuIcon size={24} />
       </button>
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Notifications Menu */}
         <Menu as="div" className="relative inline-block text-left">
           <div>
-            <Menu.Button className="relative p-2 rounded-full hover:bg-gray-100 text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500">
-              <Bell size={22} />
+            <Menu.Button aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} não lidas` : "Notificações"} className="relative flex h-11 w-11 items-center justify-center rounded-syncar-control text-syncar-text hover:bg-syncar-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus">
+              <Bell size={20} aria-hidden="true" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 block h-3 w-3 rounded-full bg-red-500 border-2 border-white" />
+                <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-syncar-danger" />
               )}
             </Menu.Button>
           </div>
@@ -90,16 +91,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute right-0 mt-2 w-80 md:w-96 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 mt-2 w-[min(22rem,calc(100vw-2rem))] origin-top-right rounded-syncar-panel border border-syncar-border bg-syncar-surface shadow-syncar-overlay focus:outline-none">
               <div className="px-4 py-3">
                 <div className="flex justify-between items-center">
-                  <p className="text-sm font-semibold text-gray-900">
+                  <p className="text-sm font-semibold text-syncar-text">
                     Notificações
                   </p>
                   {unreadCount > 0 && (
                     <button
                       onClick={() => markAllAsRead()}
-                      className="text-xs text-blue-600 hover:underline"
+                      className="text-xs font-semibold text-syncar-success hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus"
                     >
                       Marcar todas como lidas
                     </button>
@@ -115,14 +116,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                           href={getNotificationLink(notification)}
                           onClick={() => markAsRead(notification.id)}
                           className={`${
-                            active ? "bg-gray-100" : ""
+                            active ? "bg-syncar-subtle" : ""
                           } flex items-start gap-3 px-4 py-3 text-sm`}
                         >
                           <div
                             className={`mt-0.5 p-1 rounded-full ${
                               !notification.isRead
-                                ? "bg-blue-100"
-                                : "bg-gray-100"
+                                ? "bg-syncar-subtle"
+                                : "bg-syncar-canvas"
                             }`}
                           >
                             <NotificationIcon
@@ -134,13 +135,13 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                             <p
                               className={`text-sm ${
                                 !notification.isRead
-                                  ? "font-semibold text-gray-900"
-                                  : "text-gray-600"
+                                  ? "font-semibold text-syncar-text"
+                                  : "text-syncar-muted"
                               }`}
                             >
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-syncar-muted mt-1">
                               {new Date(
                                 notification.createdAt
                               ).toLocaleDateString("pt-BR", {
@@ -153,7 +154,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                           </div>
                           {!notification.isRead && (
                             <div
-                              className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"
+                              className="w-2 h-2 bg-syncar-success rounded-full mt-1.5"
                               title="Não lida"
                             ></div>
                           )}
@@ -164,22 +165,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 ) : (
                   <div className="px-4 py-5 text-center">
                     <div className="flex flex-col items-center text-center">
-                      <CheckCheck size={32} className="text-green-500 mb-2" />
-                      <p className="text-sm font-semibold text-gray-700">
+                      <CheckCheck size={32} className="text-syncar-success mb-2" />
+                      <p className="text-sm font-semibold text-syncar-text">
                         Tudo em dia!
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-syncar-muted">
                         Você não tem novas notificações.
                       </p>
                     </div>
                   </div>
                 )}
               </div>
-              <div className="px-1 py-1 border-t border-gray-100">
+              <div className="px-1 py-1 border-t border-syncar-border">
                 <Menu.Item>
                   <Link
                     href="/dashboard/notifications"
-                    className="block w-full text-center rounded-md px-2 py-2 text-sm font-medium text-blue-600 hover:bg-gray-100"
+                    className="block w-full rounded-syncar-control px-2 py-3 text-center text-sm font-semibold text-syncar-success hover:bg-syncar-subtle"
                   >
                     Ver todas as notificações
                   </Link>
@@ -192,14 +193,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         {/* User Menu */}
         <Menu as="div" className="relative inline-block text-left">
           <div>
-            <Menu.Button className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <Menu.Button aria-label={`Menu da conta: ${session?.user?.name || "Usuário"}`} className="flex min-h-11 items-center gap-3 rounded-syncar-control px-2 hover:bg-syncar-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus">
               <div className="text-right hidden sm:block">
-                <p className="font-semibold text-sm text-gray-800">
+                <p className="max-w-48 truncate font-semibold text-sm text-syncar-text">
                   {session?.user?.name || "Usuário"}
                 </p>
-                <p className="text-xs text-gray-500">{session?.user?.email}</p>
+                <p className="max-w-48 truncate text-xs text-syncar-muted">{session?.user?.email}</p>
               </div>
-              <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-syncar-subtle">
                 {session?.user?.image ? (
                   <Image
                     src={session.user.image}
@@ -208,7 +209,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     height={40}
                   />
                 ) : (
-                  <UserIcon className="text-gray-500" size={24} />
+                  <UserIcon className="text-syncar-muted" size={20} />
                 )}
               </div>
             </Menu.Button>
@@ -222,16 +223,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-              <div className="px-1 py-1 "></div>
+            <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right rounded-syncar-panel border border-syncar-border bg-syncar-surface p-1 shadow-syncar-overlay focus:outline-none">
+              <Menu.Item>
+                {({ active }) => (
+                  <Link href="/dashboard/profile" className={`${active ? "bg-syncar-subtle" : ""} flex min-h-11 items-center rounded-syncar-control px-3 text-sm font-medium text-syncar-text`}>
+                    <UserIcon className="mr-2 h-4 w-4" aria-hidden="true" />Meu perfil
+                  </Link>
+                )}
+              </Menu.Item>
               <div className="px-1 py-1">
                 <Menu.Item>
                   {({ active }) => (
                     <button
                       onClick={() => signOut({ callbackUrl: "/" })}
                       className={`${
-                        active ? "bg-red-500 text-white" : "text-gray-900"
-                      } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                        active ? "bg-syncar-subtle" : ""
+                      } group flex min-h-11 w-full items-center rounded-syncar-control px-3 text-sm font-medium text-syncar-danger`}
                     >
                       <LogOut className="mr-2 h-5 w-5" aria-hidden="true" />
                       Sair

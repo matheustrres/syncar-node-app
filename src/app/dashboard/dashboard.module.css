@@ -1,0 +1,80 @@
+.page { max-width: 1440px; margin: 0 auto; color: var(--syncar-text); }
+.intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.intro h1 { margin: 0; font-size: clamp(28px, 3vw, 36px); line-height: 1.16; font-weight: 750; letter-spacing: -.035em; }
+.intro p { margin: 10px 0 0; color: var(--syncar-text-muted); font-size: 15px; }
+.primaryAction { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 44px; padding: 0 18px; border-radius: var(--syncar-radius-control); background: var(--syncar-action); color: var(--syncar-action-text); font-size: 14px; font-weight: 700; white-space: nowrap; transition: background var(--syncar-motion-fast); }
+.primaryAction:hover { background: var(--syncar-action-hover); }
+.primaryAction:focus-visible, .textLink:focus-visible, .financePanel a:focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 3px; }
+.overview, .panel { background: var(--syncar-surface); border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-panel); }
+.overview { margin-bottom: 24px; }
+.overviewHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 21px 24px; border-bottom: 1px solid var(--syncar-border); }
+.overviewHeader h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.overviewHeader span { color: var(--syncar-text-muted); font-size: 13px; }
+.metricGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.metric { display: flex; flex-direction: column; min-width: 0; gap: 8px; padding: 24px; }
+.metric + .metric { border-left: 1px solid var(--syncar-border); }
+.metricLabel { color: var(--syncar-text-muted); font-size: 13px; font-weight: 600; }
+.metric strong { font-size: clamp(25px, 2.3vw, 32px); line-height: 1.12; letter-spacing: -.035em; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.metricNote { color: var(--syncar-text-muted); font-size: 12px; }
+.metric .warningValue { color: var(--syncar-warning); }
+.metric .dangerValue { color: var(--syncar-danger); }
+.detailGrid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); gap: 24px; align-items: start; }
+.panel { min-width: 0; padding: 24px; }
+.panelHeader { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.titleWithIcon { display: flex; align-items: center; gap: 10px; }
+.titleWithIcon svg { color: var(--syncar-success); flex: none; }
+.titleWithIcon h2, .financeHeading h2 { margin: 0; font-size: 18px; line-height: 1.3; letter-spacing: -.02em; font-weight: 700; }
+.panelHeader p { margin: 7px 0 0; color: var(--syncar-text-muted); font-size: 13px; }
+.textLink { display: inline-flex; align-items: center; gap: 7px; min-height: 30px; color: var(--syncar-success); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.textLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.paymentList { list-style: none; margin: 22px 0 0; padding: 0; }
+.paymentRow { display: flex; justify-content: space-between; gap: 20px; padding: 17px 0; border-top: 1px solid var(--syncar-border); }
+.paymentIdentity, .paymentMeta { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.paymentIdentity strong, .paymentMeta strong { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.paymentIdentity span, .paymentMeta span { color: var(--syncar-text-muted); font-size: 12px; overflow-wrap: anywhere; }
+.paymentMeta { text-align: right; flex: none; }
+.paymentMeta .overdue { color: var(--syncar-danger); font-weight: 700; }
+.emptyState { display: flex; flex-direction: column; align-items: flex-start; padding: 38px 0 12px; }
+.emptyIcon { display: inline-flex; width: 44px; height: 44px; align-items: center; justify-content: center; border-radius: 50%; color: var(--syncar-success); background: var(--syncar-surface-subtle); }
+.emptyState h3 { margin: 16px 0 0; font-size: 16px; font-weight: 700; }
+.emptyState p { max-width: 360px; margin: 7px 0 12px; color: var(--syncar-text-muted); font-size: 13px; line-height: 1.55; }
+.sideColumn { display: grid; gap: 24px; }
+.fleetList { margin: 22px 0 0; }
+.fleetList > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid var(--syncar-border); }
+.fleetList dt { color: var(--syncar-text-muted); font-size: 14px; }
+.fleetList dd { margin: 0; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.fleetList .fleetTotal dt, .fleetList .fleetTotal dd { color: var(--syncar-text); font-weight: 700; }
+.fleetEmpty { padding-top: 18px; }
+.fleetEmpty p { margin: 0 0 8px; color: var(--syncar-text-muted); font-size: 13px; line-height: 1.55; }
+.financePanel { padding: 24px; border-radius: var(--syncar-radius-panel); background: var(--syncar-green-950); color: white; }
+.financeHeading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.financeHeading span { color: #b5c9c1; font-size: 12px; }
+.financePanel dl { margin: 20px 0; }
+.financePanel dl > div { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-top: 1px solid rgba(255,255,255,.16); font-size: 13px; }
+.financePanel dt { color: #c4d3ce; }
+.financePanel dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.financePanel a { display: inline-flex; align-items: center; gap: 8px; min-height: 32px; color: var(--syncar-lime-300); font-size: 13px; font-weight: 700; }
+.financePanel a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+@media (max-width: 1120px) {
+  .metricGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .metric:nth-child(3) { border-left: 0; }
+  .metric:nth-child(n+3) { border-top: 1px solid var(--syncar-border); }
+  .detailGrid { grid-template-columns: 1fr; }
+  .sideColumn { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .intro { align-items: flex-start; flex-direction: column; gap: 18px; }
+  .overviewHeader { padding: 18px; }
+  .overviewHeader span { display: none; }
+  .metric { padding: 18px; }
+  .sideColumn { grid-template-columns: 1fr; }
+  .panel, .financePanel { padding: 20px; }
+}
+@media (max-width: 420px) {
+  .metric strong { font-size: 23px; }
+  .metricLabel { font-size: 12px; }
+  .metricNote { font-size: 11px; }
+  .paymentRow { gap: 10px; }
+  .paymentMeta { max-width: 42%; }
+}
