@@ -244,7 +244,7 @@ export default function DriversClientPage({
   };
 
   const handleExportClick = () => {
-    if (userPlan?.toUpperCase() !== "PRO") {
+    if (userPlan !== "PROFESSIONAL") {
       setIsUpgradeModalOpen(true);
     } else {
       handleExport();

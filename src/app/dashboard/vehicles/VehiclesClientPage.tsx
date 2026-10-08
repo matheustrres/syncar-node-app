@@ -251,7 +251,7 @@ export default function VehiclesClientPage({
   };
 
   const handleExportClick = () => {
-    if (dataSession?.user?.plan?.toUpperCase() !== "PRO") {
+    if (userPlan !== "PROFESSIONAL") {
       setIsUpgradeModalOpen(true);
     } else {
       handleExport();

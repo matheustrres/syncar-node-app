@@ -148,7 +148,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
   };
 
   const handleExport = async () => {
-    if (userPlan?.toUpperCase() !== "PRO") {
+    if (userPlan !== "PROFESSIONAL") {
       setIsUpgradeModalOpen(true);
       return;
     }
