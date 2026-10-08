@@ -4,7 +4,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function useNotifications() {
   const { data, error, mutate } = useSWR(
-    `/api/notifications?limit=2`,
+    `/api/notifications?limit=2&summary=true`,
     fetcher,
     {
       refreshInterval: 60000, // Re-fetch a cada 60 segundos
@@ -34,7 +34,6 @@ export function useNotifications() {
   return {
     notifications: data?.notifications || [],
     unreadCount: data?.unreadCount || 0,
-    total: data?.total || 0,
     isLoading: !error && !data,
     isError: error,
     markAsRead,

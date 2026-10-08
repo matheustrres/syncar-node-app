@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowRight, ChartNoAxesCombined, LockKeyhole, ReceiptText } from "lucide-react";
 import { ResponsivePie, PieCustomLayerProps } from "@nivo/pie";
 import { ResponsiveBar } from "@nivo/bar";
-import { useFetchProfile, useFetchVehiclePerformanceReport, useFetchExpenseAnalysisReport } from "@/hooks/useData";
+import { useFetchVehiclePerformanceReport, useFetchExpenseAnalysisReport } from "@/hooks/useData";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { VehiclePerformanceReportItem, ExpenseAnalysisReport } from "@/types";
 import AdvancedReportsSkeleton from "./AdvancedReportsSkeleton";
@@ -15,6 +15,7 @@ const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", { style
 interface AdvancedReportsProps {
   initialVehiclePerformance: VehiclePerformanceReportItem[];
   initialExpenseAnalysis: ExpenseAnalysisReport;
+  plan: string;
 }
 
 const chartTheme = {
@@ -28,16 +29,13 @@ function CenteredMetric({ dataWithArc, centerX, centerY }: PieCustomLayerProps<u
   return <text x={centerX} y={centerY} textAnchor="middle" dominantBaseline="central" style={{ fontSize: 19, fontWeight: 750, fill: "#142c2e" }}>{formatCurrency(total)}</text>;
 }
 
-export default function AdvancedReports({ initialVehiclePerformance, initialExpenseAnalysis }: AdvancedReportsProps) {
-  const { profile, isLoading: profileLoading, isError: profileError } = useFetchProfile();
-  const { data: vehiclePerformance, isLoading: vehicleLoading, isError: vehicleError } = useFetchVehiclePerformanceReport(initialVehiclePerformance);
-  const { data: expenseAnalysis, isLoading: expenseLoading, isError: expenseError } = useFetchExpenseAnalysisReport(initialExpenseAnalysis);
+export default function AdvancedReports({ initialVehiclePerformance, initialExpenseAnalysis, plan }: AdvancedReportsProps) {
+  const hasAccess = plan === "PROFESSIONAL";
+  const { data: vehiclePerformance, isLoading: vehicleLoading, isError: vehicleError } = useFetchVehiclePerformanceReport(hasAccess ? initialVehiclePerformance : undefined, hasAccess);
+  const { data: expenseAnalysis, isLoading: expenseLoading, isError: expenseError } = useFetchExpenseAnalysisReport(hasAccess ? initialExpenseAnalysis : undefined, hasAccess);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
-  if (profileLoading) return <AdvancedReportsSkeleton />;
-  if (profileError) return <div className={styles.panel}><div className={styles.empty}><span className={styles.emptyVisual}><LockKeyhole size={26} /></span><div className={styles.emptyCopy}><strong>Não foi possível verificar seu plano.</strong><p>Atualize a página para tentar novamente.</p></div></div></div>;
-
-  if (profile?.plan !== "PROFESSIONAL") return <>
+  if (!hasAccess) return <>
     <div className={`${styles.panel} ${styles.gate}`}><div className={styles.gateCopy}><span className={styles.gateIcon} aria-hidden="true"><LockKeyhole size={26} /></span><div><h3>Uma visão mais detalhada da sua operação</h3><p>O plano Profissional libera desempenho por veículo, análise de despesas e exportação de dados.</p></div></div><button onClick={() => setIsUpgradeModalOpen(true)}>Conhecer o Profissional <ArrowRight size={17} /></button></div>
     <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} resourceName="relatórios avançados" monthlyPrice="R$ 49,90" annualPrice="R$ 499" annualSavings="Economize R$ 99,80" />
   </>;

@@ -5,7 +5,7 @@ import {
   Vehicle,
   Contract,
   ContractWithDetails,
-  User,
+  ProfileData,
   Payment,
   Expense,
   CashFlowReportItem,
@@ -22,7 +22,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 // --- Type Definitions ---
 
 export type MaintenanceWithRelations = Maintenance & {
-  vehicle: Vehicle;
+  vehicle: Pick<Vehicle, "id" | "plate" | "model">;
 };
 
 export type ContractWithRelations = Contract & {
@@ -31,6 +31,13 @@ export type ContractWithRelations = Contract & {
 };
 
 export type PaymentWithRelations = Payment & {
+  contract: {
+    driver: { name: string };
+    vehicle: { plate: string; model: string };
+  };
+};
+
+export type FinancialPayment = Pick<Payment, "id" | "dueDate" | "value" | "paymentDate"> & {
   contract: {
     driver: { name: string };
     vehicle: { plate: string; model: string };
@@ -306,7 +313,7 @@ export function useFetchRecentExpenses(
     total: number;
   }>(`/api/financial/recent-expenses?page=${page}&limit=${limit}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
   return { data, isLoading, isError: error, mutate };
 }
@@ -314,14 +321,14 @@ export function useFetchRecentExpenses(
 export function useFetchPendingPayments(
   page: number,
   limit: number,
-  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+  fallbackData?: { payments: FinancialPayment[]; total: number }
 ) {
   const { data, error, isLoading, mutate } = useSWR<{
-    payments: PaymentWithRelations[];
+    payments: FinancialPayment[];
     total: number;
   }>(`/api/financial/pending-payments?page=${page}&limit=${limit}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
   return { data, isLoading, isError: error, mutate };
 }
@@ -329,14 +336,14 @@ export function useFetchPendingPayments(
 export function useFetchPaidPayments(
   page: number,
   limit: number,
-  fallbackData?: { payments: PaymentWithRelations[]; total: number }
+  fallbackData?: { payments: FinancialPayment[]; total: number }
 ) {
   const { data, error, isLoading, mutate } = useSWR<{
-    payments: PaymentWithRelations[];
+    payments: FinancialPayment[];
     total: number;
   }>(`/api/financial/paid-payments?page=${page}&limit=${limit}`, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
   return { data, isLoading, isError: error, mutate };
 }
@@ -389,11 +396,11 @@ export function useFetchMaintenanceById(
 
 // --- Profile Hook ---
 
-export function useFetchProfile(fallbackData?: User | null) {
-  const { data, error, isLoading, mutate } = useSWR<User | null>(
+export function useFetchProfile(fallbackData?: ProfileData | null) {
+  const { data, error, isLoading, mutate } = useSWR<ProfileData | null>(
     "/api/profile",
     fetcher,
-    { fallbackData, revalidateOnFocus: true }
+    { fallbackData, revalidateOnMount: !fallbackData, revalidateOnFocus: true }
   );
   return {
     profile: data ?? fallbackData,
@@ -409,7 +416,7 @@ export function useFetchCashFlow(fallbackData?: CashFlowReportItem[]) {
   const { data, error, isLoading, mutate } = useSWR<CashFlowReportItem[]>(
     "/api/reports/cash-flow",
     fetcher,
-    { fallbackData, revalidateOnMount: false }
+    { fallbackData, revalidateOnMount: !fallbackData }
   );
   return { data, isLoading, isError: error, mutate };
 }
@@ -420,7 +427,7 @@ export function useFetchOverduePayments(
   const { data, error, isLoading, mutate } = useSWR<OverduePaymentReportItem[]>(
     "/api/reports/overdue-payments",
     fetcher,
-    { fallbackData, revalidateOnMount: false }
+    { fallbackData, revalidateOnMount: !fallbackData }
   );
   return { data, isLoading, isError: error, mutate };
 }
@@ -431,30 +438,32 @@ export function useFetchDriverSummary(
   const { data, error, isLoading, mutate } = useSWR<DriverSummaryReportItem[]>(
     "/api/reports/driver-summary",
     fetcher,
-    { fallbackData, revalidateOnMount: false }
+    { fallbackData, revalidateOnMount: !fallbackData }
   );
   return { data, isLoading, isError: error, mutate };
 }
 
 export function useFetchVehiclePerformanceReport(
-  fallbackData?: VehiclePerformanceReportItem[]
+  fallbackData?: VehiclePerformanceReportItem[],
+  enabled = true
 ) {
   const { data, error, isLoading, mutate } = useSWR<
     VehiclePerformanceReportItem[]
-  >("/api/reports/vehicle-performance", fetcher, {
+  >(enabled ? "/api/reports/vehicle-performance" : null, fetcher, {
     fallbackData,
-    revalidateOnMount: false,
+    revalidateOnMount: !fallbackData,
   });
   return { data, isLoading, isError: error, mutate };
 }
 
 export function useFetchExpenseAnalysisReport(
-  fallbackData?: ExpenseAnalysisReport
+  fallbackData?: ExpenseAnalysisReport,
+  enabled = true
 ) {
   const { data, error, isLoading, mutate } = useSWR<ExpenseAnalysisReport>(
-    "/api/reports/expense-analysis",
+    enabled ? "/api/reports/expense-analysis" : null,
     fetcher,
-    { fallbackData, revalidateOnMount: false }
+    { fallbackData, revalidateOnMount: !fallbackData }
   );
   return { data, isLoading, isError: error, mutate };
 }

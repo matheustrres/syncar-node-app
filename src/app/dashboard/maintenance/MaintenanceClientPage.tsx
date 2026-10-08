@@ -18,7 +18,6 @@ import MaintenanceFilterBar, { emptyMaintenanceFilters, MaintenanceFilterDraft }
 import MaintenanceTable, { formatCost, formatDate, formatMileage, maintenanceTypeLabels } from "./MaintenanceTable";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import UpgradeModal from "@/components/ui/UpgradeModal";
-import useCrud from "@/hooks/useCrud";
 import styles from "../vehicles/vehicles.module.css";
 import local from "./maintenance.module.css";
 import EmptyState from "@/components/ui/EmptyState";
@@ -76,9 +75,6 @@ export default function MaintenanceClientPage({
   const { showToast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  const { deleteMany: deleteManyMaintenance } =
-    useCrud<Maintenance>("/api/maintenance");
 
   const handleOpenFormModal = (
     item: MaintenanceWithRelations | null = null
@@ -239,7 +235,12 @@ export default function MaintenanceClientPage({
     setItemsToDelete([]);
     try {
       await mutateMaintenance(async () => {
-        await deleteManyMaintenance(idsToDelete);
+        const response = await fetch("/api/maintenance", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: idsToDelete }),
+        });
+        if (!response.ok) throw new Error("Falha ao excluir manutenções.");
         setMaintenanceCount((count) => Math.max(0, count - idsToDelete.length));
         showToast("Manutenções excluídas com sucesso!", "success");
         return {

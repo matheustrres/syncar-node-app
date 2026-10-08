@@ -4,6 +4,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 import { normalizeString } from "@/lib/string-utils";
+import { Prisma } from "@prisma/client";
+
+const sortableColumns = new Set([
+  "createdAt", "startDate", "weeklyValue", "duration", "status", "driver.name", "vehicle.plate", "vehicle.model",
+]);
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -11,12 +16,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const sortColumn = searchParams.get("sortColumn") || "createdAt";
-  const sortDirection = searchParams.get("sortDirection") || "desc";
+  const requestedPage = Number(searchParams.get("page"));
+  const requestedLimit = Number(searchParams.get("limit"));
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= 100000 ? requestedPage : 1;
+  const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : 10;
+  const requestedSort = searchParams.get("sortColumn") || "createdAt";
+  const sortColumn = sortableColumns.has(requestedSort) ? requestedSort : "createdAt";
+  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
   const skip = (page - 1) * limit;
-  const where: { [key: string]: unknown } = { userId: session.user.id };
+  const where: Prisma.ContractWhereInput = { userId: session.user.id };
   const driverName = searchParams.get("driverName");
   if (driverName) {
     where.driver = {
@@ -27,88 +35,36 @@ export async function GET(request: NextRequest) {
     };
   }
   const vehiclePlate = searchParams.get("vehiclePlate");
-  if (vehiclePlate) {
-    where.vehicle = {
-      ...where.vehicle!,
-      plateNormalized: {
-        contains: normalizeString(vehiclePlate),
-        mode: "insensitive",
-      },
-    };
-  }
   const vehicleModel = searchParams.get("vehicleModel");
-  if (vehicleModel) {
+  if (vehiclePlate || vehicleModel) {
     where.vehicle = {
-      ...where.vehicle!,
-      modelNormalized: {
-        contains: normalizeString(vehicleModel),
-        mode: "insensitive",
-      },
+      ...(vehiclePlate && { plateNormalized: { contains: normalizeString(vehiclePlate), mode: "insensitive" as const } }),
+      ...(vehicleModel && { modelNormalized: { contains: normalizeString(vehicleModel), mode: "insensitive" as const } }),
     };
   }
-  // Parse other filters
-  searchParams.forEach((value, key) => {
-    if (
-      [
-        "page",
-        "limit",
-        "sortColumn",
-        "sortDirection",
-        "driverName",
-        "vehiclePlate",
-        "vehicleModel",
-      ].includes(key)
-    ) {
-      return;
-    }
-    // Select filters
-    if (key === "status") {
-      if (value) {
-        where.status = value;
-      }
-    }
-    // Number range filters
-    if (key.endsWith("Min")) {
-      const field = key.replace("Min", "");
-      if (value) {
-        where[field] = { ...where[field]!, gte: parseFloat(value) };
-      }
-    }
-    if (key.endsWith("Max")) {
-      const field = key.replace("Max", "");
-      if (value) {
-        where[field] = { ...where[field]!, lte: parseFloat(value) };
-      }
-    }
-    // Date range filters
-    if (key.endsWith("StartDate")) {
-      const field = key.replace("StartDate", "");
-      if (value) {
-        where[field] = { ...where[field]!, gte: new Date(value) };
-      }
-    }
-    if (key.endsWith("EndDate")) {
-      const field = key.replace("EndDate", "");
-      if (value) {
-        where[field] = { ...where[field]!, lte: new Date(value) };
-      }
-    }
-  });
-  let orderBy:
-    | { [key: string]: "asc" | "desc" }
-    | { driver: { name: "asc" | "desc" } }
-    | { vehicle: { plate: "asc" | "desc" } }
-    | { vehicle: { model: "asc" | "desc" } } = {
-    createdAt: "desc",
-  };
+  const status = searchParams.get("status");
+  if (status === "Ativo" || status === "Encerrado") where.status = status;
+  const weeklyValueMin = Number(searchParams.get("weeklyValueMin"));
+  const weeklyValueMax = Number(searchParams.get("weeklyValueMax"));
+  if (searchParams.get("weeklyValueMin") && Number.isFinite(weeklyValueMin)) where.weeklyValue = { gte: weeklyValueMin };
+  if (searchParams.get("weeklyValueMax") && Number.isFinite(weeklyValueMax)) {
+    where.weeklyValue = { ...where.weeklyValue as Prisma.FloatFilter, lte: weeklyValueMax };
+  }
+  const startDate = searchParams.get("startDateStartDate");
+  const endDate = searchParams.get("startDateEndDate");
+  if (startDate && !Number.isNaN(Date.parse(startDate))) where.startDate = { gte: new Date(startDate) };
+  if (endDate && !Number.isNaN(Date.parse(endDate))) {
+    where.startDate = { ...where.startDate as Prisma.DateTimeFilter, lte: new Date(endDate) };
+  }
+  let orderBy: Prisma.ContractOrderByWithRelationInput = { createdAt: "desc" };
   if (sortColumn === "driver.name") {
-    orderBy = { driver: { name: sortDirection as "asc" | "desc" } };
+    orderBy = { driver: { name: sortDirection } };
   } else if (sortColumn === "vehicle.plate") {
-    orderBy = { vehicle: { plate: sortDirection as "asc" | "desc" } };
+    orderBy = { vehicle: { plate: sortDirection } };
   } else if (sortColumn === "vehicle.model") {
-    orderBy = { vehicle: { model: sortDirection as "asc" | "desc" } };
+    orderBy = { vehicle: { model: sortDirection } };
   } else {
-    orderBy = { [sortColumn]: sortDirection as "asc" | "desc" };
+    orderBy = { [sortColumn]: sortDirection };
   }
   const [contracts, total] = await prisma.$transaction([
     prisma.contract.findMany({

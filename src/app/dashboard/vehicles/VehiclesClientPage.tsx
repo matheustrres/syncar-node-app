@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Vehicle, WithoutBaseItem } from "@/types";
 import { useFetchVehicles, VehicleFilters } from "@/hooks/useData";
-import useCrud from "@/hooks/useCrud";
 import Modal from "@/components/ui/Modal";
 import VehicleForm from "@/components/forms/VehicleForm";
 import {
@@ -78,8 +77,6 @@ export default function VehiclesClientPage({
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isAtLimit = userPlan === "BASIC" && fleetCount >= 3;
-
-  const { deleteMany: deleteManyVehicles } = useCrud<Vehicle>("/api/vehicles");
 
   const handleOpenFormModal = (item: Vehicle | null = null) => {
     setEditingItem(item);
@@ -229,7 +226,12 @@ export default function VehiclesClientPage({
 
     try {
       await mutateVehicles(async () => {
-        await deleteManyVehicles(idsToDelete);
+        const response = await fetch("/api/vehicles", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: idsToDelete }),
+        });
+        if (!response.ok) throw new Error("Falha ao excluir veículos.");
         setFleetCount((count) => Math.max(0, count - idsToDelete.length));
         showToast("Veículos excluídos com sucesso!", "success");
         return {

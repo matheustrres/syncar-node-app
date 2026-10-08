@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -13,50 +14,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const sortColumn = searchParams.get("sortColumn") || "createdAt";
-  const sortDirection = searchParams.get("sortDirection") || "desc";
+  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10", 10) || 10));
+  const sortableColumns = ["createdAt", "plate", "brand", "model", "status"] as const;
+  const requestedSort = searchParams.get("sortColumn");
+  const sortColumn = sortableColumns.find((column) => column === requestedSort) || "createdAt";
+  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
   const skip = (page - 1) * limit;
-  const where: { [key: string]: unknown } = { userId: session.user.id };
-  // Parse advanced filters
-  searchParams.forEach((value, key) => {
-    if (
-      key === "page" ||
-      key === "limit" ||
-      key === "sortColumn" ||
-      key === "sortDirection"
-    )
-      return;
-    // Text filters
-    if (["plate", "brand", "model"].includes(key)) {
-      if (value) {
-        where[key] = {
-          contains: value,
-          mode: "insensitive",
-        };
-      }
-    }
-    // Select filters
-    if (key === "status") {
-      if (value) {
-        where.status = value;
-      }
-    }
-    // Number range filters
-    if (key.endsWith("Min")) {
-      const field = key.replace("Min", "");
-      if (value) {
-        where[field] = { ...where[field]!, gte: parseInt(value, 10) };
-      }
-    }
-    if (key.endsWith("Max")) {
-      const field = key.replace("Max", "");
-      if (value) {
-        where[field] = { ...where[field]!, lte: parseInt(value, 10) };
-      }
-    }
-  });
+  const where: Prisma.VehicleWhereInput = { userId: session.user.id };
+  for (const field of ["plate", "brand", "model"] as const) {
+    const value = searchParams.get(field);
+    if (value) where[field] = { contains: value, mode: "insensitive" };
+  }
+  const status = searchParams.get("status");
+  if (status) where.status = status;
+  for (const field of ["year", "km"] as const) {
+    const min = searchParams.get(`${field}Min`);
+    const max = searchParams.get(`${field}Max`);
+    const range: { gte?: number; lte?: number } = {};
+    if (min && /^\d+$/.test(min)) range.gte = Number(min);
+    if (max && /^\d+$/.test(max)) range.lte = Number(max);
+    if (Object.keys(range).length > 0) where[field] = range;
+  }
   const [vehicles, total] = await prisma.$transaction([
     prisma.vehicle.findMany({
       where,
@@ -86,10 +65,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-  });
-  if (user?.plan === "BASIC") {
+  if (session.user.plan === "BASIC") {
     const vehicleCount = await prisma.vehicle.count({
       where: { userId: session.user.id },
     });

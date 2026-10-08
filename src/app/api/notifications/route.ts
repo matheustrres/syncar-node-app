@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const isRead = searchParams.get("isRead");
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = parseInt(searchParams.get("limit") || "10", 10);
+  const summary = searchParams.get("summary") === "true";
   const skip = (page - 1) * limit;
 
   const where: { userId: string; isRead?: boolean } = {
@@ -25,19 +26,36 @@ export async function GET(req: Request) {
   }
 
   try {
+    const notificationsQuery = prisma.notification.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        type: true,
+        message: true,
+        relatedEntityId: true,
+        isRead: true,
+        createdAt: true,
+      },
+    });
+    const unreadCountQuery = prisma.notification.count({
+      where: { userId: session.user.id, isRead: false },
+    });
+
+    if (summary) {
+      const [notifications, unreadCount] = await prisma.$transaction([
+        notificationsQuery,
+        unreadCountQuery,
+      ]);
+      return NextResponse.json({ notifications, unreadCount });
+    }
+
     const [notifications, total, unreadCount] = await prisma.$transaction([
-      prisma.notification.findMany({
-        where,
-        orderBy: {
-          createdAt: "desc",
-        },
-        skip,
-        take: limit,
-      }),
+      notificationsQuery,
       prisma.notification.count({ where }),
-      prisma.notification.count({
-        where: { userId: session.user.id, isRead: false },
-      }),
+      unreadCountQuery,
     ]);
 
     return NextResponse.json({ notifications, total, unreadCount });

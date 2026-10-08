@@ -45,7 +45,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { data: session } = useSession();
-  const { notifications, unreadCount, total, markAsRead, markAllAsRead } =
+  const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
 
   const getNotificationLink = (notification: Notification) => {
@@ -108,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
               </div>
               <div className="py-1 max-h-80 overflow-y-auto">
-                {total > 0 ? (
+                {notifications.length > 0 ? (
                   notifications.map((notification: Notification) => (
                     <Menu.Item key={notification.id}>
                       {({ active }) => (

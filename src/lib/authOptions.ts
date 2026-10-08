@@ -45,6 +45,12 @@ export const authOptions: NextAuthOptions = {
       if (token.id) {
         const dbUser = await prisma.user.findUnique({
           where: { id: token.id as string },
+          select: {
+            name: true,
+            email: true,
+            plan: true,
+            companyName: true,
+          },
         });
         if (dbUser) {
           token.name = dbUser.name;

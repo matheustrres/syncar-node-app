@@ -1,9 +1,9 @@
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const [maintenances, total] = await prisma.$transaction([
       prisma.maintenance.findMany({
         where,
-        include: { vehicle: true },
+        include: { vehicle: { select: { id: true, plate: true, model: true } } },
         orderBy,
         ...(paginated && { skip: (page - 1) * limit, take: limit }),
       }),
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
           userId: session.user.id,
         },
         include: {
-          vehicle: true,
+          vehicle: { select: { id: true, plate: true, model: true } },
         },
       });
 

@@ -4,10 +4,13 @@ import {
   getReportDriverSummary,
   getReportVehiclePerformance,
   getReportExpenseAnalysis,
+  getProfile,
 } from "@/lib/data-access";
 import ReportsClientPage from "./ReportsClientPage";
 
 export default async function ReportsPage() {
+  const profile = await getProfile();
+  const hasAdvancedReports = profile?.plan === "PROFESSIONAL";
   const [
     cashFlow,
     rawOverduePayments,
@@ -18,8 +21,8 @@ export default async function ReportsPage() {
     getReportCashFlow(),
     getReportOverduePayments(),
     getReportDriverSummary(),
-    getReportVehiclePerformance(),
-    getReportExpenseAnalysis(),
+    hasAdvancedReports ? getReportVehiclePerformance() : Promise.resolve([]),
+    hasAdvancedReports ? getReportExpenseAnalysis() : Promise.resolve({ byType: [], byMonth: [] }),
   ]);
 
   const overduePayments = rawOverduePayments.map((payment) => ({
@@ -34,6 +37,7 @@ export default async function ReportsPage() {
       initialDriverSummary={driverSummary}
       initialVehiclePerformance={vehiclePerformance}
       initialExpenseAnalysis={expenseAnalysis}
+      initialPlan={profile?.plan ?? "BASIC"}
     />
   );
 }

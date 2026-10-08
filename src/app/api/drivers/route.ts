@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
@@ -13,37 +14,24 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const limit = parseInt(searchParams.get("limit") || "10", 10);
-  const sortColumn = searchParams.get("sortColumn") || "createdAt";
-  const sortDirection = searchParams.get("sortDirection") || "desc";
+  const requestedPage = Number(searchParams.get("page"));
+  const requestedLimit = Number(searchParams.get("limit"));
+  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0
+    ? Math.min(requestedLimit, 100)
+    : 10;
+  const sortableColumns = ["createdAt", "name", "cpf", "phone", "status"] as const;
+  const requestedSort = searchParams.get("sortColumn");
+  const sortColumn = sortableColumns.find((column) => column === requestedSort) || "createdAt";
+  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
   const skip = (page - 1) * limit;
-  const where: { [key: string]: unknown } = { userId: session.user.id };
-  // Parse advanced filters
-  searchParams.forEach((value, key) => {
-    if (
-      key === "page" ||
-      key === "limit" ||
-      key === "sortColumn" ||
-      key === "sortDirection"
-    )
-      return;
-    // Text filters
-    if (["name", "cpf", "phone", "email"].includes(key)) {
-      if (value) {
-        where[key] = {
-          contains: value,
-          mode: "insensitive",
-        };
-      }
-    }
-    // Select filters
-    if (key === "status") {
-      if (value) {
-        where.status = value;
-      }
-    }
-  });
+  const where: Prisma.DriverWhereInput = { userId: session.user.id };
+  for (const field of ["name", "cpf", "phone", "email"] as const) {
+    const value = searchParams.get(field);
+    if (value) where[field] = { contains: value, mode: "insensitive" };
+  }
+  const status = searchParams.get("status");
+  if (status) where.status = status;
   const [drivers, total] = await prisma.$transaction([
     prisma.driver.findMany({
       where,
@@ -78,11 +66,7 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { plan: true },
-  });
-  if (user?.plan === "BASIC") {
+  if (session.user.plan === "BASIC") {
     const driverCount = await prisma.driver.count({
       where: { userId: session.user.id },
     });

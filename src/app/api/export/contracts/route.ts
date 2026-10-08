@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -21,10 +19,16 @@ export async function GET() {
       where: {
         userId: session.user.id,
       },
-      include: {
-        driver: true,
-        vehicle: true,
-        user: true,
+      select: {
+        id: true,
+        weeklyValue: true,
+        paymentDay: true,
+        startDate: true,
+        deposit: true,
+        status: true,
+        duration: true,
+        driver: { select: { name: true, cpf: true } },
+        vehicle: { select: { plate: true, model: true } },
       },
     });
     if (!contracts || !contracts.length) {
@@ -57,7 +61,7 @@ export async function GET() {
         contract.driver.cpf,
         contract.vehicle.plate,
         contract.vehicle.model,
-        contract.user.companyName,
+        session.user.companyName,
       ].join(",");
     });
     const csvContent = [headers.join(","), ...csv].join("\n");

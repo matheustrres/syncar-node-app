@@ -37,7 +37,10 @@ export async function POST(req: Request) {
   if (!priceId) {
     return new NextResponse("Price ID is required", { status: 400 });
   }
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { stripeCustomerId: true, email: true, name: true },
+  });
   if (!user) {
     return new NextResponse("User not found", { status: 404 });
   }
@@ -53,6 +56,7 @@ export async function POST(req: Request) {
       await prisma.user.update({
         where: { id: userId },
         data: { stripeCustomerId: stripeCustomerId },
+        select: { id: true },
       });
       const checkoutSession = await createStripeCheckoutSession(
         stripeCustomerId,
@@ -86,6 +90,7 @@ export async function POST(req: Request) {
         await prisma.user.update({
           where: { id: userId },
           data: { stripeCustomerId: newStripeCustomerId },
+          select: { id: true },
         });
         const checkoutSession = await createStripeCheckoutSession(
           newStripeCustomerId,

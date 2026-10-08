@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     where: {
       id: session.user.id,
     },
+    select: { stripeCustomerId: true },
   });
   if (!user || !user.stripeCustomerId) {
     return new NextResponse("Stripe customer not found", { status: 404 });

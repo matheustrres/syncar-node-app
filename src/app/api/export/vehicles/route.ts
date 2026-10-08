@@ -1,9 +1,7 @@
-import { PrismaClient } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -21,8 +19,18 @@ export async function GET() {
       where: {
         userId: session.user.id,
       },
-      include: {
-        user: true,
+      select: {
+        id: true,
+        plate: true,
+        brand: true,
+        model: true,
+        year: true,
+        color: true,
+        renavam: true,
+        chassis: true,
+        km: true,
+        status: true,
+        user: { select: { companyName: true } },
       },
     });
 

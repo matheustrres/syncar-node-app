@@ -23,6 +23,7 @@ export type Contract = ToJson<ContractModel>;
 export type Payment = ToJson<PaymentModel>;
 export type Expense = ToJson<ExpenseModel>;
 export type User = ToJson<UserModel>;
+export type ProfileData = Pick<User, "name" | "email" | "companyName" | "plan">;
 export type Notification = ToJson<NotificationModel>;
 export type Maintenance = ToJson<MaintenanceModel>; // Adicionado
 

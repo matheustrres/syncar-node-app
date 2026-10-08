@@ -56,6 +56,8 @@ model Notification {
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime         @default(now()) @map("created_at")
 
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, isRead])
   @@map("notifications")
 }
 
@@ -80,6 +82,8 @@ model Vehicle {
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
+  @@index([userId, status])
+  @@index([userId, createdAt(sort: Desc)])
   @@map("vehicles")
 }
 
@@ -106,6 +110,8 @@ model Driver {
   createdAt      DateTime   @default(now()) @map("created_at")
   updatedAt      DateTime   @updatedAt @map("updated_at")
 
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, status])
   @@map("drivers")
 }
 
@@ -127,6 +133,9 @@ model Contract {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, status, createdAt(sort: Desc)])
   @@map("contracts")
 }
 
@@ -143,6 +152,9 @@ model Payment {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
+  @@index([contractId, status, dueDate])
+  @@index([status, dueDate(sort: Asc)])
+  @@index([status, paymentDate(sort: Desc)])
   @@map("payments")
 }
 
@@ -159,6 +171,8 @@ model Expense {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
+  @@index([userId])
+  @@index([userId, date(sort: Desc)])
   @@map("expenses")
 }
 
@@ -188,5 +202,6 @@ model Maintenance {
   createdAt          DateTime        @default(now()) @map("created_at")
   updatedAt          DateTime        @updatedAt @map("updated_at")
 
+  @@index([userId, date(sort: Desc)])
   @@map("maintenances")
 }

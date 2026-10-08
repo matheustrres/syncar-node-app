@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ArrowUpRight, Building2, Check, CreditCard, ExternalLink, LockKeyhole, Mail, ShieldCheck, UserRound } from "lucide-react";
-import { User as UserType } from "@/types";
+import { ProfileData } from "@/types";
 import { useFetchProfile } from "@/hooks/useData";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { useToast } from "@/context/ToastContext";
@@ -19,7 +19,7 @@ async function responseError(response: Response, fallback: string) {
   }
 }
 
-function ProfileForm({ profile, mutateProfile }: { profile: UserType; mutateProfile: () => void }) {
+function ProfileForm({ profile, mutateProfile }: { profile: ProfileData; mutateProfile: (profile: ProfileData) => void }) {
   const { update } = useSession();
   const [formData, setFormData] = useState({ name: "", email: "", companyName: "" });
   const [message, setMessage] = useState("");
@@ -52,8 +52,9 @@ function ProfileForm({ profile, mutateProfile }: { profile: UserType; mutateProf
         setError(await responseError(response, "Não foi possível atualizar o perfil."));
         return;
       }
-      await update({ name: formData.name, email: formData.email });
-      mutateProfile();
+      const updatedProfile: ProfileData = await response.json();
+      await update({ name: updatedProfile.name, email: updatedProfile.email, companyName: updatedProfile.companyName });
+      mutateProfile(updatedProfile);
       setMessage("Dados atualizados com sucesso.");
     } catch {
       setError("Não foi possível salvar os dados. Tente novamente.");
@@ -154,7 +155,7 @@ function PasswordForm() {
   );
 }
 
-export default function ProfileClientPage({ initialProfile }: { initialProfile: UserType | null }) {
+export default function ProfileClientPage({ initialProfile }: { initialProfile: ProfileData | null }) {
   const { data: session, status: sessionStatus, update } = useSession();
   const { profile, isError, mutateProfile } = useFetchProfile(initialProfile);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -227,7 +228,7 @@ export default function ProfileClientPage({ initialProfile }: { initialProfile: 
       <div className={styles.sections}>
         <section className={styles.section} aria-labelledby="account-title">
           <div className={styles.sectionHeading}><span className={styles.headingIcon}><UserRound size={21} aria-hidden="true" /></span><div><h2 id="account-title">Dados da conta</h2><p>Informações usadas no seu perfil e na operação.</p></div></div>
-          <div className={styles.panel}><ProfileForm profile={profile} mutateProfile={mutateProfile} /></div>
+          <div className={styles.panel}><ProfileForm profile={profile} mutateProfile={(updatedProfile) => { void mutateProfile(updatedProfile, false); }} /></div>
         </section>
         <section className={styles.section} aria-labelledby="security-title">
           <div className={styles.sectionHeading}><span className={styles.headingIcon}><ShieldCheck size={21} aria-hidden="true" /></span><div><h2 id="security-title">Segurança</h2><p>Atualize a senha para manter seu acesso protegido.</p></div></div>

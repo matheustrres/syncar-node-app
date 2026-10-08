@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSWRConfig } from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { AlertCircle, ArrowDownLeft, CalendarDays, Check, CheckCircle2, Pencil, Plus, ReceiptText, Trash2 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { Contract, Driver, Vehicle } from "@/types";
-import { ExpenseWithRelations, PaymentWithRelations, useAllContracts, useAllDrivers, useAllVehicles, useFetchPaidPayments, useFetchPendingPayments, useFetchRecentExpenses } from "@/hooks/useData";
+import { ExpenseWithRelations, FinancialPayment, useFetchPaidPayments, useFetchPendingPayments, useFetchRecentExpenses } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
@@ -14,18 +14,20 @@ import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import styles from "./financial.module.css";
 
 interface Props {
-  initialPendingPayments: { payments: PaymentWithRelations[]; total: number };
-  initialPaidPayments: { payments: PaymentWithRelations[]; total: number };
+  initialPendingPayments: { payments: FinancialPayment[]; total: number };
+  initialPaidPayments: { payments: FinancialPayment[]; total: number };
   initialRecentExpenses: { expenses: ExpenseWithRelations[]; total: number };
-  initialContracts: Contract[];
-  initialDrivers: Driver[];
-  initialVehicles: Vehicle[];
 }
 
 const LIMIT = 10;
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const dateFormat = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
 const date = (value: string | null | undefined) => value ? dateFormat.format(new Date(value)) : "Data não informada";
+const fetchOptions = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Não foi possível carregar as opções do formulário.");
+  return response.json();
+};
 function overdue(value: string) {
   const now = new Date();
   return Date.parse(value) < Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
@@ -39,19 +41,19 @@ function Empty({ loading, error, text, retry, icon, children }: { loading: boole
   return <div className={styles.empty}>{loading ? <p role="status">Carregando registros…</p> : error ? <p role="alert">Não foi possível carregar os registros. <button className={styles.textAction} onClick={retry}>Tentar novamente</button></p> : <><span className={styles.emptyVisual} aria-hidden="true">{icon}</span><div className={styles.emptyCopy}><p>{text}</p>{children}</div></>}</div>;
 }
 
-export default function FinancialClientPage({ initialPendingPayments, initialPaidPayments, initialRecentExpenses, initialContracts, initialDrivers, initialVehicles }: Props) {
+export default function FinancialClientPage({ initialPendingPayments, initialPaidPayments, initialRecentExpenses }: Props) {
   const [pendingPage, setPendingPage] = useState(1);
   const [paidPage, setPaidPage] = useState(1);
   const [expensesPage, setExpensesPage] = useState(1);
   const pending = useFetchPendingPayments(pendingPage, LIMIT, pendingPage === 1 ? initialPendingPayments : undefined);
   const paid = useFetchPaidPayments(paidPage, LIMIT, paidPage === 1 ? initialPaidPayments : undefined);
   const expenses = useFetchRecentExpenses(expensesPage, LIMIT, expensesPage === 1 ? initialRecentExpenses : undefined);
-  const { contracts } = useAllContracts(initialContracts);
-  const { drivers } = useAllDrivers(initialDrivers);
-  const { vehicles } = useAllVehicles(initialVehicles);
+  const [modal, setModal] = useState<"payment" | "expense" | null>(null);
+  const { data: contracts, error: contractsError, mutate: retryContracts } = useSWR<Contract[]>(modal === "payment" ? "/api/contracts/all" : null, fetchOptions);
+  const { data: drivers, error: driversError, mutate: retryDrivers } = useSWR<Driver[]>(modal === "payment" ? "/api/drivers/all" : null, fetchOptions);
+  const { data: vehicles, error: vehiclesError, mutate: retryVehicles } = useSWR<Vehicle[]>(modal ? "/api/vehicles/all" : null, fetchOptions);
   const { mutate } = useSWRConfig();
   const { showToast } = useToast();
-  const [modal, setModal] = useState<"payment" | "expense" | null>(null);
   const [editing, setEditing] = useState<ExpenseWithRelations | null>(null);
   const [toDelete, setToDelete] = useState<ExpenseWithRelations | null>(null);
   const [saving, setSaving] = useState(false);
@@ -104,8 +106,16 @@ export default function FinancialClientPage({ initialPendingPayments, initialPai
       <section className={styles.section} aria-labelledby="paid-heading"><div className={styles.sectionHeading}><div className={styles.sectionTitle}><span className={styles.headingIcon}><ArrowDownLeft size={20} /></span><div><h2 id="paid-heading">Recebimentos</h2><p>Pagamentos confirmados, do mais recente ao mais antigo.</p></div></div>{paid.data && <span className={styles.count}>{paid.data.total} {paid.data.total === 1 ? "recebido" : "recebidos"}</span>}</div><div className={styles.panel}>{paid.data?.payments.length && !paid.isError ? <div className={styles.rows}>{paid.data.payments.map((item) => <div className={styles.compactRow} key={item.id}><div className={styles.rowMain}><strong>{item.contract.driver.name}</strong><span>{item.contract.vehicle.plate} · {item.contract.vehicle.model}</span><small>Vencimento: {date(item.dueDate)}</small></div><div className={styles.compactEnd}><strong className={styles.amount}>{money.format(item.value)}</strong><span className={styles.received}><CheckCircle2 size={15} /> {item.paymentDate ? `Recebido em ${date(item.paymentDate)}` : "Recebido · data não informada"}</span></div></div>)}</div> : <Empty loading={paid.isLoading} error={paid.isError} text="Nenhum pagamento recebido ainda." icon={<ArrowDownLeft size={26} strokeWidth={1.7} />} retry={() => void paid.mutate()}><p>Confirme uma cobrança em “A receber” ou registre um pagamento.</p></Empty>}<Pagination page={paidPage} total={paid.data?.total || 0} setPage={setPaidPage} /></div></section>
     </div>
     <p className={styles.footerNote}>Os pagamentos ficam vinculados aos <Link href="/dashboard/contracts">contratos</Link>.</p>
-    <Modal isOpen={modal === "payment"} onClose={close} title="Registrar pagamento"><PaymentForm contracts={contracts || []} drivers={drivers || []} vehicles={vehicles || []} onSave={(data) => void save("/api/payments", data)} onCancel={close} /></Modal>
-    <Modal isOpen={modal === "expense"} onClose={close} title={editing ? "Editar despesa" : "Adicionar despesa"} variant="platform"><ExpenseForm initialData={editing} isSaving={saving} vehicles={vehicles || []} onSave={(data) => void save("/api/expenses", data)} onCancel={close} /></Modal>
+    <Modal isOpen={modal === "payment"} onClose={close} title="Registrar pagamento">
+      {contractsError || driversError || vehiclesError ? <p role="alert">Não foi possível carregar as opções. <button onClick={() => { void retryContracts(); void retryDrivers(); void retryVehicles(); }}>Tentar novamente</button></p>
+        : !contracts || !drivers || !vehicles ? <p role="status">Carregando opções…</p>
+          : <PaymentForm contracts={contracts} drivers={drivers} vehicles={vehicles} onSave={(data) => void save("/api/payments", data)} onCancel={close} />}
+    </Modal>
+    <Modal isOpen={modal === "expense"} onClose={close} title={editing ? "Editar despesa" : "Adicionar despesa"} variant="platform">
+      {vehiclesError ? <p role="alert">Não foi possível carregar os veículos. <button onClick={() => void retryVehicles()}>Tentar novamente</button></p>
+        : !vehicles ? <p role="status">Carregando veículos…</p>
+          : <ExpenseForm initialData={editing} isSaving={saving} vehicles={vehicles} onSave={(data) => void save("/api/expenses", data)} onCancel={close} />}
+    </Modal>
     <DeleteConfirmationModal isOpen={!!toDelete} onClose={() => setToDelete(null)} onConfirm={deleteExpense} resourceName="despesa" resourceIdentifier={toDelete?.description} isDeleting={deleting} />
   </main>;
 }

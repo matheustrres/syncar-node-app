@@ -13,6 +13,7 @@ export async function PUT(request: Request) {
     const { currentPassword, newPassword } = await request.json();
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
+      select: { password: true },
     });
     if (!user) {
       return NextResponse.json(
@@ -34,6 +35,7 @@ export async function PUT(request: Request) {
     await prisma.user.update({
       where: { id: session.user.id },
       data: { password: hashedNewPassword },
+      select: { id: true },
     });
     return NextResponse.json({ message: "Senha alterada com sucesso." });
   } catch {
