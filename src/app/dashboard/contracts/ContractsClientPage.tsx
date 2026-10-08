@@ -252,7 +252,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
         </>
       )}
 
-      <Modal isOpen={isFormModalOpen} onClose={closeForm} title={editingItem ? "Editar contrato" : "Novo contrato"} size="4xl">
+      <Modal isOpen={isFormModalOpen} onClose={closeForm} title={editingItem ? "Editar contrato" : "Novo contrato"} size="4xl" variant="platform">
         <ContractForm initialData={editingItem} vehicles={allVehicles || []} drivers={allDrivers || []}
           isSaving={isSaving} onSave={handleSave} onCancel={closeForm} />
       </Modal>

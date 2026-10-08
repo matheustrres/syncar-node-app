@@ -118,10 +118,17 @@ const ContractForm: React.FC<ContractFormProps> = ({
     });
   };
 
+  const labelStyle = "mb-1.5 block text-sm font-semibold text-syncar-text";
+  const inputStyle =
+    "min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2.5 pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20";
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
         <CustomSelect
+          variant="platform"
+          id="vehicleId"
+          name="vehicleId"
           label="Veículo *"
           value={formData.vehicleId}
           onChange={(value) =>
@@ -133,6 +140,9 @@ const ContractForm: React.FC<ContractFormProps> = ({
         />
 
         <CustomSelect
+          variant="platform"
+          id="driverId"
+          name="driverId"
           label="Motorista *"
           value={formData.driverId}
           onChange={(value) =>
@@ -144,6 +154,7 @@ const ContractForm: React.FC<ContractFormProps> = ({
         />
 
         <CurrencyInput
+          variant="platform"
           label="Valor semanal (R$) *"
           Icon={DollarSign}
           name="weeklyValue"
@@ -153,6 +164,9 @@ const ContractForm: React.FC<ContractFormProps> = ({
         />
 
         <CustomSelect
+          variant="platform"
+          id="paymentDay"
+          name="paymentDay"
           label="Dia do pagamento *"
           value={formData.paymentDay}
           onChange={(value) =>
@@ -163,21 +177,27 @@ const ContractForm: React.FC<ContractFormProps> = ({
         />
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="startDate" className={labelStyle}>
             Data de início *
           </label>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted"
+            size={20}
+            aria-hidden="true"
+          />
           <input
             type="date"
+            id="startDate"
             name="startDate"
             value={formData.startDate}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100"
+            className={inputStyle}
           />
         </div>
 
         <CurrencyInput
+          variant="platform"
           label="Caução (R$) *"
           Icon={Shield}
           name="deposit"
@@ -188,6 +208,9 @@ const ContractForm: React.FC<ContractFormProps> = ({
 
         <div className="md:col-span-1">
           <CustomSelect
+            variant="platform"
+            id="status"
+            name="status"
             label="Status do contrato *"
             value={formData.status}
             onChange={(value) =>
@@ -199,39 +222,48 @@ const ContractForm: React.FC<ContractFormProps> = ({
         </div>
 
         <div className="relative md:col-span-1">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="duration" className={labelStyle}>
             Duração (semanas) *
           </label>
-          <Hash className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Hash
+            className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted"
+            size={20}
+            aria-hidden="true"
+          />
           <input
             type="number"
+            id="duration"
             name="duration"
+            min="1"
             value={formData.duration || ""}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-gray-100"
+            className={inputStyle}
           />
         </div>
       </div>
       {apiError && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-sm">
-          <AlertCircle size={16} />
+        <div
+          role="alert"
+          className="mt-1 flex items-center gap-1 text-sm text-syncar-danger"
+        >
+          <AlertCircle size={16} aria-hidden="true" />
           <span>{apiError}</span>
         </div>
       )}
-      <div className="flex justify-end gap-4 pt-4">
+      <div className="flex flex-wrap justify-end gap-3 border-t border-syncar-border pt-5">
         <button
           type="button"
           onClick={onCancel}
           disabled={isSaving}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-syncar-control border border-syncar-border bg-syncar-surface px-5 text-sm font-semibold text-syncar-text hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSaving}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-syncar-control bg-syncar-action px-6 text-sm font-bold text-syncar-action-text hover:bg-syncar-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isSaving ? "Salvando..." : "Salvar"}
         </button>
