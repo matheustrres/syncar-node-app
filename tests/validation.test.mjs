@@ -18,6 +18,12 @@ import {
   driverIdsSchema,
   driverListQuerySchema,
 } from '../src/lib/driver-validation.ts';
+import {
+  contractBodySchema,
+  contractIdsSchema,
+  contractListQuerySchema,
+  contractIdSchema,
+} from '../src/lib/contract-validation.ts';
 
 const vehicle = {
   plate: 'ABC-1234',
@@ -57,6 +63,17 @@ const driver = {
   cidade: 'São Paulo',
   uf: 'sp',
   status: 'Ativo',
+};
+
+const contract = {
+  vehicleId: 'vehicle_123',
+  driverId: 'driver_123',
+  weeklyValue: 850.5,
+  paymentDay: 'Segunda-feira',
+  startDate: '2026-10-09T12:00:00.000Z',
+  deposit: 1000,
+  status: 'Ativo',
+  duration: 24,
 };
 
 test('vehicle create validates required fields and normalizes plate and optional identifiers', () => {
@@ -172,4 +189,34 @@ test('driver update, IDs and list filters reject empty or malformed input', () =
   assert.equal(driverListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
   assert.equal(driverListQuerySchema.safeParse({ page: '-1' }).success, false);
   assert.equal(driverListQuerySchema.safeParse({ unknown: 'x' }).success, false);
+});
+
+test('contract body validates required fields, enums, values and dates', () => {
+  assert.equal(contractBodySchema.safeParse(contract).success, true);
+  assert.equal(contractBodySchema.safeParse({ ...contract, weeklyValue: 0 }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, deposit: -1 }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, duration: 1.5 }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, paymentDay: 'Feriado' }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, startDate: '2026-02-30' }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, unexpected: true }).success, false);
+  assert.equal(contractBodySchema.safeParse({ ...contract, duration: null }).success, true);
+});
+
+test('contract IDs and list filters reject malformed input and inverted ranges', () => {
+  assert.equal(contractIdSchema.safeParse('contract_123').success, true);
+  assert.equal(contractIdSchema.safeParse('bad/id').success, false);
+  assert.equal(contractIdsSchema.safeParse({ ids: ['contract1', 'contract2'] }).success, true);
+  assert.equal(contractIdsSchema.safeParse({ ids: ['same', 'same'] }).success, false);
+  assert.equal(contractIdsSchema.safeParse({ ids: [] }).success, false);
+  assert.equal(contractIdsSchema.safeParse({ ids: Array.from({ length: 101 }, (_, index) => `c${index}`) }).success, false);
+
+  const defaults = contractListQuerySchema.safeParse({});
+  assert.equal(defaults.success, true);
+  assert.equal(defaults.data.page, 1);
+  assert.equal(defaults.data.limit, 10);
+  assert.equal(contractListQuerySchema.safeParse({ status: 'Pendente' }).success, false);
+  assert.equal(contractListQuerySchema.safeParse({ weeklyValueMin: '100', weeklyValueMax: '10' }).success, false);
+  assert.equal(contractListQuerySchema.safeParse({ startDateStartDate: '2026-02-30' }).success, false);
+  assert.equal(contractListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
+  assert.equal(contractListQuerySchema.safeParse({ extra: 'x' }).success, false);
 });

@@ -5,10 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 
 import { normalizeString } from "@/lib/string-utils";
 import { Prisma } from "@prisma/client";
-
-const sortableColumns = new Set([
-  "createdAt", "startDate", "weeklyValue", "duration", "status", "driver.name", "vehicle.plate", "vehicle.model",
-]);
+import { contractBodySchema, contractIdsSchema, contractListQuerySchema, parseContractJson } from "@/lib/contract-validation";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -16,16 +13,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const requestedPage = Number(searchParams.get("page"));
-  const requestedLimit = Number(searchParams.get("limit"));
-  const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 && requestedPage <= 100000 ? requestedPage : 1;
-  const limit = Number.isSafeInteger(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : 10;
-  const requestedSort = searchParams.get("sortColumn") || "createdAt";
-  const sortColumn = sortableColumns.has(requestedSort) ? requestedSort : "createdAt";
-  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
+  const queryInput: Record<string, string> = {};
+  for (const [key, value] of searchParams) {
+    if (queryInput[key] !== undefined) return NextResponse.json({ error: `Parâmetro repetido: ${key}.` }, { status: 400 });
+    queryInput[key] = value;
+  }
+  const parsedQuery = contractListQuerySchema.safeParse(queryInput);
+  if (!parsedQuery.success) return NextResponse.json({ error: parsedQuery.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
+  const { page, limit, sortColumn, sortDirection, driverName, vehiclePlate, vehicleModel, status, weeklyValueMin, weeklyValueMax, startDateStartDate, startDateEndDate } = parsedQuery.data;
   const skip = (page - 1) * limit;
   const where: Prisma.ContractWhereInput = { userId: session.user.id };
-  const driverName = searchParams.get("driverName");
   if (driverName) {
     where.driver = {
       nameNormalized: {
@@ -34,28 +31,18 @@ export async function GET(request: NextRequest) {
       },
     };
   }
-  const vehiclePlate = searchParams.get("vehiclePlate");
-  const vehicleModel = searchParams.get("vehicleModel");
   if (vehiclePlate || vehicleModel) {
     where.vehicle = {
       ...(vehiclePlate && { plateNormalized: { contains: normalizeString(vehiclePlate), mode: "insensitive" as const } }),
       ...(vehicleModel && { modelNormalized: { contains: normalizeString(vehicleModel), mode: "insensitive" as const } }),
     };
   }
-  const status = searchParams.get("status");
-  if (status === "Ativo" || status === "Encerrado") where.status = status;
-  const weeklyValueMin = Number(searchParams.get("weeklyValueMin"));
-  const weeklyValueMax = Number(searchParams.get("weeklyValueMax"));
-  if (searchParams.get("weeklyValueMin") && Number.isFinite(weeklyValueMin)) where.weeklyValue = { gte: weeklyValueMin };
-  if (searchParams.get("weeklyValueMax") && Number.isFinite(weeklyValueMax)) {
-    where.weeklyValue = { ...where.weeklyValue as Prisma.FloatFilter, lte: weeklyValueMax };
-  }
-  const startDate = searchParams.get("startDateStartDate");
-  const endDate = searchParams.get("startDateEndDate");
-  if (startDate && !Number.isNaN(Date.parse(startDate))) where.startDate = { gte: new Date(startDate) };
-  if (endDate && !Number.isNaN(Date.parse(endDate))) {
-    where.startDate = { ...where.startDate as Prisma.DateTimeFilter, lte: new Date(endDate) };
-  }
+  if (status) where.status = status;
+  if (weeklyValueMin !== undefined || weeklyValueMax !== undefined) where.weeklyValue = { gte: weeklyValueMin, lte: weeklyValueMax };
+  if (startDateStartDate || startDateEndDate) where.startDate = {
+    gte: startDateStartDate ? new Date(startDateStartDate) : undefined,
+    lte: startDateEndDate ? new Date(startDateEndDate) : undefined,
+  };
   let orderBy: Prisma.ContractOrderByWithRelationInput = { createdAt: "desc" };
   if (sortColumn === "driver.name") {
     orderBy = { driver: { name: sortDirection } };
@@ -92,10 +79,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const body = await request.json();
-  const { vehicleId, ...contractData } = body;
+  const parsed = await parseContractJson(request, contractBodySchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { vehicleId, driverId, ...contractData } = parsed.data;
 
   try {
+    const [vehicle, driver] = await Promise.all([
+      prisma.vehicle.findFirst({ where: { id: vehicleId, userId: session.user.id } }),
+      prisma.driver.findFirst({ where: { id: driverId, userId: session.user.id } }),
+    ]);
+    if (!vehicle || !driver) return NextResponse.json({ error: "Veículo ou motorista não encontrado." }, { status: 400 });
+    if (vehicle.status !== "Disponível") return NextResponse.json({ error: "O veículo não está disponível." }, { status: 400 });
     const startDate = new Date(contractData.startDate);
     const paymentDay = contractData.paymentDay;
     const dayOfWeekMap: { [key: string]: number } = {
@@ -155,6 +149,7 @@ export async function POST(request: NextRequest) {
         ...contractData,
         userId: session.user.id,
         vehicleId,
+        driverId,
         payments: {
           create: paymentsToCreate,
         },
@@ -170,7 +165,7 @@ export async function POST(request: NextRequest) {
     });
 
     await prisma.vehicle.update({
-      where: { id: vehicleId },
+      where: { id: vehicleId, userId: session.user.id },
       data: { status: "Alugado" },
     });
 
@@ -189,13 +184,9 @@ export async function DELETE(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const { ids } = await request.json();
-  if (!Array.isArray(ids) || ids.length === 0) {
-    return NextResponse.json(
-      { error: "IDs inválidos fornecidos." },
-      { status: 400 }
-    );
-  }
+  const parsed = await parseContractJson(request, contractIdsSchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const { ids } = parsed.data;
   try {
     await prisma.contract.deleteMany({
       where: {

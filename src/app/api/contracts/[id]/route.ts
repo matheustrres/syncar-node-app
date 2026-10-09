@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { contractBodySchema, contractIdSchema, parseContractJson } from "@/lib/contract-validation";
 
 export async function GET(
   _: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  if (!contractIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de contrato inválido." }, { status: 400 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
@@ -37,6 +39,7 @@ export async function PUT(
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { id } = await context.params;
+  if (!contractIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de contrato inválido." }, { status: 400 });
   const contractBeforeUpdate = await prisma.contract.findUnique({
     where: { id },
   });
@@ -49,9 +52,16 @@ export async function PUT(
       { status: 404 }
     );
   }
-  const data = await request.json();
+  const parsed = await parseContractJson(request, contractBodySchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const data = parsed.data;
+  const [vehicle, driver] = await Promise.all([
+    prisma.vehicle.findFirst({ where: { id: data.vehicleId, userId: session.user.id } }),
+    prisma.driver.findFirst({ where: { id: data.driverId, userId: session.user.id } }),
+  ]);
+  if (!vehicle || !driver) return NextResponse.json({ error: "Veículo ou motorista não encontrado." }, { status: 400 });
   const updatedContract = await prisma.contract.update({
-    where: { id },
+    where: { id, userId: session.user.id },
     data,
     include: {
       driver: { select: { name: true } },
@@ -94,6 +104,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { id } = await context.params;
+  if (!contractIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de contrato inválido." }, { status: 400 });
   const contractToDelete = await prisma.contract.findUnique({ where: { id } });
   if (!contractToDelete || contractToDelete.userId !== session.user.id) {
     return NextResponse.json(
