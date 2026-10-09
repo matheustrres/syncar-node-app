@@ -17,6 +17,7 @@ import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
 import ExpenseForm from "@/components/forms/ExpenseForm";
 import UpgradePlaceholder from "@/components/ui/UpgradePlaceholder";
 import UpgradeModal from "@/components/ui/UpgradeModal";
+import styles from "../../detailPages.module.css";
 
 const DetailItem = ({
   label,
@@ -25,9 +26,9 @@ const DetailItem = ({
   label: string;
   value: string | number;
 }) => (
-  <div className="py-2">
-    <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className="text-md text-gray-900">{value}</p>
+  <div className={styles.detailItem}>
+    <p className={styles.detailLabel}>{label}</p>
+    <p className={styles.detailValue}>{value}</p>
   </div>
 );
 
@@ -196,57 +197,49 @@ export default function VehicleDetailsClientPage({
   if (!vehicle) return <div>Veículo não encontrado.</div>;
 
   return (
-    <div>
+    <div className={styles.page}>
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
+        className={styles.backLink}
       >
         <ArrowLeft size={20} />
         Voltar para a lista de veículos
       </button>
 
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="min-w-0">
-            <h2 className="text-3xl font-bold text-gray-800 truncate">
+      <section className={styles.panel}>
+        <header className={styles.detailHeader}>
+          <div className={styles.identity}>
+            <h1 className={styles.title}>
               {vehicle.brand} {vehicle.model}
-            </h2>
-            <p className="text-lg text-gray-600">{vehicle.plate}</p>
+            </h1>
+            <p className={styles.subtitle}>{vehicle.plate}</p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span
-              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                vehicle.status === "Disponível"
-                  ? "bg-green-100 text-green-800"
-                  : vehicle.status === "Manutenção"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-blue-100 text-blue-800"
-              }`}
-            >
+          <div className={styles.headerActions}>
+            <span className={`${styles.status} ${vehicle.status === "Disponível" ? styles.success : vehicle.status === "Manutenção" ? styles.warning : styles.info}`}>
               {vehicle.status}
             </span>
             <button
               onClick={() => setIsFormModalOpen(true)}
               title="Editar veículo"
-              className="p-2 rounded-full text-indigo-600 hover:bg-gray-100"
+              className={styles.iconButton}
             >
               <Edit size={20} />
             </button>
             <button
               onClick={() => setIsDeleteModalOpen(true)}
               title="Excluir veículo"
-              className="p-2 rounded-full hover:bg-gray-100 text-red-600"
+              className={`${styles.iconButton} ${styles.deleteButton}`}
             >
               <Trash2 size={20} />
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="border-t mt-6 pt-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>
             Detalhes do veículo
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+          </h2>
+          <div className={styles.detailGrid}>
             <DetailItem label="Marca" value={vehicle.brand} />
             <DetailItem label="Modelo" value={vehicle.model} />
             <DetailItem label="Placa" value={vehicle.plate} />
@@ -260,7 +253,7 @@ export default function VehicleDetailsClientPage({
             <DetailItem label="Chassi" value={vehicle.chassis || "Não informado"} />
           </div>
         </div>
-      </div>
+      </section>
 
       <Modal
         isOpen={isFormModalOpen}
@@ -312,10 +305,10 @@ export default function VehicleDetailsClientPage({
         </>
       )}
 
-      <div className="mt-10">
-        <h3 className="text-xl font-semibold mb-4 text-gray-700">
+      <section className={styles.history}>
+        <h2 className={styles.sectionTitle}>
           Histórico de despesas
-        </h3>
+        </h2>
         {session?.user?.plan === "BASIC" ? (
           <>
             <UpgradePlaceholder
@@ -347,11 +340,11 @@ export default function VehicleDetailsClientPage({
             onSort={() => {}}
           />
         ) : (
-          <div className="bg-white p-8 rounded-lg shadow-md text-center text-gray-500">
+          <div className={styles.empty}>
             Nenhuma despesa registrada para este veículo.
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

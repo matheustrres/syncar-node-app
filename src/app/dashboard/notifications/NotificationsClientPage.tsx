@@ -9,10 +9,12 @@ import {
   Loader2,
   FileText,
   DollarSign,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
 import { Notification } from "@/types";
+import styles from "./notifications.module.css";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -25,7 +27,7 @@ const NotificationIcon = ({
 }) => {
   const iconProps = {
     size: 18,
-    className: isRead ? "text-gray-500" : "text-blue-600",
+    className: isRead ? styles.readMessage : styles.iconUnread,
   };
 
   switch (type) {
@@ -87,66 +89,60 @@ export default function NotificationsClientPage({
   const totalPages = data ? Math.ceil(data.total / limit) : 1;
 
   if (error)
-    return <div className="text-red-500">Falha ao carregar notificações.</div>;
+    return (
+      <div className={styles.error} role="alert">
+        <AlertCircle size={20} aria-hidden="true" />
+        <p>Falha ao carregar notificações. Tente novamente.</p>
+        <button className={styles.retry} onClick={() => void mutate()}>
+          Tentar novamente
+        </button>
+      </div>
+    );
 
   const notifications = data?.notifications || [];
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-          <Bell />
-          Central de notificações
-        </h1>
+    <main className={styles.page}>
+      <header className={styles.intro}>
+        <div>
+          <h1 className={styles.title}>Central de notificações</h1>
+          <p className={styles.description}>
+            Acompanhe atualizações importantes da sua operação.
+          </p>
+        </div>
+        <Bell className={styles.introIcon} size={36} aria-hidden="true" />
         <button
           onClick={handleMarkAllAsRead}
           disabled={isMarkingAll || data?.unreadCount === 0}
-          className="text-sm font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+          className={styles.markAll}
         >
           {isMarkingAll ? (
-            <Loader2 className="animate-spin h-4 w-4" />
+            <Loader2 className="animate-spin h-4 w-4" aria-hidden="true" />
           ) : (
-            <CheckCheck className="h-4 w-4" />
+            <CheckCheck className="h-4 w-4" aria-hidden="true" />
           )}
           Marcar todas como lidas
         </button>
-      </div>
+      </header>
 
-      <div className={`space-y-4 ${isLoading ? "opacity-50" : ""}`}>
+      <section className={styles.panel} aria-label="Notificações">
         {notifications.length > 0 ? (
-          notifications.map((notification: Notification) => (
-            <Link
-              href={getNotificationLink(notification)}
-              key={notification.id}
-            >
-              <div
-                className={`p-4 rounded-lg flex items-start gap-4 transition-colors ${
-                  notification.isRead
-                    ? "bg-gray-50 hover:bg-gray-100"
-                    : "bg-blue-50 hover:bg-blue-100 border border-blue-200"
-                }`}
+          <div className={`${styles.list} ${isLoading ? styles.loading : ""}`}>
+            {notifications.map((notification: Notification) => (
+              <Link
+                href={getNotificationLink(notification)}
+                key={notification.id}
+                className={`${styles.notification} ${notification.isRead ? "" : styles.notificationUnread}`}
               >
-                <div
-                  className={`mt-1 p-2 rounded-full ${
-                    notification.isRead ? "bg-gray-200" : "bg-blue-200"
-                  }`}
-                >
+                <span className={`${styles.iconTile} ${notification.isRead ? "" : styles.iconUnread}`}>
                   <NotificationIcon
                     type={notification.type}
                     isRead={notification.isRead}
                   />
-                </div>
-                <div className="flex-1">
-                  <p
-                    className={`text-sm ${
-                      notification.isRead
-                        ? "text-gray-600"
-                        : "text-gray-900 font-semibold"
-                    }`}
-                  >
+                </span>
+                <span className={`${styles.message} ${notification.isRead ? styles.readMessage : styles.unreadMessage}`}>
                     {notification.message}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <time className={styles.date} dateTime={new Date(notification.createdAt).toISOString()}>
                     {new Date(notification.createdAt).toLocaleString("pt-BR", {
                       day: "2-digit",
                       month: "short",
@@ -154,51 +150,45 @@ export default function NotificationsClientPage({
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
-                  </p>
-                </div>
+                  </time>
+                </span>
                 {!notification.isRead && (
-                  <div
-                    className="w-2.5 h-2.5 bg-blue-500 rounded-full mt-2"
-                    title="Não lida"
-                  ></div>
+                  <span className={styles.unreadMark} aria-label="Não lida" />
                 )}
-              </div>
-            </Link>
-          ))
+              </Link>
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-12 text-gray-500">
-            <Check size={40} className="mx-auto mb-2 text-green-500" />
-            <h3 className="text-lg font-semibold">Tudo certo!</h3>
-            <p>Você não tem nenhuma notificação no seu histórico.</p>
+          <div className={`${styles.empty} ${isLoading ? styles.loading : ""}`}>
+            <Check size={36} className={styles.emptyIcon} aria-hidden="true" />
+            <h2 className={styles.emptyTitle}>Tudo certo!</h2>
+            <p className={styles.emptyCopy}>Você não tem nenhuma notificação no seu histórico.</p>
           </div>
         )}
-      </div>
 
-      {/* Pagination Controls */}
-      <div className="mt-6 flex items-center justify-between">
-        <div className="text-sm text-gray-700">
+        <footer className={styles.footer}>
+        <div>
           Mostrando {notifications.length} de {data?.total || 0} notificações.
         </div>
-        <div className="flex items-center gap-2">
+        <nav className={styles.pagination} aria-label="Paginação de notificações">
           <button
             onClick={() => setPage(page - 1)}
             disabled={page === 1 || isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Anterior
           </button>
-          <span className="text-sm text-gray-700">
+          <span aria-current="page">
             Página {page} de {totalPages}
           </span>
           <button
             onClick={() => setPage(page + 1)}
             disabled={page === totalPages || isLoading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Próximo
           </button>
-        </div>
-      </div>
-    </div>
+        </nav>
+        </footer>
+      </section>
+    </main>
   );
 }

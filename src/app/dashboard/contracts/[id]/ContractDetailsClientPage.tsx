@@ -17,6 +17,7 @@ import ContractDetailsSkeleton from "./ContractDetailsSkeleton";
 import { useFetchContractById } from "@/hooks/useData";
 import ErrorDisplay from "@/components/ui/ErrorDisplay";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import styles from "../../detailPages.module.css";
 
 const DetailItem = ({
   label,
@@ -27,9 +28,9 @@ const DetailItem = ({
   value: string | number;
   className?: string;
 }) => (
-  <div className="py-2">
-    <p className="text-sm font-medium text-gray-500">{label}</p>
-    <p className={`text-md text-gray-900 ${className}`}>{value}</p>
+  <div className={styles.detailItem}>
+    <p className={styles.detailLabel}>{label}</p>
+    <p className={`${styles.detailValue} ${className}`}>{value}</p>
   </div>
 );
 
@@ -109,59 +110,57 @@ export default function ContractDetailsClientPage({
   if (!contract) return <div>Contrato não encontrado.</div>;
 
   return (
-    <div>
+    <div className={styles.page}>
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 font-medium"
+        className={styles.backLink}
       >
         <ArrowLeft size={20} />
         Voltar para a lista de contratos
       </button>
 
-      <div className="bg-white p-8 rounded-lg shadow-md">
-        <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-          <div className="min-w-0">
-            <h2 className="text-3xl font-bold text-gray-800 truncate">
+      <section className={styles.panel}>
+        <header className={styles.detailHeader}>
+          <div className={styles.identity}>
+            <h1 className={styles.title}>
               {contract.driver.name}
-            </h2>
-            <p className="text-lg text-gray-600 truncate">
+            </h1>
+            <p className={styles.subtitle}>
               {contract.vehicle.plate} - {contract.vehicle.brand}{" "}
               {contract.vehicle.model}
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <span
-              className={`px-3 py-1 text-sm font-semibold rounded-full ${contract.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
-            >
+          <div className={styles.headerActions}>
+            <span className={`${styles.status} ${contract.status === "Ativo" ? styles.success : styles.neutral}`}>
               {contract.status}
             </span>
             <button
               onClick={() => setIsFormModalOpen(true)}
               title="Editar contrato"
-              className="p-2 rounded-full hover:bg-gray-100 text-indigo-600"
+              className={styles.iconButton}
             >
               <Edit size={20} />
             </button>
             <button
               onClick={() => setIsDeleteModalOpen(true)}
               title="Excluir contrato"
-              className="p-2 rounded-full hover:bg-gray-100 text-red-600"
+              className={`${styles.iconButton} ${styles.deleteButton}`}
             >
               <Trash2 size={20} />
             </button>
           </div>
-        </div>
+        </header>
 
-        <div className="border-t mt-6 pt-6">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>
             Detalhes do contrato
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+          </h2>
+          <div className={styles.detailGrid}>
             <DetailItem label="Motorista" value={contract.driver.name} />
             <DetailItem
               label="Valor semanal"
               value={`R$ ${contract.weeklyValue.toFixed(2)}`}
-              className="font-semibold text-green-600"
+              className={styles.success}
             />
             <DetailItem label="Data do pagamento" value={contract.paymentDay} />
             <DetailItem
@@ -180,7 +179,7 @@ export default function ContractDetailsClientPage({
             )}
           </div>
         </div>
-      </div>
+      </section>
 
       <Modal
         isOpen={isFormModalOpen}

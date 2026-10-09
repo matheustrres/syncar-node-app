@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
+import styles from "@/components/forms/auth.module.css";
 
 interface ResetPasswordFormProps {
   token: string;
@@ -36,6 +37,34 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   const isPasswordValid = (strength: ReturnType<typeof validatePassword>) => {
     return Object.values(strength).every((value) => value === true);
+  };
+
+  const passwordStrength = validatePassword(password);
+  const passwordIsValid = isPasswordValid(passwordStrength);
+  const confirmationMismatch = Boolean(confirmPassword) && password !== confirmPassword;
+  const canSubmit = passwordIsValid && Boolean(confirmPassword) && !confirmationMismatch && !loading;
+
+  const updatePassword = (value: string) => {
+    setPassword(value);
+    setErrors((current) => ({
+      ...current,
+      password: value && !isPasswordValid(validatePassword(value))
+        ? "A senha não atende aos requisitos"
+        : undefined,
+      confirmPassword: confirmPassword && value !== confirmPassword
+        ? "As senhas não coincidem"
+        : undefined,
+    }));
+  };
+
+  const updateConfirmPassword = (value: string) => {
+    setConfirmPassword(value);
+    setErrors((current) => ({
+      ...current,
+      confirmPassword: value && password !== value
+        ? "As senhas não coincidem"
+        : undefined,
+    }));
   };
 
   const validateForm = () => {
@@ -79,119 +108,90 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     }
   };
 
-  const passwordStrength = validatePassword(password);
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+    <form onSubmit={handleSubmit} className={`${styles.recovery} ${styles.form}`}>
+      <div className={styles.field}>
+        <label htmlFor="reset-password" className="block text-sm font-medium mb-2">
           Nova Senha *
         </label>
-        <div className="relative">
-          <Lock
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
-          />
+        <div className={styles.inputWrap}>
+          <Lock size={18} aria-hidden="true" />
           <input
+            id="reset-password"
             type={showPassword ? "text" : "password"}
             name="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={`w-full pl-11 pr-11 py-3 border rounded-lg ${errors.password ? "border-red-500" : "border-gray-300"}`}
-            placeholder="••••••••"
+            onChange={(e) => updatePassword(e.target.value)}
+            autoComplete="new-password"
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby="password-requirements password-error"
+            placeholder="Crie uma senha forte"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className={styles.reveal}
+            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
         {errors.password && (
-          <p className="text-red-500 text-sm mt-1">{errors.password}</p>
+          <p id="password-error" className={styles.error}>{errors.password}</p>
         )}
-        <div className="mt-2 text-sm">
-          <p
-            className={
-              passwordStrength.minLength ? "text-green-500" : "text-red-500"
-            }
-          >
-            Pelo menos 9 caracteres
-          </p>
-          <p
-            className={
-              passwordStrength.hasTwoSpecialChars
-                ? "text-green-500"
-                : "text-red-500"
-            }
-          >
-            Pelo menos 2 caracteres especiais
-          </p>
-          <p
-            className={
-              passwordStrength.hasLowerCase ? "text-green-500" : "text-red-500"
-            }
-          >
-            Pelo menos 1 letra minúscula
-          </p>
-          <p
-            className={
-              passwordStrength.hasUpperCase ? "text-green-500" : "text-red-500"
-            }
-          >
-            Pelo menos 1 letra maiúscula
-          </p>
-          <p
-            className={
-              passwordStrength.hasNumber ? "text-green-500" : "text-red-500"
-            }
-          >
-            Pelo menos 1 número
-          </p>
+        <div id="password-requirements" className={styles.requirements} aria-label="Requisitos da senha">
+          <p>Sua senha precisa conter:</p>
+          <ul>
+            <li className={passwordStrength.minLength ? styles.fulfilled : undefined}>Pelo menos 9 caracteres</li>
+            <li className={passwordStrength.hasTwoSpecialChars ? styles.fulfilled : undefined}>Pelo menos 2 caracteres especiais</li>
+            <li className={passwordStrength.hasLowerCase ? styles.fulfilled : undefined}>Pelo menos 1 letra minúscula</li>
+            <li className={passwordStrength.hasUpperCase ? styles.fulfilled : undefined}>Pelo menos 1 letra maiúscula</li>
+            <li className={passwordStrength.hasNumber ? styles.fulfilled : undefined}>Pelo menos 1 número</li>
+          </ul>
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className={styles.field}>
+        <label htmlFor="reset-password-confirm" className="block text-sm font-medium mb-2">
           Confirmar Nova Senha *
         </label>
-        <div className="relative">
-          <Lock
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
-          />
+        <div className={styles.inputWrap}>
+          <Lock size={18} aria-hidden="true" />
           <input
+            id="reset-password-confirm"
             type={showPassword ? "text" : "password"}
             name="confirmPassword"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e) => updateConfirmPassword(e.target.value)}
             onPaste={(e) => e.preventDefault()}
-            className={`w-full pl-11 pr-11 py-3 border rounded-lg ${errors.confirmPassword ? "border-red-500" : "border-gray-300"}`}
-            placeholder="••••••••"
+            autoComplete="new-password"
+            aria-invalid={Boolean(errors.confirmPassword)}
+            aria-describedby={errors.confirmPassword || confirmationMismatch ? "confirm-password-error" : undefined}
+            placeholder="Repita sua nova senha"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className={styles.reveal}
+            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
-        {errors.confirmPassword && (
-          <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>
+        {(errors.confirmPassword || confirmationMismatch) && (
+          <p id="confirm-password-error" className={styles.error}>As senhas não coincidem</p>
         )}
       </div>
 
       <button
         type="submit"
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:bg-blue-400 flex items-center justify-center gap-2"
+        disabled={!canSubmit}
+        className={styles.submit}
       >
         {loading ? (
-          <Loader2 className="animate-spin" size={20} />
+          <><Loader2 className="animate-spin" size={18} aria-hidden="true" /> Redefinindo senha...</>
         ) : (
-          "Redefinir Senha"
+          <>Redefinir senha <span aria-hidden="true">→</span></>
         )}
       </button>
     </form>

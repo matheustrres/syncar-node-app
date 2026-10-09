@@ -59,6 +59,14 @@
 @media (prefers-reduced-motion: reduce) { .page * { transition: none !important; } }
 
 .recovery { color: var(--syncar-text); }
+.recovery label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.recovery .inputWrap input { padding-right: 44px; }
+.recovery .requirements { margin-top: 14px; }
+.recovery .requirements > p { grid-column: 1 / -1; }
+.recovery .requirements li { color: #687a70; }
+.recovery .requirements .fulfilled { color: #2a6945; font-weight: 600; }
 .recovery input:focus { outline-color: var(--syncar-focus); --tw-ring-color: var(--syncar-focus); }
+.recovery .submit { justify-content: space-between; }
 .recovery button[type="submit"] { background: var(--syncar-action); color: var(--syncar-action-text); }
 .recovery button[type="submit"]:hover { background: var(--syncar-action-hover); }
+.recovery button[type="submit"]:disabled { opacity: .55; cursor: not-allowed; }
