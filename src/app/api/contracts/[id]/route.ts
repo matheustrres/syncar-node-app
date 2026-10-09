@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { contractBodySchema, contractIdSchema, parseContractJson } from "@/lib/contract-validation";
+import { invalidateContractCaches, invalidateVehicleCaches } from "@/lib/redis-cache";
 
 export async function GET(
   _: NextRequest,
@@ -92,6 +93,13 @@ export async function PUT(
       data: { status: "Disponível" },
     });
   }
+  if (
+    contractBeforeUpdate.vehicleId !== updatedContract.vehicleId ||
+    (contractBeforeUpdate.status === "Ativo" && updatedContract.status === "Encerrado")
+  ) {
+    await invalidateVehicleCaches(session.user.id);
+  }
+  await invalidateContractCaches(session.user.id);
   return NextResponse.json(updatedContract);
 }
 
@@ -123,5 +131,9 @@ export async function DELETE(
   } else {
     await prisma.contract.delete({ where: { id } });
   }
+  if (contractToDelete.status === "Ativo") {
+    await invalidateVehicleCaches(session.user.id);
+  }
+  await invalidateContractCaches(session.user.id);
   return NextResponse.json({ message: "Contrato deletado" }, { status: 200 });
 }

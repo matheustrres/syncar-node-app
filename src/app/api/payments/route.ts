@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { invalidateFinancialCaches } from "@/lib/redis-cache";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -22,5 +23,6 @@ export async function POST(request: Request) {
   }
   const data = await request.json();
   const newPayment = await prisma.payment.create({ data });
+  await invalidateFinancialCaches(session.user.id);
   return NextResponse.json(newPayment, { status: 201 });
 }

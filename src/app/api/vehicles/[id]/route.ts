@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 
 import { normalizeString } from "@/lib/string-utils";
 import { parseJsonBody, vehicleIdSchema, vehicleUpdateSchema } from "@/lib/vehicle-validation";
+import { invalidateVehicleCaches } from "@/lib/redis-cache";
 
 export async function GET(
   _: NextRequest,
@@ -58,6 +59,7 @@ export async function PUT(
     where: { id: parsedId.data, userId: session.user.id },
     data: updateData,
   });
+  await invalidateVehicleCaches(session.user.id);
   return NextResponse.json(updatedVehicle);
 }
 
@@ -77,5 +79,6 @@ export async function DELETE(
   await prisma.vehicle.delete({
     where: { id: parsedId.data, userId: session.user.id },
   });
+  await invalidateVehicleCaches(session.user.id);
   return NextResponse.json({ message: "Veículo deletado" }, { status: 200 });
 }

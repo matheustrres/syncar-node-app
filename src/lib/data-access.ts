@@ -3,6 +3,7 @@ import { cache } from "react";
 import { prisma } from "./prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "./authOptions";
+import { getRedisCache, setRedisCache } from "./redis-cache";
 import { Contract, Driver, Vehicle } from "@/types";
 import {
   Prisma,
@@ -27,6 +28,17 @@ export const getMaintenance = cache(
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { maintenance: [], total: 0 };
+    const cacheKey = `syncar:cache:maintenance:${session.user.id}:page:${JSON.stringify([
+      page,
+      limit,
+      search,
+      type,
+      sortColumn,
+      sortDirection,
+    ])}`;
+    const cachedMaintenance = await getRedisCache<{ maintenance: any[]; total: number }>(cacheKey);
+    if (cachedMaintenance.value) return cachedMaintenance.value;
+
     const skip = (page - 1) * limit;
     const where: Prisma.MaintenanceWhereInput = { userId: session.user.id };
 
@@ -76,7 +88,9 @@ export const getMaintenance = cache(
       vehicle: m.vehicle,
     }));
 
-    return { maintenance, total };
+    const result = { maintenance, total };
+    await setRedisCache(cacheKey, result, 15, cachedMaintenance.version);
+    return result;
   }
 );
 
@@ -91,8 +105,20 @@ export const getContracts = cache(
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { contracts: [], total: 0 };
+    const userId = session.user.id;
+    const cacheKey = `syncar:cache:contracts:${userId}:page:${JSON.stringify([
+      page,
+      limit,
+      search,
+      status,
+      sortColumn,
+      sortDirection,
+    ])}`;
+    const cachedContracts = await getRedisCache<{ contracts: any[]; total: number }>(cacheKey);
+    if (cachedContracts.value) return cachedContracts.value;
+
     const skip = (page - 1) * limit;
-    const where: Prisma.ContractWhereInput = { userId: session.user.id };
+    const where: Prisma.ContractWhereInput = { userId };
     if (status) where.status = status;
     if (search) {
       where.OR = [
@@ -132,7 +158,9 @@ export const getContracts = cache(
       updatedAt: contract.updatedAt.toISOString(),
       startDate: contract.startDate.toISOString(),
     }));
-    return { contracts, total };
+    const result = { contracts, total };
+    await setRedisCache(cacheKey, result, 15, cachedContracts.version);
+    return result;
   }
 );
 
@@ -162,8 +190,20 @@ export const getDrivers = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { drivers: [], total: 0 };
+    const userId = session.user.id;
+    const cacheKey = `syncar:cache:drivers:${userId}:page:${JSON.stringify([
+      page,
+      limit,
+      search,
+      status,
+      sortColumn,
+      sortDirection,
+    ])}`;
+    const cachedDrivers = await getRedisCache<{ drivers: Driver[]; total: number }>(cacheKey);
+    if (cachedDrivers.value) return cachedDrivers.value;
+
     const skip = (page - 1) * limit;
-    const where: Prisma.DriverWhereInput = { userId: session.user.id };
+    const where: Prisma.DriverWhereInput = { userId };
     if (status) {
       where.status = status;
     }
@@ -210,18 +250,26 @@ export const getDrivers = cache(
       updatedAt: driver.updatedAt.toISOString(),
       cnhValidity: driver.cnhValidity?.toISOString() ?? null,
     }));
-    return { drivers, total };
+    const result = { drivers, total };
+    await setRedisCache(cacheKey, result, 15, cachedDrivers.version);
+    return result;
   }
 );
 
 export const getAllDrivers = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
-  return prisma.driver.findMany({
-    where: { userId: session.user.id },
+  const userId = session.user.id;
+  const cacheKey = `syncar:cache:drivers:${userId}:all`;
+  const cachedDrivers = await getRedisCache<Driver[]>(cacheKey);
+  if (cachedDrivers.value) return cachedDrivers.value;
+  const drivers = await prisma.driver.findMany({
+    where: { userId },
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   }) as unknown as Driver[];
+  await setRedisCache(cacheKey, drivers, 15, cachedDrivers.version);
+  return drivers;
 });
 
 export const getVehicles = cache(
@@ -235,8 +283,20 @@ export const getVehicles = cache(
   ) => {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return { vehicles: [], total: 0 };
+    const userId = session.user.id;
+    const cacheKey = `syncar:cache:vehicles:${userId}:page:${JSON.stringify([
+      page,
+      limit,
+      search,
+      status,
+      sortColumn,
+      sortDirection,
+    ])}`;
+    const cachedVehicles = await getRedisCache<{ vehicles: Vehicle[]; total: number }>(cacheKey);
+    if (cachedVehicles.value) return cachedVehicles.value;
+
     const skip = (page - 1) * limit;
-    const where: Prisma.VehicleWhereInput = { userId: session.user.id };
+    const where: Prisma.VehicleWhereInput = { userId };
     if (status) where.status = status;
     if (search) {
       where.OR = [
@@ -276,18 +336,26 @@ export const getVehicles = cache(
       createdAt: vehicle.createdAt.toISOString(),
       updatedAt: vehicle.updatedAt.toISOString(),
     }));
-    return { vehicles, total };
+    const result = { vehicles, total };
+    await setRedisCache(cacheKey, result, 15, cachedVehicles.version);
+    return result;
   }
 );
 
 export const getAllVehicles = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
-  return prisma.vehicle.findMany({
-    where: { userId: session.user.id },
+  const userId = session.user.id;
+  const cacheKey = `syncar:cache:vehicles:${userId}:all`;
+  const cachedVehicles = await getRedisCache<Vehicle[]>(cacheKey);
+  if (cachedVehicles.value) return cachedVehicles.value;
+  const vehicles = await prisma.vehicle.findMany({
+    where: { userId },
     select: { id: true, plate: true, brand: true, model: true, status: true },
     orderBy: { model: "asc" },
   }) as unknown as Vehicle[];
+  await setRedisCache(cacheKey, vehicles, 15, cachedVehicles.version);
+  return vehicles;
 });
 
 // --- Financial Page Functions ---
@@ -303,6 +371,9 @@ export const getPendingPayments = cache(
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { payments: [], total: 0 };
+    const cacheKey = `syncar:cache:financial:${session.user.id}:pending:${JSON.stringify([page, limit, search, sortColumn, sortDirection, filters])}`;
+    const cached = await getRedisCache<{ payments: any[]; total: number }>(cacheKey);
+    if (cached.value) return cached.value;
     const skip = (page - 1) * limit;
     const where: Prisma.PaymentWhereInput = {
       contract: { userId: session.user.id },
@@ -360,7 +431,9 @@ export const getPendingPayments = cache(
         ? payment.paymentDate.toISOString()
         : null,
     }));
-    return { payments, total };
+    const result = { payments, total };
+    await setRedisCache(cacheKey, result, 15, cached.version);
+    return result;
   }
 );
 
@@ -375,6 +448,9 @@ export const getPaidPayments = cache(
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { payments: [], total: 0 };
+    const cacheKey = `syncar:cache:financial:${session.user.id}:paid:${JSON.stringify([page, limit, search, sortColumn, sortDirection, filters])}`;
+    const cached = await getRedisCache<{ payments: any[]; total: number }>(cacheKey);
+    if (cached.value) return cached.value;
     const skip = (page - 1) * limit;
     const where: Prisma.PaymentWhereInput = {
       contract: { userId: session.user.id },
@@ -440,7 +516,9 @@ export const getPaidPayments = cache(
         ? payment.paymentDate.toISOString()
         : null,
     }));
-    return { payments, total };
+    const result = { payments, total };
+    await setRedisCache(cacheKey, result, 15, cached.version);
+    return result;
   }
 );
 
@@ -455,6 +533,9 @@ export const getRecentExpenses = cache(
   ) => {
     const session = await getDataAccessSession();
     if (!session?.user?.id) return { expenses: [], total: 0 };
+    const cacheKey = `syncar:cache:financial:${session.user.id}:expenses:${JSON.stringify([page, limit, search, sortColumn, sortDirection, filters])}`;
+    const cached = await getRedisCache<{ expenses: any[]; total: number }>(cacheKey);
+    if (cached.value) return cached.value;
     const skip = (page - 1) * limit;
     const where: Prisma.ExpenseWhereInput = { userId: session.user.id };
     if (dateRange(filters)) where.date = dateRange(filters);
@@ -488,7 +569,9 @@ export const getRecentExpenses = cache(
       updatedAt: expense.updatedAt.toISOString(),
       date: expense.date.toISOString(),
     }));
-    return { expenses, total };
+    const result = { expenses, total };
+    await setRedisCache(cacheKey, result, 15, cached.version);
+    return result;
   }
 );
 
@@ -498,6 +581,9 @@ export const getReportVehiclePerformance = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
   const userId = session.user.id;
+  const cacheKey = `syncar:cache:reports:${userId}:vehicle-performance`;
+  const cached = await getRedisCache<any[]>(cacheKey);
+  if (cached.value) return cached.value;
 
   const [vehicles, revenues, expenses] = await Promise.all([
     prisma.vehicle.findMany({
@@ -542,6 +628,7 @@ export const getReportVehiclePerformance = cache(async () => {
     };
   });
 
+  await setRedisCache(cacheKey, report, 15, cached.version);
   return report;
 });
 
@@ -549,6 +636,9 @@ export const getReportExpenseAnalysis = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return { byType: [], byMonth: [] };
   const userId = session.user.id;
+  const cacheKey = `syncar:cache:reports:${userId}:expense-analysis`;
+  const cached = await getRedisCache<{ byType: { name: string; value: number }[]; byMonth: { month: string; value: number }[] }>(cacheKey);
+  if (cached.value) return cached.value;
 
   const [expensesByType, expensesByMonth] = await Promise.all([
     prisma.expense.groupBy({
@@ -576,13 +666,18 @@ export const getReportExpenseAnalysis = cache(async () => {
     value: Number(item.value),
   }));
 
-  return { byType, byMonth };
+  const result = { byType, byMonth };
+  await setRedisCache(cacheKey, result, 15, cached.version);
+  return result;
 });
 
 export const getReportCashFlow = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
   const userId = session.user.id;
+  const cacheKey = `syncar:cache:reports:${userId}:cash-flow`;
+  const cached = await getRedisCache<{ month: string; revenue: number; expense: number }[]>(cacheKey);
+  if (cached.value) return cached.value;
 
   const cashFlow = await prisma.$queryRaw<
     { month: string; revenue: number; expense: number }[]
@@ -607,16 +702,22 @@ export const getReportCashFlow = cache(async () => {
     GROUP BY month
     ORDER BY month
   `;
-  return cashFlow.map((item) => ({
+  const result = cashFlow.map((item) => ({
     month: item.month,
     revenue: Number(item.revenue),
     expense: Number(item.expense),
   }));
+  await setRedisCache(cacheKey, result, 15, cached.version);
+  return result;
 });
 
 export const getReportOverduePayments = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
+  const userId = session.user.id;
+  const cacheKey = `syncar:cache:reports:${userId}:overdue-payments`;
+  const cached = await getRedisCache<any[]>(cacheKey);
+  if (cached.value) return cached.value;
 
   const overduePayments = await prisma.$queryRaw<
     {
@@ -647,13 +748,14 @@ export const getReportOverduePayments = cache(async () => {
       JOIN drivers d ON c.driver_id = d.id
       JOIN vehicles v ON c.vehicle_id = v.id
     WHERE
-      c.user_id = ${session.user.id}
+      c.user_id = ${userId}
       AND p.status = 'Pendente'
       AND p.due_date < NOW()
     ORDER BY
       p.due_date ASC
   `;
 
+  await setRedisCache(cacheKey, overduePayments, 15, cached.version);
   return overduePayments;
 });
 
@@ -661,6 +763,9 @@ export const getReportDriverSummary = cache(async () => {
   const session = await getDataAccessSession();
   if (!session?.user?.id) return [];
   const userId = session.user.id;
+  const cacheKey = `syncar:cache:reports:${userId}:driver-summary`;
+  const cached = await getRedisCache<any[]>(cacheKey);
+  if (cached.value) return cached.value;
 
   const [drivers, revenues, lastContracts] = await Promise.all([
     prisma.driver.findMany({
@@ -705,6 +810,7 @@ export const getReportDriverSummary = cache(async () => {
     };
   });
 
+  await setRedisCache(cacheKey, report, 15, cached.version);
   return report;
 });
 
@@ -726,6 +832,27 @@ export const getDashboardData = cache(async () => {
     };
   }
   const userId = session.user.id;
+  const cacheKey = `syncar:cache:dashboard:${userId}`;
+  const cachedDashboard = await getRedisCache<{
+    stats: {
+      totalRevenue: number;
+      totalExpenses: number;
+      netProfit: number;
+      overduePaymentsCount: number;
+      rentedVehiclesCount: number;
+      availableVehiclesCount: number;
+      totalVehicles: number;
+    };
+    pendingPayments: Array<{
+      id: string;
+      dueDate: string;
+      value: number;
+      driverName: string;
+      vehicleInfo: string;
+    }>;
+  }>(cacheKey);
+  if (cachedDashboard.value) return cachedDashboard.value;
+
   const [
     totalRevenueResult,
     totalExpensesResult,
@@ -791,12 +918,12 @@ export const getDashboardData = cache(async () => {
   const netProfit = totalRevenue - totalExpenses;
   const pendingPaymentsWithDetails = pendingPayments.map((payment) => ({
     id: payment.id,
-    dueDate: payment.dueDate,
+    dueDate: payment.dueDate.toISOString(),
     value: payment.value,
     driverName: payment.contract.driver.name,
     vehicleInfo: `${payment.contract.vehicle.plate} - ${payment.contract.vehicle.model}`,
   }));
-  return {
+  const dashboardData = {
     stats: {
       totalRevenue,
       totalExpenses,
@@ -808,6 +935,8 @@ export const getDashboardData = cache(async () => {
     },
     pendingPayments: pendingPaymentsWithDetails,
   };
+  await setRedisCache(cacheKey, dashboardData, 15, cachedDashboard.version);
+  return dashboardData;
 });
 
 export const getProfile = cache(async () => {

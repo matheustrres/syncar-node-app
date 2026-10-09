@@ -11,12 +11,13 @@ import Modal from "@/components/ui/Modal";
 import PaymentForm from "@/components/forms/PaymentForm";
 import ExpenseForm from "@/components/forms/ExpenseForm";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
+import DataTableSkeleton from "@/components/ui/DataTableSkeleton";
 import type { FinancialSummary } from "@/lib/financial-summary";
 import { expenseLabel } from "@/lib/financial-filters";
 import styles from "./financial.module.css";
 
 interface Props {
-  initialSummary: FinancialSummary;
+  initialSummary: FinancialSummary | null;
   initialPendingPayments: { payments: FinancialPayment[]; total: number };
   initialPaidPayments: { payments: FinancialPayment[]; total: number };
   initialRecentExpenses: { expenses: ExpenseWithRelations[]; total: number };
@@ -76,7 +77,7 @@ export default function FinancialClientPage({ initialPendingPayments, initialPai
   const firstItem = total ? (filter.page - 1) * filter.limit + 1 : 0;
   const lastItem = Math.min(filter.page * filter.limit, total);
   const resultName = tab === "expenses" ? (total === 1 ? "despesa" : "despesas") : tab === "paid" ? (total === 1 ? "recebimento" : "recebimentos") : (total === 1 ? "parcela a receber" : "parcelas a receber");
-  const summary = useSWR<FinancialSummary>("/api/financial/summary", fetchOptions, { fallbackData: initialSummary });
+  const summary = useSWR<FinancialSummary>("/api/financial/summary", fetchOptions, { fallbackData: initialSummary ?? undefined });
   const [detail, setDetail] = useState<FinancialPayment | ExpenseWithRelations | null>(null);
   const drawer = useRef<HTMLDialogElement>(null);
   const detailTrigger = useRef<HTMLButtonElement | null>(null);
@@ -167,7 +168,26 @@ export default function FinancialClientPage({ initialPendingPayments, initialPai
           {!invalidDates && !list.error && !list.isLoading && pages > 1 && <PageNavigation page={filter.page} pages={pages} setPage={page => updateFilters({ page })} />}
         </div>
       </div>
-      {!invalidDates && !list.error && !list.isLoading && (list.data?.total ?? 0) > 0 ? <div className={styles.tableWrap}><table className={styles.table}>
+      {list.isLoading && !invalidDates && !list.error ? <DataTableSkeleton
+        columns={tab === "expenses" ? [
+          { key: "date", label: "Data" },
+          { key: "description", label: "Categoria e descrição", variant: "primary", supportingLine: true },
+          { key: "vehicle", label: "Veículo" },
+          { key: "amount", label: "Valor", variant: "amount" },
+          { key: "actions", label: "Ações", variant: "actions" },
+        ] : [
+          { key: "driver", label: "Motorista", variant: "primary" },
+          { key: "vehicle", label: "Veículo", supportingLine: true },
+          { key: "due", label: "Vencimento" },
+          { key: "status", label: tab === "paid" ? "Recebimento" : "Situação", variant: tab === "paid" ? "text" : "status" },
+          { key: "amount", label: "Valor", variant: "amount" },
+          { key: "actions", label: "Ações", variant: "actions" },
+        ]}
+        rows={6}
+        label="Carregando registros financeiros"
+        className={styles.tableWrap}
+        tableClassName={`${styles.table} ${styles.skeletonTable}`}
+      /> : !invalidDates && !list.error && (list.data?.total ?? 0) > 0 ? <div className={styles.tableWrap}><table className={styles.table}>
         <caption className={styles.srOnly}>{tabs.find(item => item.id === tab)!.label}</caption>
         <thead><tr>{(tab === "expenses" ? ["Data", "Categoria e descrição", "Veículo", "Valor", "Ações"] : ["Motorista", "Veículo", "Vencimento", tab === "paid" ? "Recebimento" : "Situação", "Valor", "Ações"]).map(title => <th scope="col" key={title}>{title}</th>)}</tr></thead>
         <tbody>{tab === "expenses" ? list.data?.expenses?.map(item => <tr key={item.id}>

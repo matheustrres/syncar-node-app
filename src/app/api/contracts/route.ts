@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/authOptions";
 import { normalizeString } from "@/lib/string-utils";
 import { Prisma } from "@prisma/client";
 import { contractBodySchema, contractIdsSchema, contractListQuerySchema, parseContractJson } from "@/lib/contract-validation";
+import { getRedisCache, invalidateContractCaches, invalidateVehicleCaches, setRedisCache } from "@/lib/redis-cache";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -20,6 +21,9 @@ export async function GET(request: NextRequest) {
   }
   const parsedQuery = contractListQuerySchema.safeParse(queryInput);
   if (!parsedQuery.success) return NextResponse.json({ error: parsedQuery.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
+  const cacheKey = `syncar:cache:contracts:${session.user.id}:api:${encodeURIComponent(JSON.stringify(parsedQuery.data))}`;
+  const cachedContracts = await getRedisCache<unknown>(cacheKey);
+  if (cachedContracts.value) return NextResponse.json(cachedContracts.value);
   const { page, limit, sortColumn, sortDirection, driverName, vehiclePlate, vehicleModel, status, weeklyValueMin, weeklyValueMax, startDateStartDate, startDateEndDate } = parsedQuery.data;
   const skip = (page - 1) * limit;
   const where: Prisma.ContractWhereInput = { userId: session.user.id };
@@ -53,24 +57,31 @@ export async function GET(request: NextRequest) {
   } else {
     orderBy = { [sortColumn]: sortDirection };
   }
-  const [contracts, total] = await prisma.$transaction([
-    prisma.contract.findMany({
-      where,
-      include: {
-        driver: {
-          select: { name: true },
+  try {
+    const [contracts, total] = await prisma.$transaction([
+      prisma.contract.findMany({
+        where,
+        include: {
+          driver: {
+            select: { name: true },
+          },
+          vehicle: {
+            select: { plate: true, model: true },
+          },
         },
-        vehicle: {
-          select: { plate: true, model: true },
-        },
-      },
-      skip,
-      take: limit,
-      orderBy,
-    }),
-    prisma.contract.count({ where }),
-  ]);
-  return NextResponse.json({ contracts, total });
+        skip,
+        take: limit,
+        orderBy,
+      }),
+      prisma.contract.count({ where }),
+    ]);
+    const result = { contracts, total };
+    await setRedisCache(cacheKey, result, 15, cachedContracts.version);
+    return NextResponse.json(result);
+  } catch (error) {
+    console.error("Erro ao buscar contratos:", error);
+    return NextResponse.json({ error: "Ocorreu um erro ao buscar contratos." }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -168,6 +179,8 @@ export async function POST(request: NextRequest) {
       where: { id: vehicleId, userId: session.user.id },
       data: { status: "Alugado" },
     });
+    await invalidateVehicleCaches(session.user.id);
+    await invalidateContractCaches(session.user.id);
 
     return NextResponse.json(newContract);
   } catch (error) {
@@ -196,6 +209,7 @@ export async function DELETE(request: NextRequest) {
         userId: session.user.id,
       },
     });
+    await invalidateContractCaches(session.user.id);
     return NextResponse.json(
       { message: "Contratos excluídos com sucesso." },
       { status: 200 }

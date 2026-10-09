@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 import { prisma } from "@/lib/prisma";
+import { invalidateMaintenanceCaches } from "@/lib/redis-cache";
 import { maintenanceBodySchema, maintenanceIdSchema, parseMaintenanceJson } from "@/lib/maintenance-validation";
 
 export async function GET(
@@ -69,6 +70,7 @@ export async function PUT(
         notes: data.notes || null,
       },
     });
+    await invalidateMaintenanceCaches(session.user.id);
     return NextResponse.json(updatedMaintenance);
   } catch (error) {
     console.error(`Error updating maintenance record ${id}:`, error);
@@ -93,6 +95,7 @@ export async function DELETE(
         userId: session.user.id,
       },
     });
+    await invalidateMaintenanceCaches(session.user.id);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error(`Error deleting maintenance record ${id}:`, error);

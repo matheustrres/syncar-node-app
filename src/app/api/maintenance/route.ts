@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
+import { getRedisCache, invalidateMaintenanceCaches, setRedisCache } from "@/lib/redis-cache";
 import {
   maintenanceBodySchema,
   maintenanceIdsSchema,
@@ -25,6 +26,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
   }
   const query = parsed.data;
+  const paginated = searchParams.has("page");
+  const cacheKey = `syncar:cache:maintenance:${session.user.id}:api:${encodeURIComponent(JSON.stringify({ ...query, paginated }))}`;
+  const cachedMaintenance = await getRedisCache<unknown>(cacheKey);
+  if (cachedMaintenance.value) return NextResponse.json(cachedMaintenance.value);
   const where: Prisma.MaintenanceWhereInput = { userId: session.user.id };
   if (query.vehicleId) where.vehicleId = query.vehicleId;
   if (query.type) where.type = query.type as Prisma.MaintenanceWhereInput["type"];
@@ -47,7 +52,6 @@ export async function GET(request: Request) {
     };
   }
   const { page, limit, sortColumn, sortDirection } = query;
-  const paginated = searchParams.has("page");
   const orderBy: Prisma.MaintenanceOrderByWithRelationInput = sortColumn === "vehicle.plate"
     ? { vehicle: { plate: sortDirection } }
     : sortColumn === "vehicle.model"
@@ -63,7 +67,9 @@ export async function GET(request: Request) {
       }),
       prisma.maintenance.count({ where }),
     ]);
-    return NextResponse.json(paginated ? { maintenance: maintenances, total } : maintenances);
+    const result = paginated ? { maintenance: maintenances, total } : maintenances;
+    await setRedisCache(cacheKey, result, 15, cachedMaintenance.version);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching maintenances:", error);
     return NextResponse.json({ error: "Ocorreu um erro ao buscar manutenções." }, { status: 500 });
@@ -105,6 +111,7 @@ export async function POST(request: Request) {
       });
       return created;
     });
+    await invalidateMaintenanceCaches(session.user.id);
     return NextResponse.json(maintenance, { status: 201 });
   } catch (error) {
     console.error("Error creating maintenance record:", error);
@@ -119,6 +126,7 @@ export async function DELETE(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
     await prisma.maintenance.deleteMany({ where: { id: { in: parsed.data.ids }, userId: session.user.id } });
+    await invalidateMaintenanceCaches(session.user.id);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting maintenance records:", error);

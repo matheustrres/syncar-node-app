@@ -5,6 +5,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 import { handlePrismaError } from "@/lib/api-utils";
+import {
+  getRedisCache,
+  invalidateVehicleCaches,
+  setRedisCache,
+} from "@/lib/redis-cache";
 
 import { normalizeString } from "@/lib/string-utils";
 import {
@@ -30,6 +35,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsedQuery.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
   }
   const query = parsedQuery.data;
+  const cacheKey = `syncar:cache:vehicles:${session.user.id}:api:${encodeURIComponent(JSON.stringify(query))}`;
+  const cachedVehicles = await getRedisCache<{ vehicles: unknown[]; total: number }>(cacheKey);
+  if (cachedVehicles.value) return NextResponse.json(cachedVehicles.value);
   const { page, limit, sortColumn, sortDirection } = query;
   const skip = (page - 1) * limit;
   const where: Prisma.VehicleWhereInput = { userId: session.user.id };
@@ -66,7 +74,9 @@ export async function GET(request: NextRequest) {
     }),
     prisma.vehicle.count({ where }),
   ]);
-  return NextResponse.json({ vehicles, total });
+  const result = { vehicles, total };
+  await setRedisCache(cacheKey, result, 15, cachedVehicles.version);
+  return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {
@@ -103,6 +113,7 @@ export async function POST(request: Request) {
         modelNormalized: normalizeString(data.model),
       },
     });
+    await invalidateVehicleCaches(session.user.id);
     return NextResponse.json(newVehicle, { status: 201 });
   } catch (error: unknown) {
     return handlePrismaError(
@@ -139,6 +150,7 @@ export async function DELETE(request: NextRequest) {
         userId: session.user.id,
       },
     });
+    await invalidateVehicleCaches(session.user.id);
     return NextResponse.json(
       { message: "Veículos excluídos com sucesso." },
       { status: 200 }

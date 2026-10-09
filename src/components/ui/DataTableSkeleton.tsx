@@ -1,61 +1,72 @@
 "use client";
 
-const Shimmer = () => (
-  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-syncar-border to-transparent" />
-);
+import styles from "./DataTableSkeleton.module.css";
 
-const SkeletonCell = () => (
-  <div className="relative h-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
-    <Shimmer />
-  </div>
-);
+export type DataTableSkeletonColumn = {
+  key: string;
+  label?: string;
+  variant?: "text" | "primary" | "secondary" | "status" | "amount" | "actions" | "icon-actions";
+  supportingLine?: boolean;
+};
 
 interface DataTableSkeletonProps {
-  columns: number;
+  columns: number | DataTableSkeletonColumn[];
   rows?: number;
+  label?: string;
+  className?: string;
+  tableClassName?: string;
 }
+
+const numericColumns = (count: number): DataTableSkeletonColumn[] => [
+  ...Array.from({ length: count }, (_, index) => ({ key: `column-${index}` })),
+  { key: "actions", variant: "icon-actions" },
+];
 
 export default function DataTableSkeleton({
   columns,
   rows = 5,
+  label = "Carregando registros",
+  className,
+  tableClassName,
 }: DataTableSkeletonProps) {
+  const columnList = typeof columns === "number" ? numericColumns(columns) : columns;
+
   return (
-    <div className="overflow-hidden rounded-syncar-panel border border-syncar-border bg-syncar-surface shadow-sm">
-      <table className="min-w-full divide-y divide-syncar-border">
-        <thead className="bg-syncar-surface-subtle">
+    <div className={`${styles.container}${className ? ` ${className}` : ""}`} role="status" aria-label={label}>
+      <span className={styles.srOnly}>{label}</span>
+      <table className={`${styles.table}${tableClassName ? ` ${tableClassName}` : ""}`} aria-hidden="true">
+        <thead>
           <tr>
-            {Array.from({ length: columns }).map((_, i) => (
-              <th key={i} className="px-6 py-3">
-                <div className="relative h-4 w-20 overflow-hidden rounded-md bg-syncar-surface-subtle">
-                  <Shimmer />
-                </div>
+            {columnList.map((column) => (
+              <th scope="col" key={column.key}>
+                <span className={styles.heading} />
               </th>
             ))}
-            <th className="px-6 py-3">
-              <div className="relative ml-auto h-4 w-12 overflow-hidden rounded-md bg-syncar-surface-subtle">
-                <Shimmer />
-              </div>
-            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-syncar-border bg-syncar-surface">
-          {Array.from({ length: rows }).map((_, i) => (
-            <tr key={i}>
-              {Array.from({ length: columns }).map((_, j) => (
-                <td key={j} className="px-6 py-4">
-                  <SkeletonCell />
-                </td>
-              ))}
-              <td className="px-6 py-4">
-                <div className="flex justify-end gap-4">
-                  <div className="relative h-5 w-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
-                    <Shimmer />
-                  </div>
-                  <div className="relative h-5 w-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
-                    <Shimmer />
-                  </div>
-                </div>
-              </td>
+        <tbody>
+          {Array.from({ length: rows }, (_, row) => (
+            <tr key={row}>
+              {columnList.map((column) => {
+                const variant = column.variant ?? "text";
+                return (
+                  <td key={column.key} data-label={column.label}>
+                    {variant === "actions" ? (
+                      <span className={`${styles.line} ${styles.action}`} />
+                    ) : variant === "icon-actions" ? (
+                      <span className={styles.iconActions}>
+                        <span className={styles.iconAction} />
+                        <span className={styles.iconAction} />
+                      </span>
+                    ) : (
+                      <>
+                        <span className={`${styles.line} ${variant === "text" ? "" : styles[variant]}`} />
+                        {column.supportingLine && <span className={`${styles.line} ${styles.supporting}`} />}
+                      </>
+                    )}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

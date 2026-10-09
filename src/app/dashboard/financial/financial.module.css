@@ -82,6 +82,7 @@
 .table tbody tr:last-child td { border-bottom: 0; }
 .table tbody tr:hover { background: var(--syncar-surface-subtle); }
 .table .amount { font-size: 14px; }
+.skeletonTable tbody tr:hover { background: transparent; }
 .detailLink { min-height: 44px; text-align: left; color: var(--syncar-success); font-weight: 650; }
 .detailLink:hover { text-decoration: underline; text-underline-offset: 3px; }
 .secondary { display: block; max-width: 36ch; margin-top: 2px; color: var(--syncar-text-muted); font-size: 12px; overflow-wrap: anywhere; }

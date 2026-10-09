@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { handlePrismaError } from "@/lib/api-utils";
 import { normalizeString } from "@/lib/string-utils";
+import { getRedisCache, invalidateDriverCaches, setRedisCache } from "@/lib/redis-cache";
 import {
   driverCreateSchema,
   driverIdsSchema,
@@ -26,6 +27,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
   }
   const query = parsed.data;
+  const cacheKey = `syncar:cache:drivers:${session.user.id}:api:${encodeURIComponent(JSON.stringify(query))}`;
+  const cachedDrivers = await getRedisCache<unknown>(cacheKey);
+  if (cachedDrivers.value) return NextResponse.json(cachedDrivers.value);
   const where: Prisma.DriverWhereInput = { userId: session.user.id };
   for (const field of ["name", "cpf", "phone", "email"] as const) {
     const value = query[field];
@@ -48,7 +52,9 @@ export async function GET(request: NextRequest) {
       }),
       prisma.driver.count({ where }),
     ]);
-    return NextResponse.json({ drivers, total });
+    const result = { drivers, total };
+    await setRedisCache(cacheKey, result, 15, cachedDrivers.version);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Erro ao buscar motoristas:", error);
     return NextResponse.json({ error: "Ocorreu um erro ao buscar motoristas." }, { status: 500 });
@@ -77,6 +83,7 @@ export async function POST(request: Request) {
         cnhValidity: cnhValidity ? new Date(cnhValidity) : null,
       },
     });
+    await invalidateDriverCaches(session.user.id);
     return NextResponse.json(newDriver, { status: 201 });
   } catch (error: unknown) {
     return handlePrismaError(error, {
@@ -94,6 +101,7 @@ export async function DELETE(request: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
     await prisma.driver.deleteMany({ where: { id: { in: parsed.data.ids }, userId: session.user.id } });
+    await invalidateDriverCaches(session.user.id);
     return NextResponse.json({ message: "Motoristas excluídos com sucesso." }, { status: 200 });
   } catch (error) {
     console.error("Erro ao excluir motoristas:", error);

@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/authOptions";
 
 import { normalizeString } from "@/lib/string-utils";
 import { driverIdSchema, driverUpdateSchema, parseDriverJson } from "@/lib/driver-validation";
+import { invalidateDriverCaches } from "@/lib/redis-cache";
 
 export async function GET(
   _: NextRequest,
@@ -55,6 +56,7 @@ export async function PUT(
         ...(cnhValidity !== undefined && { cnhValidity: cnhValidity ? new Date(cnhValidity) : null }),
       },
     });
+    await invalidateDriverCaches(session.user.id);
     return NextResponse.json(updatedDriver);
   } catch (error) {
     console.error(`Erro ao atualizar motorista ${id}:`, error);
@@ -76,6 +78,7 @@ export async function DELETE(
   }
   try {
     await prisma.driver.delete({ where: { id, userId: session.user.id } });
+    await invalidateDriverCaches(session.user.id);
     return NextResponse.json({ message: "Motorista deletado" }, { status: 200 });
   } catch (error) {
     console.error(`Erro ao excluir motorista ${id}:`, error);

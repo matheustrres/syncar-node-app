@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { invalidateFinancialCaches } from "@/lib/redis-cache";
 
 async function getExpense(id: string, userId: string) {
   return await prisma.expense.findFirst({
@@ -30,6 +31,7 @@ export async function PUT(
     where: { id },
     data,
   });
+  await invalidateFinancialCaches(session.user.id);
   return NextResponse.json(updatedExpense);
 }
 
@@ -50,5 +52,6 @@ export async function DELETE(
     );
   }
   await prisma.expense.delete({ where: { id } });
+  await invalidateFinancialCaches(session.user.id);
   return NextResponse.json({ message: "Despesa excluída com sucesso" });
 }
