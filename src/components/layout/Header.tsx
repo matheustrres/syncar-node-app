@@ -9,12 +9,14 @@ import {
   CheckCheck,
   FileText,
   DollarSign,
+  ChevronRight,
 } from "lucide-react";
 import Image from "next/image";
 import { Menu, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import { useNotifications } from "@/hooks/useNotifications";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Notification } from "@/types";
 
 const NotificationIcon = ({
@@ -44,6 +46,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const pathname = usePathname();
   const { data: session } = useSession();
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
@@ -58,24 +61,62 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     return "#";
   };
 
+  const sections = [
+    { path: "/dashboard/vehicles", group: "Operação", label: "Veículos" },
+    { path: "/dashboard/maintenance", group: "Operação", label: "Manutenções" },
+    { path: "/dashboard/drivers", group: "Operação", label: "Motoristas" },
+    { path: "/dashboard/contracts", group: "Operação", label: "Contratos" },
+    { path: "/dashboard/financial", group: "Gestão", label: "Financeiro" },
+    { path: "/dashboard/reports", group: "Gestão", label: "Relatórios" },
+    { path: "/dashboard/notifications", group: "Painel", label: "Notificações" },
+    { path: "/dashboard/profile", group: "Conta", label: "Meu perfil" },
+  ];
+  const section = sections.find(({ path }) => pathname === path || pathname.startsWith(`${path}/`));
+  const breadcrumb = section ?? { path: "/dashboard", group: "Painel", label: "Visão geral" };
+  const isDetailPage = pathname !== breadcrumb.path;
+  const userName = session?.user?.name?.trim() || "Usuário";
+  const nameParts = userName.split(/\s+/);
+  const initials = `${nameParts[0]?.[0] ?? ""}${nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : ""}`.toLocaleUpperCase("pt-BR");
+
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-syncar-border bg-syncar-surface px-4 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-20 items-center justify-between gap-2 border-b border-syncar-border bg-syncar-surface px-4 sm:gap-4 sm:px-6 lg:px-10">
       <button
+        id="dashboard-menu-button"
         onClick={onMenuClick}
-        className="flex h-11 w-11 items-center justify-center rounded-syncar-control text-syncar-text hover:bg-syncar-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus lg:hidden"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-syncar-control text-syncar-text hover:bg-syncar-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus lg:hidden"
         aria-label="Abrir menu de navegação"
         aria-controls="dashboard-navigation"
       >
         <MenuIcon size={24} />
       </button>
 
-      <div className="flex-1" />
+      <nav aria-label="Localização atual" className="min-w-0 flex-1">
+        <ol className="flex min-w-0 items-center gap-2 text-sm sm:gap-3">
+          <li className="hidden shrink-0 items-center gap-2 text-syncar-muted sm:flex sm:gap-3">
+            {breadcrumb.group === "Painel" ? (
+              <Link href="/dashboard" className="rounded-sm hover:text-syncar-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus">Painel</Link>
+            ) : (
+              <span>{breadcrumb.group}</span>
+            )}
+            <ChevronRight size={14} strokeWidth={1.8} aria-hidden="true" />
+          </li>
+          <li className={`min-w-0 truncate font-semibold ${isDetailPage ? "hidden text-syncar-muted sm:block" : "text-syncar-text"}`}>
+            {isDetailPage ? <Link href={breadcrumb.path} className="rounded-sm hover:text-syncar-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus">{breadcrumb.label}</Link> : <span aria-current="page">{breadcrumb.label}</span>}
+          </li>
+          {isDetailPage && (
+            <li className="flex min-w-0 items-center gap-2 sm:gap-3">
+              <ChevronRight size={14} strokeWidth={1.8} className="hidden shrink-0 text-syncar-muted sm:block" aria-hidden="true" />
+              <span aria-current="page" className="truncate font-semibold text-syncar-text">Detalhes</span>
+            </li>
+          )}
+        </ol>
+      </nav>
 
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         {/* Notifications Menu */}
         <Menu as="div" className="relative inline-block text-left">
           <div>
-            <Menu.Button aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} não lidas` : "Notificações"} className="relative flex h-11 w-11 items-center justify-center rounded-syncar-control text-syncar-text hover:bg-syncar-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus">
+            <Menu.Button aria-label={unreadCount > 0 ? `Notificações, ${unreadCount} não lidas` : "Notificações"} className="relative flex h-11 w-11 items-center justify-center rounded-syncar-control border border-syncar-border text-syncar-muted hover:bg-syncar-subtle hover:text-syncar-text focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus">
               <Bell size={20} aria-hidden="true" />
               {unreadCount > 0 && (
                 <span className="absolute right-2 top-2 block h-2 w-2 rounded-full bg-syncar-danger" />
@@ -190,28 +231,26 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           </Transition>
         </Menu>
 
+        <span className="h-9 w-px bg-syncar-border" aria-hidden="true" />
+
         {/* User Menu */}
         <Menu as="div" className="relative inline-block text-left">
           <div>
-            <Menu.Button aria-label={`Menu da conta: ${session?.user?.name || "Usuário"}`} className="flex min-h-11 items-center gap-3 rounded-syncar-control px-2 hover:bg-syncar-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus">
-              <div className="text-right hidden sm:block">
-                <p className="max-w-48 truncate font-semibold text-sm text-syncar-text">
-                  {session?.user?.name || "Usuário"}
-                </p>
-                <p className="max-w-48 truncate text-xs text-syncar-muted">{session?.user?.email}</p>
-              </div>
-              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-syncar-subtle">
+            <Menu.Button aria-label={`Menu da conta: ${userName}`} className="flex min-h-11 items-center gap-3 rounded-syncar-control pl-1 hover:bg-syncar-subtle focus:outline-none focus-visible:ring-2 focus-visible:ring-syncar-focus sm:px-1">
+              <span className="hidden max-w-40 truncate text-sm font-semibold text-syncar-text sm:block lg:max-w-48">{userName}</span>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-syncar-subtle text-xs font-semibold text-syncar-brand">
                 {session?.user?.image ? (
                   <Image
                     src={session.user.image}
-                    alt="Avatar"
-                    width={40}
-                    height={40}
+                    alt=""
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <UserIcon className="text-syncar-muted" size={20} />
+                  initials
                 )}
-              </div>
+              </span>
             </Menu.Button>
           </div>
           <Transition

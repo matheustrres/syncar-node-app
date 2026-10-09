@@ -1,17 +1,17 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  CarFront, ChartNoAxesCombined, Users, FileText, Wallet,
-  ChartColumnIncreasing, Settings, Wrench, X, PanelLeftClose, PanelLeftOpen,
+  CarFront, House, Users, FileText, Wallet,
+  ChartColumnIncreasing, Settings, Wrench, X,
 } from "lucide-react";
 
 const navGroups = [
   {
     label: "Painel",
-    items: [{ href: "/dashboard", icon: ChartNoAxesCombined, label: "Visão geral" }],
+    items: [{ href: "/dashboard", icon: House, label: "Visão geral" }],
   },
   {
     label: "Operação",
@@ -33,53 +33,27 @@ const navGroups = [
 
 interface SidebarProps {
   isOpen: boolean;
-  isExpanded: boolean;
   onClose: () => void;
-  onToggle: () => void;
 }
 
-export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: SidebarProps) {
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  const sidebarRef = useRef<HTMLElement>(null);
-  const navRef = useRef<HTMLElement>(null);
-  const driversItemRef = useRef<HTMLLIElement>(null);
-  const [toggleTop, setToggleTop] = useState<number | null>(null);
 
-  useLayoutEffect(() => {
-    const sidebar = sidebarRef.current;
-    const nav = navRef.current;
-    const driversItem = driversItemRef.current;
-    if (!sidebar || !nav || !driversItem) return;
-
-    const updateTogglePosition = () => {
-      const sidebarRect = sidebar.getBoundingClientRect();
-      const itemRect = driversItem.getBoundingClientRect();
-      setToggleTop(itemRect.top + itemRect.height / 2 - sidebarRect.top);
-    };
-
-    updateTogglePosition();
-    const observer = new ResizeObserver(updateTogglePosition);
-    observer.observe(sidebar);
-    observer.observe(driversItem);
-    nav.addEventListener("scroll", updateTogglePosition);
-    window.addEventListener("resize", updateTogglePosition);
-    return () => {
-      observer.disconnect();
-      nav.removeEventListener("scroll", updateTogglePosition);
-      window.removeEventListener("resize", updateTogglePosition);
-    };
-  }, [isExpanded]);
+  const closeAndRestoreFocus = useCallback(() => {
+    onClose();
+    requestAnimationFrame(() => document.getElementById("dashboard-menu-button")?.focus());
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
     closeButtonRef.current?.focus();
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") closeAndRestoreFocus();
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, closeAndRestoreFocus]);
 
   return (
     <>
@@ -87,49 +61,49 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
         <button
           type="button"
           aria-label="Fechar menu de navegação"
-          onClick={onClose}
+          onClick={closeAndRestoreFocus}
           className="fixed inset-0 z-30 bg-syncar-brand/60 lg:hidden"
         />
       )}
       <aside
-        ref={sidebarRef}
         id="dashboard-navigation"
         aria-label="Navegação principal"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-syncar-brand text-white transition-[width,transform] duration-200 ease-out motion-reduce:transition-none lg:translate-x-0 ${isExpanded ? "lg:w-64" : "lg:w-[4.5rem]"} ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 w-64 flex-col border-r border-white/10 bg-syncar-brand text-white lg:flex lg:w-[17.25rem] ${isOpen ? "flex" : "hidden"}`}
       >
-        <div className={`flex h-16 flex-none items-center border-b border-white/10 px-5 ${isExpanded ? "justify-between" : "lg:justify-center"}`}>
-          <Link href="/dashboard" onClick={onClose} aria-label="SynCar, visão geral" className={`flex items-center rounded text-xl font-bold tracking-tight transition-[gap] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-syncar-action ${isExpanded ? "gap-2" : "gap-2 lg:gap-0"}`}>
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-syncar-action text-syncar-brand"><CarFront size={21} aria-hidden="true" /></span>
-            <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-32 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>syncar<span className="-ml-2 text-syncar-action">.</span></span>
+        <div className="flex h-20 flex-none items-center justify-between border-b border-white/10 px-5">
+          <Link href="/dashboard" onClick={onClose} aria-label="SynCar, visão geral" className="flex items-center gap-3 rounded text-[22px] font-bold tracking-[-0.03em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-syncar-action">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-syncar-action text-syncar-brand">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3.5 17.5 8.3 7h12.2l-4.8 10.5H3.5Z" fill="currentColor" />
+              </svg>
+            </span>
+            <span>syncar<span className="ml-1 text-syncar-action">.</span></span>
           </Link>
-          <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Fechar menu" className="flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-action lg:hidden">
+          <button ref={closeButtonRef} type="button" onClick={closeAndRestoreFocus} aria-label="Fechar menu" className="flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-action lg:hidden">
             <X size={20} aria-hidden="true" />
           </button>
         </div>
 
-        <nav ref={navRef} className={`flex-1 overflow-y-auto py-5 ${isExpanded ? "px-3" : "px-2 lg:px-2"}`} aria-label="Seções da plataforma">
+        <nav className="flex-1 overflow-y-auto px-2 py-8" aria-label="Seções da plataforma">
           <div className="space-y-5">
             {navGroups.map((group) => (
               <section key={group.label} aria-label={group.label}>
-                <div className={`mb-2 flex items-center px-3 text-[11px] font-semibold uppercase tracking-wider text-[#afc6bd] transition-[gap] duration-200 ease-out motion-reduce:transition-none ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center"}`} aria-hidden="true">
-                  <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-24 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>{group.label}</span>
-                  <span className={`h-px flex-1 bg-white/15 transition-opacity duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:opacity-100 lg:delay-100" : "lg:opacity-0 lg:delay-0"}`} />
+                <div className="mb-3 px-4 text-xs font-bold uppercase tracking-[0.08em] text-[#afc6bd]">
+                  {group.label}
                 </div>
                 <ul className="space-y-1">
                   {group.items.map((item) => {
                     const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
                     return (
-                      <li key={item.href} ref={item.href === "/dashboard/drivers" ? driversItemRef : undefined}>
+                      <li key={item.href}>
                         <Link
                           href={item.href}
                           onClick={onClose}
                           aria-current={active ? "page" : undefined}
-                          aria-label={isExpanded ? undefined : item.label}
-                          title={isExpanded ? undefined : item.label}
-                          className={`flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-[gap,color,background-color] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center lg:px-0"} ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
+                          className={`flex min-h-12 items-center gap-3 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
                         >
                           <item.icon className="shrink-0" size={19} strokeWidth={1.8} aria-hidden="true" />
-                          <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-40 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>{item.label}</span>
+                          <span>{item.label}</span>
                         </Link>
                       </li>
                     );
@@ -139,29 +113,15 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
             ))}
           </div>
         </nav>
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-label={isExpanded ? "Recolher menu de navegação" : "Expandir menu de navegação"}
-          aria-expanded={isExpanded}
-          aria-controls="dashboard-navigation"
-          title={isExpanded ? "Recolher menu" : "Expandir menu"}
-          style={toggleTop === null ? undefined : { top: toggleTop }}
-          className={`absolute right-0 z-50 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/20 bg-syncar-brand text-[#d2dfda] shadow-md transition-colors hover:bg-syncar-action hover:text-syncar-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action lg:flex ${toggleTop === null ? "invisible" : ""}`}
-        >
-          {isExpanded ? <PanelLeftClose size={18} aria-hidden="true" /> : <PanelLeftOpen size={18} aria-hidden="true" />}
-        </button>
-        <div className={`border-t border-white/10 p-3 ${isExpanded ? "" : "lg:px-2"}`}>
+        <div className="border-t border-white/10 p-2">
           <Link
             href="/dashboard/profile"
             onClick={onClose}
             aria-current={pathname.startsWith("/dashboard/profile") ? "page" : undefined}
-            title={isExpanded ? undefined : "Meu perfil"}
-            aria-label={isExpanded ? undefined : "Meu perfil"}
-            className={`flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-[gap,color,background-color] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center lg:px-0"} ${pathname.startsWith("/dashboard/profile") ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
+            className={`flex min-h-12 items-center gap-3 rounded-lg px-4 py-2 text-sm font-semibold transition-colors duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${pathname.startsWith("/dashboard/profile") ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
           >
             <Settings className="shrink-0" size={19} strokeWidth={1.8} aria-hidden="true" />
-            <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-32 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>Meu perfil</span>
+            <span>Meu perfil</span>
           </Link>
         </div>
       </aside>
