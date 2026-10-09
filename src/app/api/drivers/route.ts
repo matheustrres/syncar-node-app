@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       prisma.driver.count({ where }),
     ]);
     const result = { drivers, total };
-    await setRedisCache(cacheKey, result, 15, cachedDrivers.version);
+    await setRedisCache(cacheKey, result, cachedDrivers);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Erro ao buscar motoristas:", error);

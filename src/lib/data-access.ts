@@ -89,7 +89,7 @@ export const getMaintenance = cache(
     }));
 
     const result = { maintenance, total };
-    await setRedisCache(cacheKey, result, 15, cachedMaintenance.version);
+    await setRedisCache(cacheKey, result, cachedMaintenance);
     return result;
   }
 );
@@ -159,7 +159,7 @@ export const getContracts = cache(
       startDate: contract.startDate.toISOString(),
     }));
     const result = { contracts, total };
-    await setRedisCache(cacheKey, result, 15, cachedContracts.version);
+    await setRedisCache(cacheKey, result, cachedContracts);
     return result;
   }
 );
@@ -251,7 +251,7 @@ export const getDrivers = cache(
       cnhValidity: driver.cnhValidity?.toISOString() ?? null,
     }));
     const result = { drivers, total };
-    await setRedisCache(cacheKey, result, 15, cachedDrivers.version);
+    await setRedisCache(cacheKey, result, cachedDrivers);
     return result;
   }
 );
@@ -268,7 +268,7 @@ export const getAllDrivers = cache(async () => {
     select: { id: true, name: true },
     orderBy: { name: "asc" },
   }) as unknown as Driver[];
-  await setRedisCache(cacheKey, drivers, 15, cachedDrivers.version);
+  await setRedisCache(cacheKey, drivers, cachedDrivers);
   return drivers;
 });
 
@@ -337,7 +337,7 @@ export const getVehicles = cache(
       updatedAt: vehicle.updatedAt.toISOString(),
     }));
     const result = { vehicles, total };
-    await setRedisCache(cacheKey, result, 15, cachedVehicles.version);
+    await setRedisCache(cacheKey, result, cachedVehicles);
     return result;
   }
 );
@@ -354,7 +354,7 @@ export const getAllVehicles = cache(async () => {
     select: { id: true, plate: true, brand: true, model: true, status: true },
     orderBy: { model: "asc" },
   }) as unknown as Vehicle[];
-  await setRedisCache(cacheKey, vehicles, 15, cachedVehicles.version);
+  await setRedisCache(cacheKey, vehicles, cachedVehicles);
   return vehicles;
 });
 
@@ -432,7 +432,7 @@ export const getPendingPayments = cache(
         : null,
     }));
     const result = { payments, total };
-    await setRedisCache(cacheKey, result, 15, cached.version);
+    await setRedisCache(cacheKey, result, cached);
     return result;
   }
 );
@@ -517,7 +517,7 @@ export const getPaidPayments = cache(
         : null,
     }));
     const result = { payments, total };
-    await setRedisCache(cacheKey, result, 15, cached.version);
+    await setRedisCache(cacheKey, result, cached);
     return result;
   }
 );
@@ -570,7 +570,7 @@ export const getRecentExpenses = cache(
       date: expense.date.toISOString(),
     }));
     const result = { expenses, total };
-    await setRedisCache(cacheKey, result, 15, cached.version);
+    await setRedisCache(cacheKey, result, cached);
     return result;
   }
 );
@@ -628,7 +628,7 @@ export const getReportVehiclePerformance = cache(async () => {
     };
   });
 
-  await setRedisCache(cacheKey, report, 15, cached.version);
+  await setRedisCache(cacheKey, report, cached);
   return report;
 });
 
@@ -667,7 +667,7 @@ export const getReportExpenseAnalysis = cache(async () => {
   }));
 
   const result = { byType, byMonth };
-  await setRedisCache(cacheKey, result, 15, cached.version);
+  await setRedisCache(cacheKey, result, cached);
   return result;
 });
 
@@ -707,7 +707,7 @@ export const getReportCashFlow = cache(async () => {
     revenue: Number(item.revenue),
     expense: Number(item.expense),
   }));
-  await setRedisCache(cacheKey, result, 15, cached.version);
+  await setRedisCache(cacheKey, result, cached);
   return result;
 });
 
@@ -755,7 +755,7 @@ export const getReportOverduePayments = cache(async () => {
       p.due_date ASC
   `;
 
-  await setRedisCache(cacheKey, overduePayments, 15, cached.version);
+  await setRedisCache(cacheKey, overduePayments, cached);
   return overduePayments;
 });
 
@@ -810,7 +810,7 @@ export const getReportDriverSummary = cache(async () => {
     };
   });
 
-  await setRedisCache(cacheKey, report, 15, cached.version);
+  await setRedisCache(cacheKey, report, cached);
   return report;
 });
 
@@ -935,7 +935,7 @@ export const getDashboardData = cache(async () => {
     },
     pendingPayments: pendingPaymentsWithDetails,
   };
-  await setRedisCache(cacheKey, dashboardData, 15, cachedDashboard.version);
+  await setRedisCache(cacheKey, dashboardData, cachedDashboard);
   return dashboardData;
 });
 

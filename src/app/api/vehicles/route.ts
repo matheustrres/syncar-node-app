@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     prisma.vehicle.count({ where }),
   ]);
   const result = { vehicles, total };
-  await setRedisCache(cacheKey, result, 15, cachedVehicles.version);
+  await setRedisCache(cacheKey, result, cachedVehicles);
   return NextResponse.json(result);
 }
 

@@ -20,3 +20,9 @@ O Compose não lê as variáveis da aplicação: as credenciais locais de desenv
 O arquivo `.env.development.local` é ignorado pelo Git. Não crie um `.env` genérico com credenciais locais, pois o Next.js também o carregaria em produção. Os valores `NEXT_PUBLIC_*` são incorporados ao JavaScript durante `pnpm build`; configure os IDs de preço do ambiente de destino antes da compilação. `NODE_ENV` é definido automaticamente pelo Next.js e não deve ser colocado nos arquivos `.env*`.
 
 Stripe exige chaves e preços do modo de teste em desenvolvimento e valores live em produção. O envio de recuperação de senha exige um servidor SMTP configurado. A porta `1025` do exemplo local pressupõe um servidor SMTP de desenvolvimento, como Mailpit.
+
+## Cache das páginas
+
+O Redis guarda os resultados por usuário e escopo. As mutações incrementam a versão dos escopos afetados; entradas de versões anteriores deixam de ser lidas e expiram pelo TTL. Listas de veículos, motoristas, contratos, manutenções e relatórios usam 5 minutos; consultas financeiras usam 1 minuto; dashboard e relatório de pagamentos vencidos usam 30 segundos.
+
+Para observar o cache, configure `CACHE_METRICS_ENABLED=true` no processo da aplicação. A cada 60 segundos com atividade, os logs agregam por escopo acessos, acertos, ausências, desvios por falha ou falta do Redis e duração média/máxima de carregamento após uma ausência. Essa duração inclui a consulta ao banco e a preparação do resultado; não é o tempo isolado de SQL. As métricas são locais a cada processo e reiniciam quando ele reinicia.

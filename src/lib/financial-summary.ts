@@ -36,6 +36,6 @@ export async function getFinancialSummary(): Promise<FinancialSummary | null> {
     upcoming: { value: upcoming._sum.value || 0, count: upcoming._count },
     received: { value: received._sum.value || 0, count: received._count },
     expenses: { value: expenses._sum.value || 0, count: expenses._count }, categories: categories.map(item => item.type) };
-  await setRedisCache(cacheKey, result, 15, cached.version);
+  await setRedisCache(cacheKey, result, cached);
   return result;
 }

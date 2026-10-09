@@ -68,7 +68,7 @@ export async function GET(request: Request) {
       prisma.maintenance.count({ where }),
     ]);
     const result = paginated ? { maintenance: maintenances, total } : maintenances;
-    await setRedisCache(cacheKey, result, 15, cachedMaintenance.version);
+    await setRedisCache(cacheKey, result, cachedMaintenance);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching maintenances:", error);

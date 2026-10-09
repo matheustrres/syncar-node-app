@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       prisma.contract.count({ where }),
     ]);
     const result = { contracts, total };
-    await setRedisCache(cacheKey, result, 15, cachedContracts.version);
+    await setRedisCache(cacheKey, result, cachedContracts);
     return NextResponse.json(result);
   } catch (error) {
     console.error("Erro ao buscar contratos:", error);
