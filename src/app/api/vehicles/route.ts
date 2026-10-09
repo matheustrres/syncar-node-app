@@ -7,6 +7,12 @@ import { authOptions } from "@/lib/authOptions";
 import { handlePrismaError } from "@/lib/api-utils";
 
 import { normalizeString } from "@/lib/string-utils";
+import {
+  parseJsonBody,
+  vehicleCreateSchema,
+  vehicleIdsSchema,
+  vehicleListQuerySchema,
+} from "@/lib/vehicle-validation";
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -14,27 +20,30 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10", 10) || 10));
-  const sortableColumns = ["createdAt", "plate", "brand", "model", "status"] as const;
-  const requestedSort = searchParams.get("sortColumn");
-  const sortColumn = sortableColumns.find((column) => column === requestedSort) || "createdAt";
-  const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
+  for (const key of new Set(searchParams.keys())) {
+    if (searchParams.getAll(key).length > 1) {
+      return NextResponse.json({ error: `Parâmetro repetido: ${key}.` }, { status: 400 });
+    }
+  }
+  const parsedQuery = vehicleListQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: parsedQuery.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
+  }
+  const query = parsedQuery.data;
+  const { page, limit, sortColumn, sortDirection } = query;
   const skip = (page - 1) * limit;
   const where: Prisma.VehicleWhereInput = { userId: session.user.id };
   for (const field of ["plate", "brand", "model"] as const) {
-    const value = searchParams.get(field);
+    const value = query[field];
     if (value) where[field] = { contains: value, mode: "insensitive" };
   }
-  const status = searchParams.get("status");
-  if (status) where.status = status;
+  if (query.status) where.status = query.status;
   for (const field of ["year", "km"] as const) {
-    const min = searchParams.get(`${field}Min`);
-    const max = searchParams.get(`${field}Max`);
-    const range: { gte?: number; lte?: number } = {};
-    if (min && /^\d+$/.test(min)) range.gte = Number(min);
-    if (max && /^\d+$/.test(max)) range.lte = Number(max);
-    if (Object.keys(range).length > 0) where[field] = range;
+    const min = query[`${field}Min`];
+    const max = query[`${field}Max`];
+    if (min !== undefined || max !== undefined) {
+      where[field] = { ...(min !== undefined ? { gte: min } : {}), ...(max !== undefined ? { lte: max } : {}) };
+    }
   }
   const [vehicles, total] = await prisma.$transaction([
     prisma.vehicle.findMany({
@@ -78,13 +87,17 @@ export async function POST(request: Request) {
       );
     }
   }
-  const data = await request.json();
+  const parsedBody = await parseJsonBody(request, vehicleCreateSchema);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: parsedBody.error }, { status: 400 });
+  }
+  const data = parsedBody.data;
   try {
     const newVehicle = await prisma.vehicle.create({
       data: {
         ...data,
-        renavam: data.renavam?.trim() || null,
-        chassis: data.chassis?.trim() || null,
+        renavam: data.renavam ?? null,
+        chassis: data.chassis ?? null,
         userId: session.user.id,
         plateNormalized: normalizeString(data.plate),
         modelNormalized: normalizeString(data.model),
@@ -109,13 +122,14 @@ export async function DELETE(request: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
-  const { ids } = await request.json();
-  if (!Array.isArray(ids) || ids.length === 0) {
+  const parsedBody = await parseJsonBody(request, vehicleIdsSchema);
+  if (!parsedBody.success) {
     return NextResponse.json(
-      { error: "IDs inválidos fornecidos." },
+      { error: parsedBody.error },
       { status: 400 }
     );
   }
+  const ids = parsedBody.data;
   try {
     await prisma.vehicle.deleteMany({
       where: {

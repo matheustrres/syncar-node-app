@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
+import { vehicleCatalogQuerySchema } from "@/lib/vehicle-validation";
 
 type CatalogItem = { code: string; name: string };
 
@@ -10,10 +11,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
 
-  const brand = request.nextUrl.searchParams.get("brand");
-  if (brand !== null && !/^\d+$/.test(brand)) {
-    return NextResponse.json({ error: "Marca inválida" }, { status: 400 });
+  const searchParams = request.nextUrl.searchParams;
+  for (const key of new Set(searchParams.keys())) {
+    if (searchParams.getAll(key).length > 1) {
+      return NextResponse.json({ error: `Parâmetro repetido: ${key}.` }, { status: 400 });
+    }
   }
+  const parsedQuery = vehicleCatalogQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
+  if (!parsedQuery.success) {
+    return NextResponse.json({ error: parsedQuery.error.issues[0]?.message ?? "Parâmetros inválidos." }, { status: 400 });
+  }
+  const { brand } = parsedQuery.data;
 
   const path = brand ? `/cars/brands/${brand}/models` : "/cars/brands";
   try {

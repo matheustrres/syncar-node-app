@@ -31,7 +31,8 @@
     "react-dom": "19.1.0",
     "react-imask": "^7.6.1",
     "stripe": "^19.1.0",
-    "swr": "^2.3.6"
+    "swr": "^2.3.6",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

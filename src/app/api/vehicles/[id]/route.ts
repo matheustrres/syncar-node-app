@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 import { normalizeString } from "@/lib/string-utils";
+import { parseJsonBody, vehicleIdSchema, vehicleUpdateSchema } from "@/lib/vehicle-validation";
 
 export async function GET(
   _: NextRequest,
@@ -14,8 +15,12 @@ export async function GET(
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { id } = await context.params;
+  const parsedId = vehicleIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return NextResponse.json({ error: "ID de veículo inválido." }, { status: 400 });
+  }
   const vehicle = await prisma.vehicle.findUnique({
-    where: { id, userId: session.user.id },
+    where: { id: parsedId.data, userId: session.user.id },
   });
   if (!vehicle) {
     return NextResponse.json(
@@ -35,18 +40,23 @@ export async function PUT(
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { id } = await context.params;
-  const data = await request.json();
-  if (data.plate) {
-    data.plateNormalized = normalizeString(data.plate);
+  const parsedId = vehicleIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return NextResponse.json({ error: "ID de veículo inválido." }, { status: 400 });
   }
-  if (data.model) {
-    data.modelNormalized = normalizeString(data.model);
+  const parsedBody = await parseJsonBody(request, vehicleUpdateSchema);
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: parsedBody.error }, { status: 400 });
   }
-  if ("renavam" in data) data.renavam = data.renavam?.trim() || null;
-  if ("chassis" in data) data.chassis = data.chassis?.trim() || null;
+  const data = parsedBody.data;
+  const updateData = {
+    ...data,
+    ...(data.plate !== undefined ? { plateNormalized: normalizeString(data.plate) } : {}),
+    ...(data.model !== undefined ? { modelNormalized: normalizeString(data.model) } : {}),
+  };
   const updatedVehicle = await prisma.vehicle.update({
-    where: { id, userId: session.user.id },
-    data,
+    where: { id: parsedId.data, userId: session.user.id },
+    data: updateData,
   });
   return NextResponse.json(updatedVehicle);
 }
@@ -60,8 +70,12 @@ export async function DELETE(
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
   const { id } = await context.params;
+  const parsedId = vehicleIdSchema.safeParse(id);
+  if (!parsedId.success) {
+    return NextResponse.json({ error: "ID de veículo inválido." }, { status: 400 });
+  }
   await prisma.vehicle.delete({
-    where: { id, userId: session.user.id },
+    where: { id: parsedId.data, userId: session.user.id },
   });
   return NextResponse.json({ message: "Veículo deletado" }, { status: 200 });
 }
