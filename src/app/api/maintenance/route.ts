@@ -2,60 +2,58 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
-
 import { prisma } from "@/lib/prisma";
+import {
+  maintenanceBodySchema,
+  maintenanceIdsSchema,
+  maintenanceListQuerySchema,
+  parseMaintenanceJson,
+} from "@/lib/maintenance-validation";
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-  try {
-    const { searchParams } = new URL(request.url);
-    const vehicleId = searchParams.get("vehicleId");
-    const page = Math.max(1, Number(searchParams.get("page")) || 1);
-    const limit = Math.min(100, Math.max(1, Number(searchParams.get("limit")) || 10));
-    const vehicle = searchParams.get("vehicle")?.trim();
-    const type = searchParams.get("type");
-    const allowedTypes = ["PREVENTIVA", "CORRETIVA", "TROCA_OLEO", "PNEUS", "FREIOS", "OUTROS"] as const;
-    const where: Prisma.MaintenanceWhereInput = {
-      userId: session.user.id,
-      ...(vehicleId && { vehicleId }),
-      ...(type && allowedTypes.some((value) => value === type) && { type: type as Prisma.EnumMaintenanceTypeFilter["equals"] }),
-      ...(vehicle && { vehicle: { OR: [
-        { plate: { contains: vehicle, mode: "insensitive" } },
-        { model: { contains: vehicle, mode: "insensitive" } },
-      ] } }),
-    };
-    const numberFilter = (minKey: string, maxKey: string): { gte?: number; lte?: number } => {
-      const min = Number(searchParams.get(minKey));
-      const max = Number(searchParams.get(maxKey));
-      return {
-        ...(searchParams.has(minKey) && Number.isFinite(min) && { gte: min }),
-        ...(searchParams.has(maxKey) && Number.isFinite(max) && { lte: max }),
-      };
-    };
-    const cost = numberFilter("costMin", "costMax");
-    const mileage = numberFilter("mileageMin", "mileageMax");
-    if (Object.keys(cost).length) where.cost = cost;
-    if (Object.keys(mileage).length) where.mileage = mileage;
-    const startDate = searchParams.get("dateStartDate");
-    const endDate = searchParams.get("dateEndDate");
-    if (startDate || endDate) {
-      where.date = {
-        ...(startDate && !Number.isNaN(Date.parse(startDate)) && { gte: new Date(`${startDate}T00:00:00.000Z`) }),
-        ...(endDate && !Number.isNaN(Date.parse(endDate)) && { lte: new Date(`${endDate}T23:59:59.999Z`) }),
-      };
+  if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+  const { searchParams } = new URL(request.url);
+  for (const key of new Set(searchParams.keys())) {
+    if (searchParams.getAll(key).length > 1) {
+      return NextResponse.json({ error: `Parâmetro repetido: ${key}.` }, { status: 400 });
     }
-    const sortColumn = searchParams.get("sortColumn") || "date";
-    const sortDirection = searchParams.get("sortDirection") === "asc" ? "asc" : "desc";
-    const sortable = ["date", "type", "description", "cost", "mileage"];
-    const orderBy: Prisma.MaintenanceOrderByWithRelationInput = sortColumn === "vehicle.plate"
-      ? { vehicle: { plate: sortDirection } }
-      : sortColumn === "vehicle.model"
-        ? { vehicle: { model: sortDirection } }
-        : { [sortable.includes(sortColumn) ? sortColumn : "date"]: sortDirection };
-    const paginated = searchParams.has("page");
+  }
+  const parsed = maintenanceListQuerySchema.safeParse(Object.fromEntries(searchParams.entries()));
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Filtros inválidos." }, { status: 400 });
+  }
+  const query = parsed.data;
+  const where: Prisma.MaintenanceWhereInput = { userId: session.user.id };
+  if (query.vehicleId) where.vehicleId = query.vehicleId;
+  if (query.type) where.type = query.type as Prisma.MaintenanceWhereInput["type"];
+  if (query.vehicle) {
+    where.vehicle = { OR: [
+      { plate: { contains: query.vehicle, mode: "insensitive" } },
+      { model: { contains: query.vehicle, mode: "insensitive" } },
+    ] };
+  }
+  if (query.costMin !== undefined || query.costMax !== undefined) {
+    where.cost = { ...(query.costMin !== undefined && { gte: query.costMin }), ...(query.costMax !== undefined && { lte: query.costMax }) };
+  }
+  if (query.mileageMin !== undefined || query.mileageMax !== undefined) {
+    where.mileage = { ...(query.mileageMin !== undefined && { gte: query.mileageMin }), ...(query.mileageMax !== undefined && { lte: query.mileageMax }) };
+  }
+  if (query.dateStartDate || query.dateEndDate) {
+    where.date = {
+      ...(query.dateStartDate && { gte: new Date(`${query.dateStartDate}T00:00:00.000Z`) }),
+      ...(query.dateEndDate && { lte: new Date(`${query.dateEndDate}T23:59:59.999Z`) }),
+    };
+  }
+  const { page, limit, sortColumn, sortDirection } = query;
+  const paginated = searchParams.has("page");
+  const orderBy: Prisma.MaintenanceOrderByWithRelationInput = sortColumn === "vehicle.plate"
+    ? { vehicle: { plate: sortDirection } }
+    : sortColumn === "vehicle.model"
+      ? { vehicle: { model: sortDirection } }
+      : { [sortColumn]: sortDirection };
+  try {
     const [maintenances, total] = await prisma.$transaction([
       prisma.maintenance.findMany({
         where,
@@ -68,100 +66,62 @@ export async function GET(request: Request) {
     return NextResponse.json(paginated ? { maintenance: maintenances, total } : maintenances);
   } catch (error) {
     console.error("Error fetching maintenances:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Ocorreu um erro ao buscar manutenções." }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
+  if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const parsed = await parseMaintenanceJson(request, maintenanceBodySchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+  const data = parsed.data;
   try {
-    const body = await request.json();
-    const {
-      vehicleId,
-      type,
-      description,
-      cost,
-      date,
-      mileage,
-      nextServiceMileage,
-      nextServiceDate,
-      notes,
-    } = body;
-    if (!vehicleId || !type || !cost || !date || !mileage) {
-      return new NextResponse("Missing required fields", { status: 400 });
-    }
-    const normalizedDescription = typeof description === "string" ? description.trim() : "";
-
-    const newMaintenance = await prisma.$transaction(async (tx) => {
-      const maintenance = await tx.maintenance.create({
+    const vehicle = await prisma.vehicle.findFirst({ where: { id: data.vehicleId, userId: session.user.id }, select: { id: true } });
+    if (!vehicle) return NextResponse.json({ error: "Veículo não encontrado." }, { status: 400 });
+    const normalizedDescription = data.description.trim();
+    const maintenance = await prisma.$transaction(async (tx) => {
+      const created = await tx.maintenance.create({
         data: {
-          vehicleId,
-          type,
+          ...data,
           description: normalizedDescription,
-          cost: parseFloat(cost),
-          date: new Date(date),
-          mileage: parseInt(mileage),
-          nextServiceMileage: nextServiceMileage
-            ? parseInt(nextServiceMileage)
-            : null,
-          nextServiceDate: nextServiceDate ? new Date(nextServiceDate) : null,
-          notes,
+          date: new Date(data.date),
+          nextServiceDate: data.nextServiceDate ? new Date(data.nextServiceDate) : null,
+          nextServiceMileage: data.nextServiceMileage ?? null,
+          notes: data.notes || null,
           userId: session.user.id,
         },
-        include: {
-          vehicle: { select: { id: true, plate: true, model: true } },
-        },
+        include: { vehicle: { select: { id: true, plate: true, model: true } } },
       });
-
       await tx.expense.create({
         data: {
           userId: session.user.id,
-          vehicleId: maintenance.vehicleId,
-          type: maintenance.type,
+          vehicleId: created.vehicleId,
+          type: created.type,
           description: normalizedDescription ? `Manutenção: ${normalizedDescription}` : "Manutenção",
-          value: maintenance.cost,
-          date: maintenance.date,
+          value: created.cost,
+          date: created.date,
         },
       });
-
-      return maintenance;
+      return created;
     });
-
-    return NextResponse.json(newMaintenance, { status: 201 });
+    return NextResponse.json(maintenance, { status: 201 });
   } catch (error) {
     console.error("Error creating maintenance record:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Ocorreu um erro ao criar a manutenção." }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || !session.user) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
+  if (!session?.user?.id) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+  const parsed = await parseMaintenanceJson(request, maintenanceIdsSchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
-    const { ids } = await request.json();
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return new NextResponse("Invalid request body", { status: 400 });
-    }
-
-    await prisma.maintenance.deleteMany({
-      where: {
-        id: {
-          in: ids,
-        },
-        userId: session.user.id,
-      },
-    });
-
+    await prisma.maintenance.deleteMany({ where: { id: { in: parsed.data.ids }, userId: session.user.id } });
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("Error deleting maintenance records:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Ocorreu um erro ao excluir as manutenções." }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 
 import { prisma } from "@/lib/prisma";
+import { maintenanceBodySchema, maintenanceIdSchema, parseMaintenanceJson } from "@/lib/maintenance-validation";
 
 export async function GET(
   _: Request,
@@ -13,6 +14,7 @@ export async function GET(
     return new NextResponse("Unauthorized", { status: 401 });
   }
   const { id } = await params;
+  if (!maintenanceIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de manutenção inválido." }, { status: 400 });
   try {
     const maintenance = await prisma.maintenance.findUnique({
       where: {
@@ -42,40 +44,29 @@ export async function PUT(
     return new NextResponse("Unauthorized", { status: 401 });
   }
   const { id } = await params;
+  if (!maintenanceIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de manutenção inválido." }, { status: 400 });
   try {
-    const body = await request.json();
-    const {
-      vehicleId,
-      type,
-      description,
-      cost,
-      date,
-      mileage,
-      nextServiceMileage,
-      nextServiceDate,
-      notes,
-    } = body;
-    if (!vehicleId || !type || !cost || !date || !mileage) {
-      return new NextResponse("Missing required fields", { status: 400 });
-    }
-    const normalizedDescription = typeof description === "string" ? description.trim() : "";
+    const parsed = await parseMaintenanceJson(request, maintenanceBodySchema);
+    if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
+    const data = parsed.data;
+    const vehicle = await prisma.vehicle.findFirst({ where: { id: data.vehicleId, userId: session.user.id }, select: { id: true } });
+    if (!vehicle) return NextResponse.json({ error: "Veículo não encontrado." }, { status: 400 });
+    const normalizedDescription = data.description.trim();
     const updatedMaintenance = await prisma.maintenance.update({
       where: {
         id,
         userId: session.user.id,
       },
       data: {
-        vehicleId,
-        type,
+        vehicleId: data.vehicleId,
+        type: data.type,
         description: normalizedDescription,
-        cost: parseFloat(cost),
-        date: new Date(date),
-        mileage: parseInt(mileage),
-        nextServiceMileage: nextServiceMileage
-          ? parseInt(nextServiceMileage)
-          : null,
-        nextServiceDate: nextServiceDate ? new Date(nextServiceDate) : null,
-        notes,
+        cost: data.cost,
+        date: new Date(data.date),
+        mileage: data.mileage,
+        nextServiceMileage: data.nextServiceMileage ?? null,
+        nextServiceDate: data.nextServiceDate ? new Date(data.nextServiceDate) : null,
+        notes: data.notes || null,
       },
     });
     return NextResponse.json(updatedMaintenance);
@@ -94,6 +85,7 @@ export async function DELETE(
     return new NextResponse("Unauthorized", { status: 401 });
   }
   const { id } = await params;
+  if (!maintenanceIdSchema.safeParse(id).success) return NextResponse.json({ error: "ID de manutenção inválido." }, { status: 400 });
   try {
     await prisma.maintenance.delete({
       where: {

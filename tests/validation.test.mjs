@@ -1,0 +1,109 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  vehicleCreateSchema,
+  vehicleUpdateSchema,
+  vehicleIdsSchema,
+  vehicleListQuerySchema,
+} from '../src/lib/vehicle-validation.ts';
+import {
+  maintenanceBodySchema,
+  maintenanceIdsSchema,
+  maintenanceListQuerySchema,
+  maintenanceIdSchema,
+} from '../src/lib/maintenance-validation.ts';
+
+const vehicle = {
+  plate: 'ABC-1234',
+  brand: 'Toyota',
+  model: 'Corolla',
+  year: 2024,
+  color: 'Prata',
+  km: 25_000,
+  status: 'Disponível',
+};
+
+const maintenance = {
+  vehicleId: 'vehicle_123',
+  type: 'PREVENTIVA',
+  description: ' Revisão ',
+  cost: '150.50',
+  date: '2026-10-08T12:00:00.000Z',
+  mileage: '25000',
+  nextServiceMileage: null,
+  nextServiceDate: null,
+  notes: '  troca de filtros  ',
+};
+
+test('vehicle create validates required fields and normalizes plate and optional identifiers', () => {
+  const parsed = vehicleCreateSchema.safeParse({
+    ...vehicle,
+    plate: 'abc1234',
+    renavam: '',
+    chassis: '',
+  });
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.plate, 'ABC1234');
+  assert.equal(parsed.data.renavam, null);
+  assert.equal(parsed.data.chassis, null);
+
+  assert.equal(vehicleCreateSchema.safeParse({ ...vehicle, plate: 'ABC-12' }).success, false);
+  assert.equal(vehicleCreateSchema.safeParse({ ...vehicle, year: new Date().getFullYear() + 2 }).success, false);
+  assert.equal(vehicleCreateSchema.safeParse({ ...vehicle, km: -1 }).success, false);
+  assert.equal(vehicleCreateSchema.safeParse({ ...vehicle, status: 'Ativo' }).success, false);
+});
+
+test('vehicle update requires at least one valid field', () => {
+  assert.equal(vehicleUpdateSchema.safeParse({}).success, false);
+  assert.deepEqual(vehicleUpdateSchema.safeParse({ km: 0 }).data, { km: 0 });
+  assert.equal(vehicleUpdateSchema.safeParse({ km: 1.5 }).success, false);
+});
+
+test('vehicle IDs and list filters enforce shape, bounds and ranges', () => {
+  assert.equal(vehicleIdsSchema.safeParse(['vehicle1', 'vehicle2']).success, true);
+  assert.equal(vehicleIdsSchema.safeParse([]).success, false);
+  assert.equal(vehicleIdsSchema.safeParse(['same', 'same']).success, false);
+  assert.equal(vehicleIdsSchema.safeParse(Array.from({ length: 101 }, (_, index) => `v${index}`)).success, false);
+
+  const defaults = vehicleListQuerySchema.safeParse({});
+  assert.equal(defaults.success, true);
+  assert.equal(defaults.data.page, 1);
+  assert.equal(defaults.data.limit, 10);
+  assert.equal(vehicleListQuerySchema.safeParse({ status: 'Desconhecido' }).success, false);
+  assert.equal(vehicleListQuerySchema.safeParse({ kmMin: '100', kmMax: '10' }).success, false);
+  assert.equal(vehicleListQuerySchema.safeParse({ extra: 'nope' }).success, false);
+});
+
+test('maintenance create validates values and normalizes optional text and numeric strings', () => {
+  const parsed = maintenanceBodySchema.safeParse(maintenance);
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.cost, 150.5);
+  assert.equal(parsed.data.mileage, 25_000);
+  assert.equal(parsed.data.description, 'Revisão');
+  assert.equal(parsed.data.notes, 'troca de filtros');
+
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, type: 'LAVAGEM' }).success, false);
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, cost: 'abc' }).success, false);
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, cost: '0' }).success, false);
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, mileage: '1.5' }).success, false);
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, date: '2026-02-30' }).success, false);
+  assert.equal(maintenanceBodySchema.safeParse({ ...maintenance, unexpected: true }).success, false);
+});
+
+test('maintenance IDs and list filters reject malformed values and inverted ranges', () => {
+  assert.equal(maintenanceIdSchema.safeParse('maint_123').success, true);
+  assert.equal(maintenanceIdSchema.safeParse('bad/id').success, false);
+  assert.equal(maintenanceIdsSchema.safeParse({ ids: ['maint1', 'maint2'] }).success, true);
+  assert.equal(maintenanceIdsSchema.safeParse({ ids: ['same', 'same'] }).success, false);
+  assert.equal(maintenanceIdsSchema.safeParse({ ids: [] }).success, false);
+  assert.equal(maintenanceIdsSchema.safeParse({ ids: Array.from({ length: 101 }, (_, index) => `m${index}`) }).success, false);
+
+  const filters = maintenanceListQuerySchema.safeParse({ page: '2', limit: '25', costMin: '10.25', costMax: '90.50', dateStartDate: '2026-10-01' });
+  assert.equal(filters.success, true);
+  assert.equal(filters.data.page, 2);
+  assert.equal(filters.data.costMin, 10.25);
+  assert.equal(maintenanceListQuerySchema.safeParse({ mileageMin: '100', mileageMax: '10' }).success, false);
+  assert.equal(maintenanceListQuerySchema.safeParse({ dateStartDate: '2026-02-30' }).success, false);
+  assert.equal(maintenanceListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
+  assert.equal(maintenanceListQuerySchema.safeParse({ unknown: 'value' }).success, false);
+});
