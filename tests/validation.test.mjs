@@ -12,6 +12,12 @@ import {
   maintenanceListQuerySchema,
   maintenanceIdSchema,
 } from '../src/lib/maintenance-validation.ts';
+import {
+  driverCreateSchema,
+  driverUpdateSchema,
+  driverIdsSchema,
+  driverListQuerySchema,
+} from '../src/lib/driver-validation.ts';
 
 const vehicle = {
   plate: 'ABC-1234',
@@ -33,6 +39,24 @@ const maintenance = {
   nextServiceMileage: null,
   nextServiceDate: null,
   notes: '  troca de filtros  ',
+};
+
+const driver = {
+  name: '  Maria da Silva  ',
+  nameNormalized: 'maria da silva',
+  cpf: '529.982.247-25',
+  phone: '(11) 99999-9999',
+  email: 'MARIA@EXEMPLO.COM',
+  cnh: '12345678901',
+  cnhValidity: '2027-05-31',
+  cep: '01310-100',
+  logradouro: 'Av. Paulista',
+  numero: '1000',
+  complemento: '',
+  bairro: 'Bela Vista',
+  cidade: 'São Paulo',
+  uf: 'sp',
+  status: 'Ativo',
 };
 
 test('vehicle create validates required fields and normalizes plate and optional identifiers', () => {
@@ -106,4 +130,46 @@ test('maintenance IDs and list filters reject malformed values and inverted rang
   assert.equal(maintenanceListQuerySchema.safeParse({ dateStartDate: '2026-02-30' }).success, false);
   assert.equal(maintenanceListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
   assert.equal(maintenanceListQuerySchema.safeParse({ unknown: 'value' }).success, false);
+});
+
+test('driver create validates identity, contact and address fields and normalizes optional values', () => {
+  const parsed = driverCreateSchema.safeParse(driver);
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.name, 'Maria da Silva');
+  assert.equal(parsed.data.email, 'maria@exemplo.com');
+  assert.equal(parsed.data.uf, 'SP');
+  assert.equal(parsed.data.cnh, '12345678901');
+
+  const noCnh = driverCreateSchema.safeParse({ ...driver, cnh: '', cnhValidity: null, complemento: null });
+  assert.equal(noCnh.success, true);
+  assert.equal(noCnh.data.cnh, null);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, cpf: '111.111.111-11' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, cpf: '123.456.789-00' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, phone: 'abc' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, email: 'invalido' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, cnh: '123' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, cnhValidity: '2026-02-30' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, cep: '123' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, uf: 'São Paulo' }).success, false);
+  assert.equal(driverCreateSchema.safeParse({ ...driver, status: 'Pendente' }).success, false);
+});
+
+test('driver update, IDs and list filters reject empty or malformed input', () => {
+  assert.equal(driverUpdateSchema.safeParse({}).success, false);
+  assert.deepEqual(driverUpdateSchema.safeParse({ status: 'Inativo' }).data, { status: 'Inativo' });
+  assert.equal(driverUpdateSchema.safeParse({ unexpected: true }).success, false);
+
+  assert.equal(driverIdsSchema.safeParse({ ids: ['driver1', 'driver2'] }).success, true);
+  assert.equal(driverIdsSchema.safeParse({ ids: [] }).success, false);
+  assert.equal(driverIdsSchema.safeParse({ ids: ['same', 'same'] }).success, false);
+  assert.equal(driverIdsSchema.safeParse({ ids: Array.from({ length: 101 }, (_, index) => `d${index}`) }).success, false);
+
+  const defaults = driverListQuerySchema.safeParse({});
+  assert.equal(defaults.success, true);
+  assert.equal(defaults.data.page, 1);
+  assert.equal(defaults.data.limit, 10);
+  assert.equal(driverListQuerySchema.safeParse({ status: 'Outro' }).success, false);
+  assert.equal(driverListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
+  assert.equal(driverListQuerySchema.safeParse({ page: '-1' }).success, false);
+  assert.equal(driverListQuerySchema.safeParse({ unknown: 'x' }).success, false);
 });
