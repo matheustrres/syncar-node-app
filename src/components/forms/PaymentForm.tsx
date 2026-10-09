@@ -130,13 +130,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <div className="md:col-span-2">
           {isContractLocked && initialData ? (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="mb-1 block text-sm font-semibold text-syncar-text">
                 Contrato
               </label>
               <div className="relative">
                 <List
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={20}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-text-muted"
+                  size={18}
                 />
                 <input
                   type="text"
@@ -146,7 +146,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                       (c) => c.value === initialData.contractId
                     )?.label || ""
                   }
-                  className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-gray-100 rounded-lg cursor-not-allowed"
+                  className="h-11 w-full cursor-not-allowed rounded-lg border border-syncar-border bg-syncar-surface-subtle py-2 pl-11 pr-4 text-sm text-syncar-text-muted"
                 />
               </div>
             </div>
@@ -171,15 +171,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="weekStart"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-semibold text-syncar-text"
             >
               Início da semana *
             </label>
             <Tooltip text="O primeiro dia do período de 7 dias que este pagamento cobre.">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <HelpCircle size={16} className="cursor-help text-syncar-text-muted" />
             </Tooltip>
           </div>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar className="absolute left-3 top-9 text-syncar-text-muted" size={18} />
           <input
             id="weekStart"
             type="date"
@@ -187,7 +187,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.weekStart}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface py-2 pl-11 pr-4 text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
           />
         </div>
 
@@ -195,15 +195,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="weekEnd"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-semibold text-syncar-text"
             >
               Fim da semana *
             </label>
             <Tooltip text="O último dia do período de 7 dias que este pagamento cobre.">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <HelpCircle size={16} className="cursor-help text-syncar-text-muted" />
             </Tooltip>
           </div>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar className="absolute left-3 top-9 text-syncar-text-muted" size={18} />
           <input
             id="weekEnd"
             type="date"
@@ -211,7 +211,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.weekEnd}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface py-2 pl-11 pr-4 text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
           />
         </div>
 
@@ -227,15 +227,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           <div className="flex items-center gap-1.5 mb-1">
             <label
               htmlFor="dueDate"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-semibold text-syncar-text"
             >
               Data de vencimento *
             </label>
             <Tooltip text="O prazo final para o pagamento. Usado no controle de inadimplência.">
-              <HelpCircle size={16} className="text-gray-400 cursor-help" />
+              <HelpCircle size={16} className="cursor-help text-syncar-text-muted" />
             </Tooltip>
           </div>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar className="absolute left-3 top-9 text-syncar-text-muted" size={18} />
           <input
             id="dueDate"
             type="date"
@@ -243,21 +243,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             value={formData.dueDate}
             onChange={handleChange}
             required
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface py-2 pl-11 pr-4 text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
           />
         </div>
 
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label htmlFor="paymentDate" className="mb-1 block text-sm font-semibold text-syncar-text">
             Data do pagamento
           </label>
-          <Calendar className="absolute left-3 top-9 text-gray-400" size={20} />
+          <Calendar className="absolute left-3 top-9 text-syncar-text-muted" size={18} />
           <input
+            id="paymentDate"
             type="date"
             name="paymentDate"
             value={formData.paymentDate}
             onChange={handleChange}
-            className="pl-11 pr-4 py-2 w-full border border-gray-300 bg-white rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface py-2 pl-11 pr-4 text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
           />
         </div>
 
@@ -278,13 +279,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <button
           type="button"
           onClick={onCancel}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold"
+          className="min-h-11 rounded-lg border border-syncar-border bg-syncar-surface px-5 py-2 text-sm font-semibold text-syncar-text transition-colors hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus"
         >
           Cancelar
         </button>
         <button
           type="submit"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
+          className="min-h-11 rounded-lg bg-syncar-brand px-5 py-2 text-sm font-semibold text-syncar-brand-contrast transition-colors hover:bg-syncar-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus"
         >
           Salvar
         </button>

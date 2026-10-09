@@ -16,18 +16,17 @@ const CustomCurrencyInput: React.FC<CustomCurrencyInputProps> = ({
   value,
   onValueChange,
   required,
-  variant = "default",
 }) => {
   return (
     <div className="relative">
-      <label htmlFor={name} className={`mb-1.5 block text-sm font-semibold ${variant === "platform" ? "text-syncar-text" : "text-gray-700"}`}>
+      <label htmlFor={name} className="mb-1.5 block text-sm font-semibold text-syncar-text">
         {label}
       </label>
-      <Icon className={`pointer-events-none absolute left-3 top-9 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`} size={variant === "platform" ? 18 : 20} strokeWidth={variant === "platform" ? 1.75 : 2} aria-hidden="true" />
+      <Icon className="pointer-events-none absolute left-3 top-9 text-syncar-text-muted" size={18} strokeWidth={1.75} aria-hidden="true" />
       <CurrencyInput
         id={name}
         name={name}
-        className={`h-11 w-full rounded-lg border pl-11 pr-4 text-sm focus:outline-none focus:ring-2 ${variant === "platform" ? "border-syncar-border bg-syncar-surface text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:ring-syncar-focus/20" : "border-gray-300 bg-gray-100 focus:ring-blue-500"}`}
+        className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
         value={value}
         onValueChange={onValueChange}
         intlConfig={{ locale: "pt-BR", currency: "BRL" }}

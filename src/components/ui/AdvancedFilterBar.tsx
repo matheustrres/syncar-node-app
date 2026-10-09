@@ -140,7 +140,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+    <div className="mb-6 rounded-syncar-panel border border-syncar-border bg-syncar-surface p-4 shadow-sm">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtersConfig.map((filter) => {
           const filterState = filterStates[filter.id];
@@ -149,12 +149,12 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
             <div key={filter.id}>
               {filter.type === "text" && (
                 <div className="relative">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block text-sm font-semibold text-syncar-text">
                     {filter.label}
                   </label>
                   {filter.icon && (
                     <filter.icon
-                      className="absolute left-3 top-9 text-gray-400"
+                      className="absolute left-3 top-9 text-syncar-muted"
                       size={20}
                     />
                   )}
@@ -165,7 +165,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                     onChange={(e) =>
                       handleTextChange(filter.id, e.target.value)
                     }
-                    className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-sans text-sm text-gray-700 ${
+                    className={`min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2 font-sans text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20 ${
                       filter.icon ? "pl-10" : "pl-4"
                     }`}
                   />
@@ -179,6 +179,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                   onChange={(value) => handleSelectChange(filter.id, value)}
                   options={filter.options || []}
                   placeholder={filter.placeholder}
+                  variant="platform"
                   Icon={filter.icon}
                 />
               )}
@@ -187,14 +188,14 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                 typeof filterState === "object" &&
                 "startDate" in filterState && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="mb-1 block text-sm font-semibold text-syncar-text">
                       {filter.label}
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         {filter.icon && (
                           <filter.icon
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-muted"
                             size={20}
                           />
                         )}
@@ -208,7 +209,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                               e.target.value
                             )
                           }
-                          className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-sans text-sm text-gray-700 ${
+                          className={`min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2 font-sans text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20 ${
                             filter.icon ? "pl-10" : "pl-4"
                           }`}
                         />
@@ -216,7 +217,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                       <div className="relative flex-1">
                         {filter.icon && (
                           <filter.icon
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-muted"
                             size={20}
                           />
                         )}
@@ -230,7 +231,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                               e.target.value
                             )
                           }
-                          className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-sans text-sm text-gray-700 ${
+                          className={`min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2 font-sans text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20 ${
                             filter.icon ? "pl-10" : "pl-4"
                           }`}
                         />
@@ -243,14 +244,14 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                 typeof filterState === "object" &&
                 "min" in filterState && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="mb-1 block text-sm font-semibold text-syncar-text">
                       {filter.label}
                     </label>
                     <div className="flex gap-2">
                       <div className="relative flex-1">
                         {filter.icon && (
                           <filter.icon
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-muted"
                             size={20}
                           />
                         )}
@@ -265,7 +266,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                               e.target.value
                             )
                           }
-                          className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-sans text-sm text-gray-700 ${
+                          className={`min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2 font-sans text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20 ${
                             filter.icon ? "pl-10" : "pl-4"
                           }`}
                         />
@@ -273,7 +274,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                       <div className="relative flex-1">
                         {filter.icon && (
                           <filter.icon
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-muted"
                             size={20}
                           />
                         )}
@@ -288,7 +289,7 @@ const AdvancedFilterBar: React.FC<AdvancedFilterBarProps> = ({
                               e.target.value
                             )
                           }
-                          className={`w-full py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-sans text-sm text-gray-700 ${
+                          className={`min-h-11 w-full rounded-syncar-control border border-syncar-border bg-syncar-surface py-2 font-sans text-sm text-syncar-text focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20 ${
                             filter.icon ? "pl-10" : "pl-4"
                           }`}
                         />

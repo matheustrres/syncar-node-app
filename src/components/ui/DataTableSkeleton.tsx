@@ -1,11 +1,11 @@
 "use client";
 
 const Shimmer = () => (
-  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
+  <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-syncar-border to-transparent" />
 );
 
 const SkeletonCell = () => (
-  <div className="h-5 bg-gray-200 rounded-md relative overflow-hidden">
+  <div className="relative h-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
     <Shimmer />
   </div>
 );
@@ -20,25 +20,25 @@ export default function DataTableSkeleton({
   rows = 5,
 }: DataTableSkeletonProps) {
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="overflow-hidden rounded-syncar-panel border border-syncar-border bg-syncar-surface shadow-sm">
+      <table className="min-w-full divide-y divide-syncar-border">
+        <thead className="bg-syncar-surface-subtle">
           <tr>
             {Array.from({ length: columns }).map((_, i) => (
               <th key={i} className="px-6 py-3">
-                <div className="h-4 w-20 bg-gray-200 rounded-md relative overflow-hidden">
+                <div className="relative h-4 w-20 overflow-hidden rounded-md bg-syncar-surface-subtle">
                   <Shimmer />
                 </div>
               </th>
             ))}
             <th className="px-6 py-3">
-              <div className="h-4 w-12 bg-gray-200 rounded-md ml-auto relative overflow-hidden">
+              <div className="relative ml-auto h-4 w-12 overflow-hidden rounded-md bg-syncar-surface-subtle">
                 <Shimmer />
               </div>
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="divide-y divide-syncar-border bg-syncar-surface">
           {Array.from({ length: rows }).map((_, i) => (
             <tr key={i}>
               {Array.from({ length: columns }).map((_, j) => (
@@ -48,10 +48,10 @@ export default function DataTableSkeleton({
               ))}
               <td className="px-6 py-4">
                 <div className="flex justify-end gap-4">
-                  <div className="h-5 w-5 bg-gray-200 rounded-md relative overflow-hidden">
+                  <div className="relative h-5 w-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
                     <Shimmer />
                   </div>
-                  <div className="h-5 w-5 bg-gray-200 rounded-md relative overflow-hidden">
+                  <div className="relative h-5 w-5 overflow-hidden rounded-md bg-syncar-surface-subtle">
                     <Shimmer />
                   </div>
                 </div>

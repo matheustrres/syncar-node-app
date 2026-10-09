@@ -17,17 +17,17 @@ export default function UpgradePlaceholder({
       {children}
 
       {/* 2. The "Glass Pane" Overlay */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-gray-100/70 rounded-lg">
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4 shadow-md">
-          <Lock className="w-6 h-6 text-blue-500" />
+      <div className="absolute inset-0 flex flex-col items-center justify-center rounded-syncar-panel border border-syncar-border bg-syncar-canvas/90 p-6 text-center backdrop-blur-[2px]">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-syncar-brand shadow-sm">
+          <Lock className="h-6 w-6 text-syncar-action" aria-hidden="true" />
         </div>
-        <h3 className="text-xl font-bold text-gray-800">{featureName}</h3>
-        <p className="text-gray-600 mt-1 mb-6 max-w-xs">
+        <h3 className="text-xl font-bold text-syncar-text">{featureName}</h3>
+        <p className="mb-6 mt-1 max-w-xs text-sm leading-6 text-syncar-muted">
           Faça o upgrade para o plano Profissional para acessar este recurso.
         </p>
         <button
           onClick={onUpgradeClick}
-          className="bg-blue-600 text-white font-semibold px-8 py-2.5 rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-300 ease-in-out"
+          className="min-h-11 rounded-syncar-control bg-syncar-action px-8 py-2.5 font-semibold text-syncar-action-text shadow-sm transition-colors hover:bg-syncar-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus"
         >
           Fazer upgrade
         </button>

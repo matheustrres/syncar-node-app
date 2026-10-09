@@ -24,21 +24,18 @@ export default function Toast({
 
   const baseClasses =
     "fixed top-5 right-5 w-full max-w-sm p-4 rounded-lg shadow-lg flex items-center gap-4 transition-transform duration-300 ease-in-out z-[9999]";
-  const typeClasses = {
-    success: "bg-green-50 text-green-800",
-    error: "bg-red-50 text-red-800",
-  };
   const transformClass = show ? "translate-x-0" : "translate-x-[120%]";
   const Icon = type === "success" ? CheckCircle : AlertTriangle;
 
   return (
-    <div className={`${baseClasses} ${typeClasses[type]} ${transformClass}`}>
+    <div role={type === "error" ? "alert" : "status"} className={`${baseClasses} rounded-syncar-panel border border-syncar-border bg-syncar-surface text-syncar-text shadow-syncar-overlay ${transformClass}`}>
       <Icon
-        className={`w-6 h-6 ${type === "success" ? "text-green-500" : "text-red-500"}`}
+        aria-hidden="true"
+        className={`h-6 w-6 shrink-0 ${type === "success" ? "text-syncar-success" : "text-syncar-danger"}`}
       />
       <p className="flex-grow font-medium">{message}</p>
-      <button onClick={onClose} className="p-1 rounded-full hover:bg-black/10">
-        <X className="w-5 h-5" />
+      <button onClick={onClose} aria-label="Fechar notificação" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-syncar-control text-syncar-muted hover:bg-syncar-surface-subtle hover:text-syncar-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus">
+        <X className="h-5 w-5" aria-hidden="true" />
       </button>
     </div>
   );

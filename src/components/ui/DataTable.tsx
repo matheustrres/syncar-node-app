@@ -66,22 +66,22 @@ export default function DataTable<T extends { id: string }>({
   const isAllSelected = selectedItems.length === data.length && data.length > 0;
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-x-auto">
+    <div className="overflow-x-auto rounded-syncar-panel border border-syncar-border bg-syncar-surface shadow-sm">
       {selectedItems.length > 0 && onBulkDelete && (
-        <div className="p-4 bg-gray-100 flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-700">
+        <div className="flex items-center justify-between border-b border-syncar-border bg-syncar-surface-subtle p-4">
+          <span className="text-sm font-medium text-syncar-text">
             {selectedItems.length} item(s) selecionado(s)
           </span>
           <button
             onClick={() => onBulkDelete(selectedItems)}
-            className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="min-h-11 rounded-syncar-control bg-syncar-danger px-4 py-2 font-semibold text-white transition-colors hover:brightness-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus"
           >
             Excluir
           </button>
         </div>
       )}
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-syncar-border">
+        <thead className="bg-syncar-surface-subtle">
           <tr>
             <th className="px-6 py-3">
               <div className="flex items-center justify-center">
@@ -89,14 +89,15 @@ export default function DataTable<T extends { id: string }>({
                   type="checkbox"
                   checked={isAllSelected}
                   onChange={handleSelectAll}
-                  className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                  aria-label="Selecionar todos os itens"
+                  className="rounded border-syncar-border text-syncar-brand accent-syncar-brand focus:ring-syncar-focus"
                 />
               </div>
             </th>
             {columns.map((col) => (
               <th
                 key={String(col.header)}
-                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase ${col.sortable ? "cursor-pointer select-none" : ""}`}
+                className={`px-6 py-3 text-left text-xs font-semibold text-syncar-muted ${col.sortable ? "cursor-pointer select-none hover:text-syncar-text" : ""}`}
                 onClick={
                   col.sortable
                     ? () => handleHeaderClick(String(col.accessor))
@@ -115,17 +116,17 @@ export default function DataTable<T extends { id: string }>({
                 </div>
               </th>
             ))}
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+            <th className="px-6 py-3 text-right text-xs font-semibold text-syncar-muted">
               Ações
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="divide-y divide-syncar-border bg-syncar-surface">
           {data.map((item) => (
             <tr
               key={item.id}
               onClick={() => onRowClick(item.id)}
-              className={`hover:bg-gray-50 cursor-pointer ${selectedItems.includes(item.id) ? "bg-gray-100" : ""}`}
+              className={`cursor-pointer transition-colors hover:bg-syncar-surface-subtle ${selectedItems.includes(item.id) ? "bg-syncar-surface-subtle" : ""}`}
             >
               <td className="px-6 py-4">
                 <div className="flex items-center justify-center">
@@ -134,7 +135,8 @@ export default function DataTable<T extends { id: string }>({
                     checked={selectedItems.includes(item.id)}
                     onChange={() => handleSelectItem(item.id)}
                     onClick={(e) => e.stopPropagation()}
-                    className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                    aria-label={`Selecionar item ${item.id}`}
+                    className="rounded border-syncar-border text-syncar-brand accent-syncar-brand focus:ring-syncar-focus"
                   />
                 </div>
               </td>
@@ -154,15 +156,17 @@ export default function DataTable<T extends { id: string }>({
               >
                 <button
                   title="Editar"
+                  aria-label="Editar item"
                   onClick={() => onEdit(item)}
-                  className="text-indigo-600 hover:text-indigo-900 mr-4"
+                  className="mr-4 inline-flex min-h-11 min-w-11 items-center justify-center rounded-syncar-control text-syncar-brand hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus"
                 >
                   <Edit size={18} />
                 </button>
                 <button
                   title="Excluir"
+                  aria-label="Excluir item"
                   onClick={() => onDelete(item)}
-                  className="text-red-600 hover:text-red-900"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-syncar-control text-syncar-danger hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-focus"
                 >
                   <Trash2 size={18} />
                 </button>

@@ -32,7 +32,6 @@ export default function CustomSelect({
   Icon,
   placeholder,
   className,
-  variant = "default",
 }: CustomSelectProps) {
   const selectedOption = options.find((option) => option.value === value);
 
@@ -41,16 +40,16 @@ export default function CustomSelect({
       <Listbox value={value} onChange={onChange}>
         <div className="relative">
           {label && (
-            <Listbox.Label className={`mb-1.5 block text-sm font-semibold ${variant === "platform" ? "text-syncar-text" : "text-gray-700"}`}>
+            <Listbox.Label className="mb-1.5 block text-sm font-semibold text-syncar-text">
               {label}
             </Listbox.Label>
           )}
 
           {Icon && (
             <Icon
-              className={`absolute left-3 ${label ? "top-9" : "top-3"} z-10 ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
-              size={variant === "platform" ? 18 : 20}
-              strokeWidth={variant === "platform" ? 1.75 : 2}
+              className={`absolute left-3 ${label ? "top-9" : "top-3"} z-10 text-syncar-text-muted`}
+              size={18}
+              strokeWidth={1.75}
               aria-hidden="true"
             />
           )}
@@ -58,10 +57,10 @@ export default function CustomSelect({
           <Listbox.Button
             id={id}
             name={name}
-            className={`relative h-11 w-full cursor-default rounded-lg border py-2 pr-10 text-left text-sm focus:outline-none focus-visible:ring-2 ${variant === "platform" ? "border-syncar-border bg-syncar-surface text-syncar-text focus-visible:border-syncar-focus focus-visible:ring-syncar-focus/25" : "border-gray-300 bg-gray-100 focus-visible:border-indigo-500 focus-visible:ring-white/75"} ${Icon ? "pl-11" : "pl-4"}`}
+            className={`relative h-11 w-full cursor-default rounded-lg border border-syncar-border bg-syncar-surface py-2 pr-10 text-left text-sm text-syncar-text focus:outline-none focus-visible:border-syncar-focus focus-visible:ring-2 focus-visible:ring-syncar-focus/25 ${Icon ? "pl-11" : "pl-4"}`}
           >
             <span
-              className={`block truncate ${variant === "platform" ? (selectedOption ? "text-syncar-text" : "text-syncar-text-muted") : (selectedOption ? "text-gray-900" : "text-gray-500")}`}
+              className={`block truncate ${selectedOption ? "text-syncar-text" : "text-syncar-text-muted"}`}
             >
               {selectedOption
                 ? selectedOption.label
@@ -69,9 +68,9 @@ export default function CustomSelect({
             </span>
             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
               <ChevronsUpDown
-                className={`${variant === "platform" ? "h-4 w-4" : "h-5 w-5"} ${variant === "platform" ? "text-syncar-text-muted" : "text-gray-400"}`}
+                className="h-4 w-4 text-syncar-text-muted"
                 aria-hidden="true"
-                strokeWidth={variant === "platform" ? 1.75 : 2}
+                strokeWidth={1.75}
               />
             </span>
           </Listbox.Button>
@@ -81,12 +80,12 @@ export default function CustomSelect({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <Listbox.Options className={`absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg focus:outline-none sm:text-sm ${variant === "platform" ? "border border-syncar-border" : "ring-1 ring-black/5"}`}>
+            <Listbox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-syncar-border bg-white py-1 text-base shadow-lg focus:outline-none sm:text-sm">
               {options.map((option) => (
                 <Listbox.Option
                   key={option.value}
                   className={({ active }) =>
-                    `relative cursor-default select-none py-2 pl-10 pr-4 ${variant === "platform" ? (active ? "bg-syncar-surface-subtle text-syncar-text" : "text-syncar-text") : (active ? "bg-blue-100 text-blue-900" : "text-gray-900")}`
+                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? "bg-syncar-surface-subtle" : ""} text-syncar-text`
                   }
                   value={option.value}
                 >
@@ -98,10 +97,10 @@ export default function CustomSelect({
                         {option.label}
                       </span>
                       {selected ? (
-                        <span className={`absolute inset-y-0 left-0 flex items-center pl-3 ${variant === "platform" ? "text-syncar-success" : "text-blue-600"}`}>
+                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-syncar-success">
                           <Check
-                            className={variant === "platform" ? "h-[18px] w-[18px]" : "h-5 w-5"}
-                            strokeWidth={variant === "platform" ? 1.75 : 2}
+                            className="h-[18px] w-[18px]"
+                            strokeWidth={1.75}
                             aria-hidden="true"
                           />
                         </span>

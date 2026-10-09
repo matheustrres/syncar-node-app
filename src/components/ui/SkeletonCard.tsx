@@ -6,7 +6,7 @@ interface SkeletonCardProps {
 
 const SkeletonCard: React.FC<SkeletonCardProps> = ({ className }) => {
   return (
-    <div className={`bg-gray-200 animate-pulse rounded-md ${className}`} />
+    <div className={`animate-pulse rounded-md bg-syncar-surface-subtle ${className}`} />
   );
 };
 

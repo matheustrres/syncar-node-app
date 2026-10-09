@@ -12,15 +12,15 @@ export default function ErrorDisplay({
   onRetry,
 }: ErrorDisplayProps) {
   return (
-    <div className="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-red-50 border border-red-200 h-full">
-      <AlertTriangle className="w-12 h-12 text-red-400 mb-4" />
-      <h3 className="text-xl font-semibold text-red-800 mb-2">
+    <div role="alert" className="flex h-full flex-col items-center justify-center rounded-syncar-panel border border-syncar-border bg-syncar-surface p-8 text-center">
+      <AlertTriangle className="mb-4 h-12 w-12 text-syncar-danger" aria-hidden="true" />
+      <h3 className="mb-2 text-xl font-semibold text-syncar-text">
         Ocorreu um Erro
       </h3>
-      <p className="text-red-600 mb-6">{errorMessage}</p>
+      <p className="mb-6 text-syncar-muted">{errorMessage}</p>
       <button
         onClick={onRetry}
-        className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold transition-colors"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-syncar-control bg-syncar-brand px-4 py-2 font-semibold text-white transition-colors hover:bg-syncar-brand-raised focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus"
       >
         <RefreshCw size={18} />
         Tentar novamente

@@ -45,20 +45,20 @@ export default function ForgotPasswordForm({
 
   return (
     <form onSubmit={handleSubmit} className={`space-y-4 p-4 ${className}`}>
-      <p className="text-gray-600 text-sm mb-4">
+      <p className="mb-4 text-sm text-syncar-text-muted">
         Informe seu email para receber as instruções de recuperação de senha.
       </p>
       <div>
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-gray-700 mb-2"
+          className="mb-2 block text-sm font-semibold text-syncar-text"
         >
           Email *
         </label>
         <div className="relative">
           <Mail
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={20}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-syncar-text-muted"
+            size={18}
           />
           <input
             type="email"
@@ -67,7 +67,7 @@ export default function ForgotPasswordForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full pl-11 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="h-11 w-full rounded-lg border border-syncar-border bg-syncar-surface py-2 pl-11 pr-4 text-sm text-syncar-text placeholder:text-syncar-text-muted focus:border-syncar-focus focus:outline-none focus:ring-2 focus:ring-syncar-focus/20"
             placeholder="seu@email.com"
           />
         </div>
@@ -77,14 +77,14 @@ export default function ForgotPasswordForm({
           type="button"
           onClick={onClose}
           disabled={loading}
-          className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 font-semibold disabled:opacity-50"
+          className="min-h-11 rounded-lg border border-syncar-border bg-syncar-surface px-5 py-2 text-sm font-semibold text-syncar-text transition-colors hover:bg-syncar-surface-subtle focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-syncar-brand px-5 py-2 text-sm font-semibold text-syncar-brand-contrast transition-colors hover:bg-syncar-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-focus disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? <Loader2 className="animate-spin" size={20} /> : "Enviar"}
         </button>
