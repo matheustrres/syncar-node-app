@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { parseAuthJson, resetPasswordSchema } from "@/lib/auth-validation";
+import { consumeRateLimits, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
     const { token, password } = parsed.data;
+    const rateLimit = await consumeRateLimits([
+      { scope: "resetIp", value: getClientIp(request.headers) },
+      { scope: "resetToken", value: token },
+    ]);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tente novamente mais tarde." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token },
       include: { user: true },

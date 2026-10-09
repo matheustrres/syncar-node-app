@@ -4,9 +4,23 @@ import bcrypt from "bcrypt";
 
 import { handlePrismaError } from "@/lib/api-utils";
 import { parseAuthJson, registrationSchema } from "@/lib/auth-validation";
+import { consumeRateLimits, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = await consumeRateLimits([
+      { scope: "registerIp", value: getClientIp(request.headers) },
+    ]);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Muitas tentativas de cadastro. Tente novamente mais tarde." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      );
+    }
+
     const parsed = await parseAuthJson(request, registrationSchema);
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });

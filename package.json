@@ -9,7 +9,8 @@
     "prestart": "npm run predev && npm run build",
     "start": "next start",
     "lint": "next lint",
-    "test:unit": "node --test tests/*.test.mjs"
+    "test:unit": "node --test tests/*.test.mjs",
+    "test:e2e": "node --test tests/e2e/*.test.mjs"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
@@ -31,12 +32,15 @@
     "react-currency-input-field": "^4.0.3",
     "react-dom": "19.1.0",
     "react-imask": "^7.6.1",
+    "redis": "^6.3.0",
     "stripe": "^19.1.0",
     "swr": "^2.3.6",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@testcontainers/postgresql": "^12.2.0",
+    "@testcontainers/redis": "^12.2.0",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/nodemailer": "^7.0.2",
@@ -47,6 +51,7 @@
     "eslint-config-next": "15.5.4",
     "postcss": "^8.5.6",
     "tailwindcss": "^3",
+    "testcontainers": "^12.2.0",
     "ts-node": "^10.9.2",
     "typescript": "^5"
   }

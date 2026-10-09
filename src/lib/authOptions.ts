@@ -4,6 +4,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
 import { bcryptHashSchema, loginCredentialsSchema } from "./auth-validation";
+import { consumeRateLimits, getClientIp } from "./rate-limit";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,10 +15,16 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginCredentialsSchema.safeParse(credentials);
         if (!parsed.success) return null;
         try {
+          const rateLimit = await consumeRateLimits([
+            { scope: "loginIp", value: getClientIp(new Headers(request.headers as HeadersInit)) },
+            { scope: "loginAccount", value: parsed.data.email },
+          ]);
+          if (!rateLimit.allowed) return null;
+
           const user = await prisma.user.findUnique({
             where: { email: parsed.data.email },
           });
