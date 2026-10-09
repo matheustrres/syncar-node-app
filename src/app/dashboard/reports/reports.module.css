@@ -1,5 +1,5 @@
 .page { max-width: 1440px; margin: 0 auto; color: var(--syncar-text); }
-.intro { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 24px; overflow: hidden; margin-bottom: 36px; padding: 32px 36px; border-radius: var(--syncar-radius-panel); background: var(--syncar-green-950); color: var(--syncar-surface); }
+.intro { position: relative; isolation: isolate; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; overflow: hidden; margin-bottom: 36px; padding: 32px 36px; border-radius: var(--syncar-radius-panel); background: var(--syncar-green-950); color: var(--syncar-surface); }
 .intro::before, .intro::after { content: ""; position: absolute; z-index: -1; width: 330px; height: 330px; border: 1px solid var(--syncar-green-900); border-radius: 50%; pointer-events: none; }
 .intro::before { right: 36px; top: -235px; }
 .intro::after { right: -195px; bottom: -235px; }
@@ -25,10 +25,38 @@
 .table tbody tr:not(:last-child) { border-bottom: 1px solid var(--syncar-border); }
 .table tbody tr:hover { background: var(--syncar-surface-subtle); }
 .table tbody th { font-weight: 700; text-transform: capitalize; }
+.resultValue { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.resultValue svg { flex: none; }
 .positive { color: var(--syncar-success); font-weight: 700; }
 .negative { color: var(--syncar-danger) !important; font-weight: 700; }
 .lowerGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 32px; }
 .rows > :not(:last-child) { border-bottom: 1px solid var(--syncar-border); }
+.overdueList { scroll-margin-top: 80px; }
+.overdueList:focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: -3px; }
+.listToolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; padding: 18px 22px; border-bottom: 1px solid var(--syncar-border); }
+.searchLabel, .pageSizeLabel { display: grid; gap: 6px; min-width: 0; font-size: 12px; font-weight: 650; }
+.searchField { position: relative; display: flex; align-items: center; }
+.searchField svg { position: absolute; left: 12px; color: var(--syncar-text-muted); pointer-events: none; }
+.searchField input, .pageSizeLabel select { min-height: 44px; min-width: 0; width: 100%; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); background: var(--syncar-surface); color: var(--syncar-text); font-size: 14px; font-weight: 400; }
+.searchField input { padding: 10px 12px 10px 38px; }
+.searchField input::placeholder { color: var(--syncar-text-muted); }
+.pageSizeLabel select { padding: 10px; }
+.listHint { grid-column: 1 / -1; margin: 0; color: var(--syncar-text-muted); font-size: 12px; }
+.overdueList .rows { list-style: none; margin: 0; padding: 0; }
+.overdueList .rowMain { overflow-wrap: anywhere; }
+.overdueList .rowButton { min-height: 44px; }
+.listFooter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 22px; border-top: 1px solid var(--syncar-border); font-size: 12px; font-variant-numeric: tabular-nums; }
+.listFooter p { margin: 0; color: var(--syncar-text-muted); }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.pagination button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 8px 10px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); font-size: 12px; font-weight: 650; }
+.pagination button:hover:not(:disabled) { background: var(--syncar-surface-subtle); }
+.pagination button:active:not(:disabled) { background: var(--syncar-border); }
+.pagination button:disabled { color: var(--syncar-text-muted); opacity: .5; cursor: not-allowed; }
+.searchEmpty { padding: 24px 22px; font-size: 14px; }
+.searchEmpty p { margin: 6px 0; color: var(--syncar-text-muted); }
+.searchEmpty button { min-height: 44px; }
+.overdueList :is(input, select):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+@media (max-width: 640px) { .listToolbar, .listFooter { padding: 16px; } .listToolbar { gap: 12px; } .listToolbar { grid-template-columns: minmax(0, 1fr); } .pageSizeLabel { grid-template-columns: auto 80px; align-items: center; justify-content: start; } }
 .paymentRow, .summaryRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 18px 22px; }
 .paymentRow:hover, .summaryRow:hover { background: var(--syncar-surface-subtle); }
 .rowMain { display: grid; gap: 4px; min-width: 0; }
@@ -72,3 +100,48 @@
 .page :is(a, button):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
 @media (max-width: 1100px) { .lowerGrid, .chartGrid { grid-template-columns: 1fr; } }
 @media (max-width: 640px) { .intro { padding: 26px 22px; } .introIcon { display: none; } .sectionHeading { align-items: flex-start; } .count { margin-top: 5px; } .empty { align-items: flex-start; gap: 14px; padding: 22px 18px; } .emptyVisual { width: 48px; height: 48px; border-radius: 12px; } .paymentRow, .summaryRow { flex-wrap: wrap; padding: 16px; } .rowEnd { align-items: flex-start; width: 100%; text-align: left; } .gate { flex-direction: column; align-items: stretch; padding: 24px 20px; } .gateCopy { gap: 14px; } .gateIcon { width: 46px; height: 46px; } .gate button { width: 100%; } .chartGrid { padding: 16px; } .chartCanvas, .chartEmpty { height: 260px; } }
+
+/* Report workspace: compact overview and independent detail panels. */
+.reportPeriod { margin-bottom: 14px; color: var(--syncar-text-muted); font-size: 13px; }
+.reportPeriod strong { color: var(--syncar-text); font-weight: 600; }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0 0 28px; padding: 20px 0; border-block: 1px solid var(--syncar-border); gap: 20px; }
+.metrics > div { min-width: 0; }
+.metrics dt { display: flex; align-items: center; gap: 8px; min-height: 32px; color: var(--syncar-text-muted); font-size: 12px; line-height: 1.35; }
+.metricIcon { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 9px; background: var(--syncar-surface-subtle); color: var(--syncar-text-muted); }
+.metricIconPositive { color: var(--syncar-success); }
+.metricIconNegative { color: var(--syncar-danger); }
+.metrics dd { margin: 6px 0 0; font-size: clamp(20px, 2vw, 28px); font-weight: 750; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.tabs { display: flex; overflow-x: auto; gap: 24px; border-bottom: 1px solid var(--syncar-border); margin-bottom: 24px; }
+.tabs button { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 10px 2px; white-space: nowrap; border-bottom: 3px solid transparent; color: var(--syncar-text-muted); font-weight: 650; font-size: 14px; }
+.tabs button:hover { color: var(--syncar-text); }
+.tabs button[aria-selected="true"] { border-bottom-color: var(--syncar-success); color: var(--syncar-success); }
+.tabs button span { font-size: 11px; background: var(--syncar-surface-subtle); padding: 3px 7px; border-radius: 6px; }
+.collectionToolbar { display: grid; grid-template-columns: minmax(160px, 1fr) auto auto; gap: 16px; padding: 20px 24px; border-bottom: 1px solid var(--syncar-border); }
+.collection .pagination { width: auto; gap: 20px; }
+.collection :is(input, select):focus-visible, .page [role="tabpanel"]:focus-visible, .driverDetails summary:focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: -3px; }
+.driverDetails summary { display: flex; align-items: center; gap: 20px; min-height: 88px; padding: 20px 24px; cursor: pointer; list-style: none; }
+.driverDetails summary::-webkit-details-marker { display: none; }
+.driverDetails summary .rowMain { flex: 1; }
+.driverDetails summary:hover { background: var(--syncar-surface-subtle); }
+.driverDetails[open] summary { background: var(--syncar-surface-subtle); border-bottom: 1px solid var(--syncar-border); }
+.driverDetails[open] summary > svg { transform: rotate(180deg); }
+.detailFooter { display: flex; align-items: center; justify-content: space-between; padding: 10px 24px; color: var(--syncar-text-muted); font-size: 12px; }
+.vehiclePlate { display: block; margin-top: 4px; color: var(--syncar-text-muted); font-size: 12px; font-weight: 400; }
+.advancedGrid { margin-top: 24px; }
+.advancedPanelHeader { padding-bottom: 20px; }
+.advancedPanelTitle { display: flex; align-items: center; gap: 12px; }
+.advancedPanelTitle .headingIcon { width: 40px; height: 40px; }
+.chartCard { border: 0; border-radius: 0; padding: 0; }
+.categoryBars { list-style: none; margin: 20px 0 0; padding: 0; display: grid; gap: 18px; }
+.categoryBars li > div:first-child { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 8px; font-size: 13px; }
+.categoryName { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.categoryName svg { flex: none; color: var(--syncar-success); }
+.categoryBars strong { font-variant-numeric: tabular-nums; }
+.barTrack { height: 8px; background: var(--syncar-surface-subtle); border-radius: 4px; overflow: hidden; }
+.barTrack span { display: block; height: 100%; background: var(--syncar-success); border-radius: inherit; }
+.page ::selection { background: var(--syncar-action); color: var(--syncar-action-text); }
+.page input { caret-color: var(--syncar-success); }
+.page :is(.tabs, .tableScroll) { scrollbar-color: var(--syncar-border) var(--syncar-surface); scrollbar-width: thin; }
+@media (max-width: 800px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } .collectionToolbar { grid-template-columns: 1fr 100px; } .collectionToolbar > :first-child { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .tabs { gap: 20px; } .collectionToolbar { padding: 16px; } .collectionToolbar .pageSizeLabel { display: grid; grid-template-columns: 1fr; } .driverDetails summary { padding: 16px; gap: 12px; flex-wrap: wrap; } .driverDetails summary .rowMain { flex-basis: calc(100% - 32px); } .driverDetails summary > svg { margin-left: auto; } .collection .pagination { width: 100%; gap: 8px; } .metrics dd { font-size: 22px; } }
+@media (max-width: 420px) { .metrics { gap: 16px 10px; } .metrics dd { font-size: 18px; } }

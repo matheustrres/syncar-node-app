@@ -625,6 +625,7 @@ export const getReportOverduePayments = cache(async () => {
       weekEnd: Date;
       dueDate: Date;
       value: number;
+      driverId: string;
       driverName: string;
       vehicleInfo: string;
       daysOverdue: number;
@@ -636,6 +637,7 @@ export const getReportOverduePayments = cache(async () => {
       p.week_end AS "weekEnd",
       p.due_date AS "dueDate",
       p.value,
+      d.id AS "driverId",
       d.name AS "driverName",
       v.plate || ' - ' || v.model AS "vehicleInfo",
       floor(EXTRACT(EPOCH FROM (NOW() - p.due_date)) / (60 * 60 * 24)) AS "daysOverdue"

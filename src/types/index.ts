@@ -47,6 +47,7 @@ export interface CashFlowReportItem {
 
 export interface OverduePaymentReportItem {
   id: string;
+  driverId: string;
   weekStart: Date;
   weekEnd: Date;
   dueDate: Date;
