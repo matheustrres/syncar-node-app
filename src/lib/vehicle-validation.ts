@@ -29,8 +29,10 @@ export const vehicleUpdateSchema = z.object(vehicleFields).partial().refine(
   "Informe ao menos um campo para atualizar.",
 );
 
-export const vehicleIdsSchema = z.array(z.string().min(1).max(30)).min(1).max(100)
-  .refine((ids) => new Set(ids).size === ids.length, "A lista contém IDs duplicados.");
+export const vehicleIdsSchema = z.object({
+  ids: z.array(z.string().min(1).max(30)).min(1).max(100)
+    .refine((ids) => new Set(ids).size === ids.length, "A lista contém IDs duplicados."),
+}).strict();
 
 export const vehicleIdSchema = z.string().min(1).max(30).regex(/^[A-Za-z0-9_-]+$/, "ID de veículo inválido.");
 

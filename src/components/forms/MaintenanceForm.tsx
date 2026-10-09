@@ -128,7 +128,7 @@ export default function MaintenanceForm({
     const newErrors: Record<string, string> = {};
     if (!formData.vehicleId) newErrors.vehicleId = "Veículo é obrigatório.";
     if (!formData.type) newErrors.type = "Tipo de manutenção é obrigatório.";
-    if (!formData.cost || parseFloat(String(formData.cost)) <= 0)
+    if (!formData.cost || !Number.isFinite(Number(formData.cost)) || Number(formData.cost) <= 0)
       newErrors.cost = "Custo deve ser maior que zero.";
     if (!formData.date) newErrors.date = "Data é obrigatória.";
     if (formData.mileage === undefined || formData.mileage <= 0)
@@ -144,18 +144,11 @@ export default function MaintenanceForm({
       showToast("Por favor, corrija os erros no formulário.", "error");
       return;
     }
-    const parseCurrency = (value: string | undefined): number => {
-      if (!value) return 0;
-      const cleanedValue = value
-        .replace(/R\$\s?/, "")
-        .replace(/\./g, "")
-        .replace(",", ".");
-      return parseFloat(cleanedValue) || 0;
-    };
     onSave({
-      ...formData,
+      vehicleId: formData.vehicleId,
+      type: formData.type,
       description: formData.description?.trim() || "",
-      cost: parseCurrency(String(formData.cost)),
+      cost: Number(formData.cost),
       date: formData.date
         ? new Date(formData.date).toISOString()
         : new Date().toISOString(),
@@ -166,6 +159,7 @@ export default function MaintenanceForm({
       nextServiceMileage: formData.nextServiceMileage
         ? parseInt(String(formData.nextServiceMileage), 10)
         : null,
+      notes: formData.notes,
     } as WithoutBaseItem<Maintenance>);
   };
 

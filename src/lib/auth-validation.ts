@@ -9,7 +9,7 @@ export const strongPasswordSchema = z.string()
     (value) => (value.match(/[!@#$%^&*(),.?":{}|<>]/g) ?? []).length >= 2,
     "A senha deve conter pelo menos dois caracteres especiais."
   )
-  .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "A senha deve ter no máximo 72 bytes.");
+  .refine((value) => new TextEncoder().encode(value).length <= 72, "A senha deve ter no máximo 72 bytes.");
 
 export const bcryptHashSchema = z.string()
   .regex(/^\$2[abyx]\$(\d{2})\$[./A-Za-z0-9]{53}$/)
@@ -36,12 +36,13 @@ export const registrationSchema = z.object({
   message: "As senhas não coincidem.",
 });
 
+// NextAuth includes csrfToken, callbackUrl and json in the credentials payload.
 export const loginCredentialsSchema = z.object({
   email: emailSchema,
   // Login accepts existing passwords regardless of the current signup policy.
   password: z.string().min(1, "Senha inválida.")
     .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "Senha inválida."),
-}).strict();
+});
 
 export const forgotPasswordSchema = z.object({ email: emailSchema }).strict();
 

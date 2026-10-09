@@ -7,6 +7,7 @@ import { ProfileData } from "@/types";
 import { useFetchProfile } from "@/hooks/useData";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import { useToast } from "@/context/ToastContext";
+import { strongPasswordSchema } from "@/lib/auth-validation";
 import ProfileSkeleton from "./ProfileSkeleton";
 import styles from "./profile.module.css";
 
@@ -103,8 +104,9 @@ function PasswordForm() {
     event.preventDefault();
     setMessage("");
     setError("");
-    if (passwords.newPassword.length < 8) {
-      setError("A nova senha deve ter no mínimo 8 caracteres.");
+    const parsedPassword = strongPasswordSchema.safeParse(passwords.newPassword);
+    if (!parsedPassword.success) {
+      setError(parsedPassword.error.issues[0]?.message ?? "Senha inválida.");
       return;
     }
     if (passwords.newPassword !== passwords.confirmNewPassword) {
@@ -139,8 +141,8 @@ function PasswordForm() {
       </div>
       <div className={styles.field}>
         <label htmlFor="new-password">Nova senha <span aria-hidden="true">*</span></label>
-        <div className={styles.inputWrap}><LockKeyhole size={18} aria-hidden="true" /><input id="new-password" name="newPassword" type="password" autoComplete="new-password" minLength={8} value={passwords.newPassword} onChange={handleChange} required aria-describedby="password-hint" /></div>
-        <p id="password-hint" className={styles.fieldHint}>Use pelo menos 8 caracteres.</p>
+        <div className={styles.inputWrap}><LockKeyhole size={18} aria-hidden="true" /><input id="new-password" name="newPassword" type="password" autoComplete="new-password" minLength={9} value={passwords.newPassword} onChange={handleChange} required aria-describedby="password-hint" /></div>
+        <p id="password-hint" className={styles.fieldHint}>Use pelo menos 9 caracteres, com letras maiúsculas e minúsculas, um número e dois caracteres especiais (até 72 bytes).</p>
       </div>
       <div className={styles.field}>
         <label htmlFor="confirm-password">Confirmar nova senha <span aria-hidden="true">*</span></label>

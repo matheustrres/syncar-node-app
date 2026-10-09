@@ -129,7 +129,7 @@ export async function DELETE(request: NextRequest) {
       { status: 400 }
     );
   }
-  const ids = parsedBody.data;
+  const ids = parsedBody.data.ids;
   try {
     await prisma.vehicle.deleteMany({
       where: {

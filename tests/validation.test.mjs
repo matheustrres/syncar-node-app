@@ -123,7 +123,12 @@ test('auth schemas validate signup, login, password reset and stored bcrypt hash
 
   assert.equal(loginCredentialsSchema.safeParse({ email: ' USER@EXEMPLO.COM ', password: 'legacy' }).data.email, 'user@exemplo.com');
   assert.equal(loginCredentialsSchema.safeParse({ email: 'x@exemplo.com', password: 'x'.repeat(73) }).success, false);
-  assert.equal(loginCredentialsSchema.safeParse({ email: 'x@exemplo.com', password: 'ok', extra: true }).success, false);
+  const nextAuthCredentials = loginCredentialsSchema.safeParse({
+    email: ' USER@EXEMPLO.COM ', password: 'legacy',
+    csrfToken: 'csrf-token', callbackUrl: '/dashboard', json: 'true',
+  });
+  assert.equal(nextAuthCredentials.success, true);
+  assert.deepEqual(nextAuthCredentials.data, { email: 'user@exemplo.com', password: 'legacy' });
 
   assert.equal(forgotPasswordSchema.safeParse({ email: ' USER@EXEMPLO.COM ' }).data.email, 'user@exemplo.com');
   assert.equal(forgotPasswordSchema.safeParse({ email: 'invalido' }).success, false);
@@ -161,10 +166,11 @@ test('vehicle update requires at least one valid field', () => {
 });
 
 test('vehicle IDs and list filters enforce shape, bounds and ranges', () => {
-  assert.equal(vehicleIdsSchema.safeParse(['vehicle1', 'vehicle2']).success, true);
-  assert.equal(vehicleIdsSchema.safeParse([]).success, false);
-  assert.equal(vehicleIdsSchema.safeParse(['same', 'same']).success, false);
-  assert.equal(vehicleIdsSchema.safeParse(Array.from({ length: 101 }, (_, index) => `v${index}`)).success, false);
+  assert.deepEqual(vehicleIdsSchema.safeParse({ ids: ['vehicle1', 'vehicle2'] }).data, { ids: ['vehicle1', 'vehicle2'] });
+  assert.equal(vehicleIdsSchema.safeParse({ ids: [] }).success, false);
+  assert.equal(vehicleIdsSchema.safeParse({ ids: ['same', 'same'] }).success, false);
+  assert.equal(vehicleIdsSchema.safeParse({ ids: Array.from({ length: 101 }, (_, index) => `v${index}`) }).success, false);
+  assert.equal(vehicleIdsSchema.safeParse(['vehicle1']).success, false);
 
   const defaults = vehicleListQuerySchema.safeParse({});
   assert.equal(defaults.success, true);
