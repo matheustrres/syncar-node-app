@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 
 import { getProfile } from "@/lib/data-access";
+import { parseProfileJson, profileUpdateSchema } from "@/lib/profile-validation";
 
 export async function GET() {
   const user = await getProfile();
@@ -22,8 +23,10 @@ export async function PUT(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  const parsed = await parseProfileJson(request, profileUpdateSchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
-    const { name, email, companyName } = await request.json();
+    const { name, email, companyName } = parsed.data;
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: {

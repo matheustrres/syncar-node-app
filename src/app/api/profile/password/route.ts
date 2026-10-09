@@ -3,14 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { parseProfileJson, profilePasswordSchema } from "@/lib/profile-validation";
 
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   }
+  const parsed = await parseProfileJson(request, profilePasswordSchema);
+  if (!parsed.success) return NextResponse.json({ error: parsed.error }, { status: 400 });
   try {
-    const { currentPassword, newPassword } = await request.json();
+    const { currentPassword, newPassword } = parsed.data;
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { password: true },

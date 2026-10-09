@@ -25,6 +25,7 @@ import {
   contractIdSchema,
 } from '../src/lib/contract-validation.ts';
 import { paymentIdSchema, paymentUpdateSchema } from '../src/lib/payment-validation.ts';
+import { profilePasswordSchema, profileUpdateSchema } from '../src/lib/profile-validation.ts';
 
 const vehicle = {
   plate: 'ABC-1234',
@@ -233,4 +234,22 @@ test('payment updates validate report confirmation and editable payment fields',
   assert.equal(paymentUpdateSchema.safeParse({ userId: 'another-user' }).success, false);
   assert.equal(paymentIdSchema.safeParse('payment_123').success, true);
   assert.equal(paymentIdSchema.safeParse('bad/id').success, false);
+});
+
+test('profile update validates and normalizes account details', () => {
+  const parsed = profileUpdateSchema.safeParse({ name: '  Maria da Silva  ', email: ' MARIA@EXEMPLO.COM ', companyName: '  Frota Maria  ' });
+  assert.equal(parsed.success, true);
+  assert.equal(parsed.data.name, 'Maria da Silva');
+  assert.equal(parsed.data.email, 'maria@exemplo.com');
+  assert.equal(parsed.data.companyName, 'Frota Maria');
+  assert.equal(profileUpdateSchema.safeParse({ name: '', email: 'invalido', companyName: 'X' }).success, false);
+  assert.equal(profileUpdateSchema.safeParse({ name: 'Maria', email: 'maria@example.com', companyName: 'Empresa', plan: 'PROFESSIONAL' }).success, false);
+});
+
+test('profile password update enforces required fields and bcrypt input size', () => {
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'senha-nova-123' }).success, true);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: '', newPassword: 'senha-nova-123' }).success, false);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'curta' }).success, false);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'á'.repeat(37) }).success, false);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'senha-nova-123', confirmNewPassword: 'outra' }).success, false);
 });
