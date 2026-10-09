@@ -95,12 +95,12 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
         ref={sidebarRef}
         id="dashboard-navigation"
         aria-label="Navegação principal"
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-syncar-brand text-white transition-[width,transform] duration-200 lg:translate-x-0 ${isExpanded ? "lg:w-64" : "lg:w-[4.5rem]"} ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-white/10 bg-syncar-brand text-white transition-[width,transform] duration-200 ease-out motion-reduce:transition-none lg:translate-x-0 ${isExpanded ? "lg:w-64" : "lg:w-[4.5rem]"} ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className={`flex h-16 flex-none items-center border-b border-white/10 px-5 ${isExpanded ? "justify-between" : "lg:justify-center"}`}>
-          <Link href="/dashboard" onClick={onClose} aria-label="SynCar, visão geral" className="flex items-center gap-2 rounded text-xl font-bold tracking-tight focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-syncar-action">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-syncar-action text-syncar-brand"><CarFront size={21} aria-hidden="true" /></span>
-            <span className={isExpanded ? "" : "lg:hidden"}>syncar<span className="-ml-2 text-syncar-action">.</span></span>
+          <Link href="/dashboard" onClick={onClose} aria-label="SynCar, visão geral" className={`flex items-center rounded text-xl font-bold tracking-tight transition-[gap] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-syncar-action ${isExpanded ? "gap-2" : "gap-2 lg:gap-0"}`}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-syncar-action text-syncar-brand"><CarFront size={21} aria-hidden="true" /></span>
+            <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-32 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>syncar<span className="-ml-2 text-syncar-action">.</span></span>
           </Link>
           <button ref={closeButtonRef} type="button" onClick={onClose} aria-label="Fechar menu" className="flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-syncar-action lg:hidden">
             <X size={20} aria-hidden="true" />
@@ -111,9 +111,9 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
           <div className="space-y-5">
             {navGroups.map((group) => (
               <section key={group.label} aria-label={group.label}>
-                <div className={`mb-2 flex items-center gap-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-[#afc6bd] ${isExpanded ? "" : "lg:justify-center"}`} aria-hidden="true">
-                  <span className={isExpanded ? "" : "lg:hidden"}>{group.label}</span>
-                  <span className={`h-px flex-1 bg-white/15 ${isExpanded ? "" : "lg:hidden"}`} />
+                <div className={`mb-2 flex items-center px-3 text-[11px] font-semibold uppercase tracking-wider text-[#afc6bd] transition-[gap] duration-200 ease-out motion-reduce:transition-none ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center"}`} aria-hidden="true">
+                  <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-24 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>{group.label}</span>
+                  <span className={`h-px flex-1 bg-white/15 transition-opacity duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:opacity-100 lg:delay-100" : "lg:opacity-0 lg:delay-0"}`} />
                 </div>
                 <ul className="space-y-1">
                   {group.items.map((item) => {
@@ -126,10 +126,10 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
                           aria-current={active ? "page" : undefined}
                           aria-label={isExpanded ? undefined : item.label}
                           title={isExpanded ? undefined : item.label}
-                          className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "" : "lg:justify-center lg:px-0"} ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
+                          className={`flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-[gap,color,background-color] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center lg:px-0"} ${active ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
                         >
-                          <item.icon size={19} strokeWidth={1.8} aria-hidden="true" />
-                          <span className={isExpanded ? "" : "lg:hidden"}>{item.label}</span>
+                          <item.icon className="shrink-0" size={19} strokeWidth={1.8} aria-hidden="true" />
+                          <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-40 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>{item.label}</span>
                         </Link>
                       </li>
                     );
@@ -158,10 +158,10 @@ export default function Sidebar({ isOpen, isExpanded, onClose, onToggle }: Sideb
             aria-current={pathname.startsWith("/dashboard/profile") ? "page" : undefined}
             title={isExpanded ? undefined : "Meu perfil"}
             aria-label={isExpanded ? undefined : "Meu perfil"}
-            className={`flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "" : "lg:justify-center lg:px-0"} ${pathname.startsWith("/dashboard/profile") ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
+            className={`flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-semibold transition-[gap,color,background-color] duration-200 ease-out motion-reduce:transition-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-syncar-action ${isExpanded ? "gap-3" : "gap-3 lg:gap-0 lg:justify-center lg:px-0"} ${pathname.startsWith("/dashboard/profile") ? "bg-syncar-action text-syncar-brand" : "text-[#d2dfda] hover:bg-white/10 hover:text-white"}`}
           >
-            <Settings size={19} strokeWidth={1.8} aria-hidden="true" />
-            <span className={isExpanded ? "" : "lg:hidden"}>Meu perfil</span>
+            <Settings className="shrink-0" size={19} strokeWidth={1.8} aria-hidden="true" />
+            <span className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-150 ease-out motion-reduce:transition-none ${isExpanded ? "lg:max-w-32 lg:opacity-100 lg:delay-100" : "lg:max-w-0 lg:opacity-0 lg:delay-0"}`}>Meu perfil</span>
           </Link>
         </div>
       </aside>
