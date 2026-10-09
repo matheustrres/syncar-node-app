@@ -4,6 +4,7 @@ import { getAllVehicles, getAllDrivers } from "@/lib/data-access";
 import { notFound } from "next/navigation";
 import { authOptions } from "@/lib/authOptions";
 import { getServerSession } from "next-auth";
+import { contractIdSchema } from "@/lib/contract-validation";
 
 interface ContractDetailsPageProps {
   params: Promise<{ id: string }>;
@@ -16,6 +17,7 @@ export default async function ContractDetailsPage({
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return notFound();
   const { id } = await params;
+  if (!contractIdSchema.safeParse(id).success) notFound();
   const contract = await prisma.contract.findUnique({
     where: {
       id,
