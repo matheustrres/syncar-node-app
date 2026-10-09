@@ -26,6 +26,14 @@ import {
 } from '../src/lib/contract-validation.ts';
 import { paymentIdSchema, paymentUpdateSchema } from '../src/lib/payment-validation.ts';
 import { profilePasswordSchema, profileUpdateSchema } from '../src/lib/profile-validation.ts';
+import {
+  bcryptHashSchema,
+  forgotPasswordSchema,
+  loginCredentialsSchema,
+  registrationSchema,
+  resetPasswordSchema,
+  strongPasswordSchema,
+} from '../src/lib/auth-validation.ts';
 
 const vehicle = {
   plate: 'ABC-1234',
@@ -77,6 +85,56 @@ const contract = {
   status: 'Ativo',
   duration: 24,
 };
+
+const validAuthPassword = 'Syncar!2026@';
+
+test('auth schemas validate signup, login, password reset and stored bcrypt hashes', () => {
+  const registration = registrationSchema.safeParse({
+    name: '  Ana Silva ',
+    email: ' ANA@EXEMPLO.COM ',
+    password: validAuthPassword,
+    confirmPassword: validAuthPassword,
+    companyName: '  Empresa Ana ',
+    phone: '(11) 99999-9999',
+  });
+  assert.equal(registration.success, true);
+  assert.equal(registration.data.email, 'ana@exemplo.com');
+  assert.equal(registration.data.name, 'Ana Silva');
+  assert.equal(registration.data.companyName, 'Empresa Ana');
+
+  assert.equal(registrationSchema.safeParse({
+    name: 'Ana', email: 'ana@exemplo.com', password: validAuthPassword,
+    confirmPassword: 'Outro!2026@', companyName: 'Empresa Ana', phone: '11999999999',
+  }).success, false);
+  assert.equal(registrationSchema.safeParse({
+    name: 'Ana', email: 'invalido', password: validAuthPassword,
+    confirmPassword: validAuthPassword, companyName: 'Empresa Ana', phone: '11999999999',
+  }).success, false);
+  assert.equal(registrationSchema.safeParse({
+    name: 'Ana', email: 'ana@exemplo.com', password: validAuthPassword,
+    confirmPassword: validAuthPassword, companyName: 'Empresa Ana', phone: '11999999999',
+    plan: 'PRO',
+  }).success, false);
+
+  assert.equal(strongPasswordSchema.safeParse('Abcdef1!').success, false);
+  assert.equal(strongPasswordSchema.safeParse('abcdefgh!@1').success, false);
+  assert.equal(strongPasswordSchema.safeParse(`A1!@${'a'.repeat(70)}`).success, false);
+  assert.equal(strongPasswordSchema.safeParse(validAuthPassword).success, true);
+
+  assert.equal(loginCredentialsSchema.safeParse({ email: ' USER@EXEMPLO.COM ', password: 'legacy' }).data.email, 'user@exemplo.com');
+  assert.equal(loginCredentialsSchema.safeParse({ email: 'x@exemplo.com', password: 'x'.repeat(73) }).success, false);
+  assert.equal(loginCredentialsSchema.safeParse({ email: 'x@exemplo.com', password: 'ok', extra: true }).success, false);
+
+  assert.equal(forgotPasswordSchema.safeParse({ email: ' USER@EXEMPLO.COM ' }).data.email, 'user@exemplo.com');
+  assert.equal(forgotPasswordSchema.safeParse({ email: 'invalido' }).success, false);
+  assert.equal(resetPasswordSchema.safeParse({ token: 'a'.repeat(64), password: validAuthPassword }).success, true);
+  assert.equal(resetPasswordSchema.safeParse({ token: 'bad-token', password: validAuthPassword }).success, false);
+  assert.equal(resetPasswordSchema.safeParse({ token: 'a'.repeat(64), password: 'weak' }).success, false);
+
+  assert.equal(bcryptHashSchema.safeParse('$2b$10$' + 'a'.repeat(53)).success, true);
+  assert.equal(bcryptHashSchema.safeParse('plain-password').success, false);
+  assert.equal(bcryptHashSchema.safeParse('$2b$10$broken').success, false);
+});
 
 test('vehicle create validates required fields and normalizes plate and optional identifiers', () => {
   const parsed = vehicleCreateSchema.safeParse({
@@ -247,9 +305,9 @@ test('profile update validates and normalizes account details', () => {
 });
 
 test('profile password update enforces required fields and bcrypt input size', () => {
-  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'senha-nova-123' }).success, true);
-  assert.equal(profilePasswordSchema.safeParse({ currentPassword: '', newPassword: 'senha-nova-123' }).success, false);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: validAuthPassword }).success, true);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: '', newPassword: validAuthPassword }).success, false);
   assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'curta' }).success, false);
   assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'á'.repeat(37) }).success, false);
-  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: 'senha-nova-123', confirmNewPassword: 'outra' }).success, false);
+  assert.equal(profilePasswordSchema.safeParse({ currentPassword: 'senha-atual', newPassword: validAuthPassword, confirmNewPassword: 'outra' }).success, false);
 });

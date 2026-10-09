@@ -2,16 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { sendPasswordResetEmail } from "@/lib/email"; // We will create this later
+import { forgotPasswordSchema, parseAuthJson } from "@/lib/auth-validation";
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email é obrigatório." },
-        { status: 400 }
-      );
+    const parsed = await parseAuthJson(request, forgotPasswordSchema);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const { email } = parsed.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json(

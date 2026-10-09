@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/authOptions";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 import { parseProfileJson, profilePasswordSchema } from "@/lib/profile-validation";
+import { bcryptHashSchema } from "@/lib/auth-validation";
 
 export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
@@ -22,6 +23,12 @@ export async function PUT(request: Request) {
       return NextResponse.json(
         { error: "Usuário não encontrado." },
         { status: 404 }
+      );
+    }
+    if (!bcryptHashSchema.safeParse(user.password).success) {
+      return NextResponse.json(
+        { error: "Não foi possível validar a senha atual." },
+        { status: 500 }
       );
     }
     const isPasswordCorrect = await bcrypt.compare(

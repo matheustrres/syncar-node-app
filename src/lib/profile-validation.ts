@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { strongPasswordSchema } from "./auth-validation.ts";
 
 const profileText = (label: string) => z.string().trim().min(1, `${label} é obrigatório.`).max(120, `${label} deve ter no máximo 120 caracteres.`);
 
@@ -10,8 +11,7 @@ export const profileUpdateSchema = z.object({
 
 export const profilePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Informe a senha atual.").max(256),
-  newPassword: z.string().min(8, "A nova senha deve ter no mínimo 8 caracteres.")
-    .refine((value) => Buffer.byteLength(value, "utf8") <= 72, "A nova senha deve ter no máximo 72 bytes."),
+  newPassword: strongPasswordSchema,
 }).strict();
 
 export async function parseProfileJson<T extends z.ZodType>(request: Request, schema: T) {

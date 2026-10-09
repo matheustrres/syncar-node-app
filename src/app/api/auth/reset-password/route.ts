@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { parseAuthJson, resetPasswordSchema } from "@/lib/auth-validation";
 
 export async function POST(request: Request) {
   try {
-    const { token, password } = await request.json();
-    if (!token || !password) {
-      return NextResponse.json(
-        { error: "Token e nova senha são obrigatórios." },
-        { status: 400 }
-      );
+    const parsed = await parseAuthJson(request, resetPasswordSchema);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const { token, password } = parsed.data;
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token },
       include: { user: true },

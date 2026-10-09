@@ -3,23 +3,21 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
 import { handlePrismaError } from "@/lib/api-utils";
+import { parseAuthJson, registrationSchema } from "@/lib/auth-validation";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, password, companyName, phone } = body;
-    if (!name || !email || !password || !companyName || !phone) {
-      return NextResponse.json(
-        { message: "Dados incompletos" },
-        { status: 400 }
-      );
+    const parsed = await parseAuthJson(request, registrationSchema);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+    const { name, email, password, companyName, phone } = parsed.data;
     const existingUserByEmail = await prisma.user.findUnique({
       where: { email },
     });
     if (existingUserByEmail) {
       return NextResponse.json(
-        { message: "Este email já está em uso." },
+        { error: "Este email já está em uso." },
         { status: 409 }
       );
     }
@@ -31,6 +29,16 @@ export async function POST(request: Request) {
         password: hashedPassword,
         companyName,
         phone,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        companyName: true,
+        phone: true,
+        plan: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
     return NextResponse.json(user);

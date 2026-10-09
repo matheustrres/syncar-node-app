@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcrypt";
+import { bcryptHashSchema, loginCredentialsSchema } from "./auth-validation";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -14,23 +15,25 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials.password) return null;
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-        if (!user) return null;
-        const passwordMatch = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-        if (!passwordMatch) return null;
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          companyName: user.companyName,
-          plan: user.plan,
-        };
+        const parsed = loginCredentialsSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: parsed.data.email },
+          });
+          if (!user || !bcryptHashSchema.safeParse(user.password).success) return null;
+          const passwordMatch = await bcrypt.compare(parsed.data.password, user.password);
+          if (!passwordMatch) return null;
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            companyName: user.companyName,
+            plan: user.plan,
+          };
+        } catch {
+          return null;
+        }
       },
     }),
   ],
