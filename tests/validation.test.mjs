@@ -24,6 +24,7 @@ import {
   contractListQuerySchema,
   contractIdSchema,
 } from '../src/lib/contract-validation.ts';
+import { paymentIdSchema, paymentUpdateSchema } from '../src/lib/payment-validation.ts';
 
 const vehicle = {
   plate: 'ABC-1234',
@@ -219,4 +220,17 @@ test('contract IDs and list filters reject malformed input and inverted ranges',
   assert.equal(contractListQuerySchema.safeParse({ startDateStartDate: '2026-02-30' }).success, false);
   assert.equal(contractListQuerySchema.safeParse({ sortColumn: 'userId' }).success, false);
   assert.equal(contractListQuerySchema.safeParse({ extra: 'x' }).success, false);
+});
+
+test('payment updates validate report confirmation and editable payment fields', () => {
+  const reportConfirmation = paymentUpdateSchema.safeParse({ status: 'Pago', paymentDate: '2026-10-09T12:00:00.000Z' });
+  assert.equal(reportConfirmation.success, true);
+  assert.equal(paymentUpdateSchema.safeParse({}).success, false);
+  assert.equal(paymentUpdateSchema.safeParse({ status: 'Cancelado' }).success, false);
+  assert.equal(paymentUpdateSchema.safeParse({ paymentDate: '2026-02-30' }).success, false);
+  assert.equal(paymentUpdateSchema.safeParse({ value: -1 }).success, false);
+  assert.equal(paymentUpdateSchema.safeParse({ weekStart: '2026-10-20', weekEnd: '2026-10-10' }).success, false);
+  assert.equal(paymentUpdateSchema.safeParse({ userId: 'another-user' }).success, false);
+  assert.equal(paymentIdSchema.safeParse('payment_123').success, true);
+  assert.equal(paymentIdSchema.safeParse('bad/id').success, false);
 });
