@@ -1,12 +1,19 @@
-.page { max-width: 1440px; margin: 0 auto; color: var(--syncar-text); }
+.page { width: 100%; min-width: 0; color: var(--syncar-text); }
 .page :is(a, button, input):focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 3px; }
-.intro { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin: 12px 0 32px; }
+.intro { position: relative; isolation: isolate; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; overflow: hidden; margin-bottom: 32px; padding: 32px 36px; border-radius: var(--syncar-radius-panel); background: var(--syncar-green-950); color: var(--syncar-surface); }
+.intro::before, .intro::after { content: ""; position: absolute; z-index: -1; width: 330px; height: 330px; border: 1px solid var(--syncar-green-900); border-radius: 50%; pointer-events: none; }
+.intro::before { right: 36px; top: -235px; }
+.intro::after { right: -195px; bottom: -235px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 10px; color: var(--syncar-action); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.eyebrow::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 0 4px var(--syncar-green-900); }
 .intro h1 { margin: 0; font-size: clamp(30px, 3vw, 38px); font-weight: 750; line-height: 1.15; letter-spacing: -.035em; }
-.intro p { margin: 7px 0 0; color: var(--syncar-text-muted); font-size: 14px; line-height: 1.5; }
+.intro p { margin: 10px 0 0; max-width: 560px; color: var(--syncar-border); font-size: 14px; line-height: 1.55; }
 .headerActions { display: flex; gap: 10px; flex-wrap: wrap; }
-.period, .exportButton { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 14px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); background: var(--syncar-surface); color: var(--syncar-text-muted); font-size: 13px; font-weight: 700; white-space: nowrap; }
-.exportButton { color: var(--syncar-text); cursor: pointer; transition: background var(--syncar-motion-fast); }
-.exportButton:hover { background: var(--syncar-surface-subtle); }
+.period, .exportButton { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 44px; padding: 0 16px; border-radius: var(--syncar-radius-control); font-size: 13px; font-weight: 700; white-space: nowrap; }
+.period { border: 1px solid var(--syncar-text-muted); background: var(--syncar-green-900); color: var(--syncar-surface); }
+.exportButton { background: var(--syncar-action); color: var(--syncar-action-text); cursor: pointer; transition: background var(--syncar-motion-fast); }
+.exportButton:hover { background: var(--syncar-action-hover); }
+.intro button:focus-visible { outline-color: var(--syncar-action); }
 .overview { margin-bottom: 24px; }
 .overviewHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
 .overviewHeader h2 { margin: 0; font-size: 15px; font-weight: 750; }
@@ -106,7 +113,7 @@
   .quickLinks { grid-column: 1 / -1; }
 }
 @media (max-width: 750px) {
-  .intro { flex-direction: column; align-items: flex-start; margin-top: 0; }
+  .intro { flex-direction: column; align-items: flex-start; }
   .sideColumn { grid-template-columns: 1fr; }
   .quickLinks { grid-column: auto; }
   .panelHeader { padding: 18px; }
@@ -116,6 +123,7 @@
   .paymentFooter { padding: 14px 18px; }
 }
 @media (max-width: 540px) {
+  .intro { padding: 20px; gap: 20px; }
   .headerActions { width: 100%; }
   .headerActions > * { flex: 1; }
   .overviewHeader span { display: none; }

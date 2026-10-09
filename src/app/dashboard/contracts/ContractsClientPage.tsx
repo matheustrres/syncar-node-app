@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSWRConfig } from "swr";
-import { ArrowRight, CircleAlert, Download, Edit2, FileText, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, CircleAlert, CircleDollarSign, Download, Edit2, FileCheck2, FileText, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
 import { Contract, Driver, Vehicle, WithoutBaseItem } from "@/types";
 import { ContractFilters, ContractWithRelations, useAllDrivers, useAllVehicles, useFetchContracts } from "@/hooks/useData";
@@ -15,7 +15,7 @@ import ContractsFilterBar, { ContractFilterDraft, emptyContractFilters } from ".
 import ContractsTable from "./ContractsTable";
 import ContractStatus from "./ContractStatus";
 import ContractsSkeleton from "./ContractsSkeleton";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
 import contractStyles from "./contracts.module.css";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -25,13 +25,15 @@ interface Props {
   initialDrivers: Driver[];
   initialVehicles: Vehicle[];
   userPlan: string;
+  initialSummary: { total: number; active: number; finished: number; activeWeeklyValue: number };
+  endingSoon: { id: string; driverName: string; vehiclePlate: string; endDate: string }[];
 }
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 const contractDate = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
 const limit = 10;
 
-export default function ContractsClientPage({ initialContracts, total: initialTotal, initialDrivers, initialVehicles, userPlan }: Props) {
+export default function ContractsClientPage({ initialContracts, total: initialTotal, initialDrivers, initialVehicles, userPlan, initialSummary, endingSoon }: Props) {
   const router = useRouter();
   const { showToast } = useToast();
   const { mutate } = useSWRConfig();
@@ -110,6 +112,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
       }
       if (!editingItem) setContractCount((count) => count + 1);
       await mutateContracts();
+      router.refresh();
       void mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
       showToast(editingItem ? "Contrato atualizado com sucesso!" : "Contrato cadastrado com sucesso!", "success");
       setEditingItem(null);
@@ -140,6 +143,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
       }
       setContractCount((count) => Math.max(0, count - ids.length));
       await mutateContracts();
+      router.refresh();
       void mutate((key) => typeof key === "string" && key.startsWith("/api/vehicles"));
       showToast(ids.length === 1 ? "Contrato excluído com sucesso!" : "Contratos excluídos com sucesso!", "success");
       setItemToDelete(null);
@@ -192,15 +196,25 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
         </div>
       </header>
 
-      {(!showFirstRun || isLoading) && (
-        <ContractsFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
-      )}
+      <section className={contractStyles.overview} aria-labelledby="contracts-overview-title">
+        <div className={contractStyles.overviewHeader}>
+          <h2 id="contracts-overview-title">Visão rápida dos contratos</h2>
+          <span>Todos os contratos da frota</span>
+        </div>
+        <div className={contractStyles.metricGrid}>
+          <div className={contractStyles.metric}><div className={contractStyles.metricTop}><span>Total de contratos</span><FileText size={18} aria-hidden="true" /></div><strong>{initialSummary.total}</strong><span className={contractStyles.metricNote}>Contratos cadastrados</span></div>
+          <div className={contractStyles.metric}><div className={contractStyles.metricTop}><span>Ativos</span><FileCheck2 size={18} aria-hidden="true" /></div><strong>{initialSummary.active}</strong><span className={contractStyles.metricNote}>Locações em andamento</span></div>
+          <div className={contractStyles.metric}><div className={contractStyles.metricTop}><span>Encerrados</span><FileText size={18} aria-hidden="true" /></div><strong>{initialSummary.finished}</strong><span className={contractStyles.metricNote}>Locações concluídas</span></div>
+          <div className={contractStyles.metric}><div className={contractStyles.metricTop}><span>Soma dos valores semanais contratados</span><CircleDollarSign size={18} aria-hidden="true" /></div><strong className={contractStyles.currencyMetric}>{currency.format(initialSummary.activeWeeklyValue)}</strong><span className={contractStyles.metricNote}>Contratos ativos · não representa recebimentos</span></div>
+        </div>
+      </section>
 
-      {isLoading ? (
-        <ContractsSkeleton />
-      ) : isError ? (
-        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os contratos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateContracts()}>Tentar novamente</button>} />
-      ) : showFirstRun ? (
+      {endingSoon.length > 0 && <section className={contractStyles.endingSoon} aria-labelledby="ending-soon-title">
+        <div className={contractStyles.endingSoonHeading}><CircleAlert size={20} aria-hidden="true" /><div><h2 id="ending-soon-title">{endingSoon.length} {endingSoon.length === 1 ? "contrato próximo" : "contratos próximos"} do encerramento</h2><p>Prazo contratual nos próximos 30 dias, calculado pela data de início e duração.</p></div></div>
+        <div className={contractStyles.endingSoonLinks}>{endingSoon.map((contract) => <button key={contract.id} type="button" onClick={() => router.push(`/dashboard/contracts/${contract.id}`)}>{contract.driverName} · {contract.vehiclePlate} <span>até {contractDate.format(new Date(contract.endDate))} <ArrowRight size={14} aria-hidden="true" /></span></button>)}</div>
+      </section>}
+
+      {showFirstRun && !isLoading && !isError ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><FileText size={28} strokeWidth={1.8} aria-hidden="true" /></div>
           <div className={styles.firstRunCopy}>
@@ -211,22 +225,29 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
             </button>
           </div>
         </section>
+      ) : (
+      <section className={contractStyles.listPanel} aria-labelledby="contracts-list-title">
+        <div className={contractStyles.listHeader}>
+          <div><h2 id="contracts-list-title">Contratos cadastrados</h2><p>Busque, filtre e gerencie as locações da frota.</p></div>
+          <span>{total} {total === 1 ? "contrato" : "contratos"}{activeFilterCount > 0 ? " nos resultados" : ""}</span>
+        </div>
+        <ContractsFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
+      {isLoading ? (
+        <ContractsSkeleton />
+      ) : isError ? (
+        <div className={contractStyles.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os contratos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateContracts()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
-        <EmptyState Icon={FileText} title="Nenhum contrato encontrado" description="Altere os filtros para ver outros contratos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
+        <div className={contractStyles.panelMessage}><EmptyState Icon={FileText} title="Nenhum contrato encontrado" description="Altere os filtros para ver outros contratos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>
       ) : (
         <>
-          <div className={styles.resultsHeader}>
-            <h2>Contratos cadastrados</h2>
-            <span>{total} {total === 1 ? "contrato" : "contratos"}{activeFilterCount > 0 ? " nos resultados" : ""}</span>
-          </div>
           <div className={styles.desktopTable}>
             <ContractsTable contracts={contracts} onOpen={(id) => router.push("/dashboard/contracts/" + id)}
               onEdit={openForm} onDelete={setItemToDelete} onBulkDelete={setItemsToDelete}
               onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} />
           </div>
-          <div className={styles.mobileList}>
+          <div className={`${styles.mobileList} ${contractStyles.listMobileList}`}>
             {contracts.map((contract) => (
-              <article key={contract.id} className={styles.mobileItem}>
+              <article key={contract.id} className={`${styles.mobileItem} ${contractStyles.listMobileItem}`}>
                 <div className={styles.mobileItemTop}>
                   <div>
                     <button type="button" className={styles.plateLink} onClick={() => router.push("/dashboard/contracts/" + contract.id)}>{contract.driver.name}</button>
@@ -246,7 +267,7 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
               </article>
             ))}
           </div>
-          <nav className={styles.pagination} aria-label="Paginação de contratos">
+          <nav className={`${styles.pagination} ${contractStyles.listPagination}`} aria-label="Paginação de contratos">
             <span>Mostrando {contracts.length} de {total} contratos</span>
             <div>
               <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
@@ -255,6 +276,8 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
             </div>
           </nav>
         </>
+      )}
+      </section>
       )}
 
       <Modal isOpen={isFormModalOpen} onClose={closeForm} title={editingItem ? "Editar contrato" : "Novo contrato"} size="4xl" variant="platform">

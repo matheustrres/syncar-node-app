@@ -41,6 +41,11 @@ export async function GET(request: NextRequest) {
   const { page, limit, sortColumn, sortDirection } = query;
   const skip = (page - 1) * limit;
   const where: Prisma.VehicleWhereInput = { userId: session.user.id };
+  if (query.search) {
+    where.OR = (["plate", "brand", "model"] as const).map((field) => ({
+      [field]: { contains: query.search, mode: "insensitive" },
+    }));
+  }
   for (const field of ["plate", "brand", "model"] as const) {
     const value = query[field];
     if (value) where[field] = { contains: value, mode: "insensitive" };

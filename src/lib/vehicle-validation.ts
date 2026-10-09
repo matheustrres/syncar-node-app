@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const vehicleStatusSchema = z.enum(["Disponível", "Alugado", "Manutenção"]);
+const vehicleStatusSchema = z.enum(["Disponível", "Alugado", "Manutenção", "Indisponível"]);
 const currentYear = new Date().getFullYear();
 
 const vehicleFields = {
@@ -50,6 +50,7 @@ export const vehicleListQuerySchema = z.object({
     z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().min(1).max(100))),
   sortColumn: z.enum(["createdAt", "plate", "brand", "model", "status"]).optional().default("createdAt"),
   sortDirection: z.enum(["asc", "desc"]).optional().default("desc"),
+  search: optionalTextFilter,
   plate: optionalTextFilter,
   brand: optionalTextFilter,
   model: optionalTextFilter,

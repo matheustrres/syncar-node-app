@@ -1,6 +1,6 @@
 export default function MaintenanceSkeleton() {
   return (
-    <div className="animate-pulse overflow-hidden rounded-xl border border-[var(--syncar-border)] bg-[var(--syncar-surface)]" aria-label="Carregando manutenções" role="status">
+    <div className="animate-pulse overflow-hidden bg-[var(--syncar-surface)]" aria-label="Carregando manutenções" role="status">
       <div className="h-12 border-b border-[var(--syncar-border)] bg-[var(--syncar-surface-subtle)]" />
       <div className="space-y-0 px-5">
         {Array.from({ length: 5 }, (_, index) => (

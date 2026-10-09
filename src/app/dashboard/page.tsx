@@ -17,6 +17,7 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <header className={styles.intro}>
         <div>
+          <span className={styles.eyebrow}>Painel da operação</span>
           <h1>Visão geral</h1>
           <p>Acompanhe a frota, as cobranças e o resultado em um só lugar.</p>
         </div>

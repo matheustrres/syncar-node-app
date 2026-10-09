@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { Maintenance, Vehicle, WithoutBaseItem } from "@/types";
 import {
@@ -18,7 +19,7 @@ import MaintenanceFilterBar, { emptyMaintenanceFilters, MaintenanceFilterDraft }
 import MaintenanceTable, { formatCost, formatDate, formatMileage, maintenanceTypeLabels } from "./MaintenanceTable";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import UpgradeModal from "@/components/ui/UpgradeModal";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
 import local from "./maintenance.module.css";
 import EmptyState from "@/components/ui/EmptyState";
 
@@ -26,6 +27,7 @@ interface MaintenanceClientPageProps {
   initialMaintenance: MaintenanceWithRelations[];
   total: number;
   initialVehicles: Vehicle[];
+  initialSummary: { total: number; preventive: number; corrective: number; oil: number; tires: number; brakes: number; other: number; cost: number };
   userPlan: string;
 }
 
@@ -33,8 +35,10 @@ export default function MaintenanceClientPage({
   initialMaintenance,
   total: initialTotal,
   initialVehicles,
+  initialSummary,
   userPlan,
 }: MaintenanceClientPageProps) {
+  const router = useRouter();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [maintenanceCount, setMaintenanceCount] = useState(initialTotal);
   const [page, setPage] = useState(1);
@@ -157,6 +161,7 @@ export default function MaintenanceClientPage({
           `Manutenção ${editingItem ? "atualizada" : "cadastrada"} com sucesso!`,
           "success"
         );
+        router.refresh();
         // Replace temp-id with the real id
         const finalData = optimisticData.map((m) =>
           m.id === "temp-id" ? savedMaintenance : m
@@ -205,6 +210,7 @@ export default function MaintenanceClientPage({
         }
         setMaintenanceCount((count) => Math.max(0, count - 1));
         showToast("Manutenção excluída com sucesso!", "success");
+        router.refresh();
         return { maintenance: optimisticData, total: total - 1 };
       }, options);
     } catch {
@@ -243,6 +249,7 @@ export default function MaintenanceClientPage({
         if (!response.ok) throw new Error("Falha ao excluir manutenções.");
         setMaintenanceCount((count) => Math.max(0, count - idsToDelete.length));
         showToast("Manutenções excluídas com sucesso!", "success");
+        router.refresh();
         return {
           maintenance: optimisticData,
           total: total - idsToDelete.length,
@@ -326,20 +333,8 @@ export default function MaintenanceClientPage({
         </div>
       </header>
 
-      {(!showFirstRun || isLoading) && (
-        <MaintenanceFilterBar
-          value={filterDraft}
-          onChange={setFilterDraft}
-          onClear={clearFilters}
-          activeCount={activeFilterCount}
-        />
-      )}
 
-      {isLoading ? (
-        <MaintenanceSkeleton />
-      ) : isError ? (
-        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar as manutenções" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateMaintenance()}>Tentar novamente</button>} />
-      ) : showFirstRun ? (
+      {showFirstRun && !isLoading && !isError ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><Wrench size={28} strokeWidth={1.8} aria-hidden="true" /></div>
           <div className={styles.firstRunCopy}>
@@ -348,31 +343,48 @@ export default function MaintenanceClientPage({
               ? "Registre a primeira manutenção para acompanhar serviços, custos e próximos cuidados em um só lugar."
               : "Cadastre um veículo para começar a acompanhar seu histórico de manutenções."}</p>
             {hasVehicles ? (
-              <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}>
-                <Plus size={19} aria-hidden="true" /> Registrar primeira manutenção
-              </button>
+              <button type="button" className={styles.primaryAction} onClick={() => handleOpenFormModal()}><Plus size={19} aria-hidden="true" /> Registrar primeira manutenção</button>
             ) : (
-              <Link href="/dashboard/vehicles" className={styles.primaryAction}>
-                Cadastrar primeiro veículo <ArrowRight size={18} aria-hidden="true" />
-              </Link>
+              <Link href="/dashboard/vehicles" className={styles.primaryAction}>Cadastrar primeiro veículo <ArrowRight size={18} aria-hidden="true" /></Link>
             )}
           </div>
           {userPlan === "BASIC" && hasVehicles && <span className={styles.firstRunNote}>Plano Básico: até 3 manutenções cadastradas.</span>}
         </section>
+      ) : (
+      <>
+      <section className={local.summary} aria-label="Resumo do histórico completo">
+        <span><strong>{initialSummary.total}</strong> serviços registrados</span>
+        <span><strong>{formatCost(initialSummary.cost)}</strong> em custos registrados</span>
+        <span className={local.summaryScope}>Histórico completo · independente dos filtros</span>
+      </section>
+
+      <section className={local.historyPanel} aria-labelledby="maintenance-history-title">
+        <div className={local.historyHeader}>
+          <div><h2 id="maintenance-history-title">Histórico de manutenção</h2><p>Busque, filtre e gerencie os serviços da frota.</p></div>
+          <span>{total} {total === 1 ? "manutenção" : "manutenções"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
+        </div>
+        <MaintenanceFilterBar
+          value={filterDraft}
+          onChange={setFilterDraft}
+          onClear={clearFilters}
+          activeCount={activeFilterCount}
+          summary={initialSummary}
+        />
+
+      {isLoading ? (
+        <MaintenanceSkeleton />
+      ) : isError ? (
+        <div className={local.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar as manutenções" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateMaintenance()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
-        <EmptyState Icon={Wrench} title="Nenhuma manutenção encontrada" description="Altere os filtros para consultar outros registros." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
+        <div className={local.panelMessage}><EmptyState Icon={Wrench} title="Nenhuma manutenção encontrada" description="Altere os filtros para consultar outros registros." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>
       ) : (
         <>
-          <div className={styles.resultsHeader}>
-            <h2>Histórico de manutenção</h2>
-            <span>{total} {total === 1 ? "manutenção" : "manutenções"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
-          </div>
           <div className={styles.desktopTable}>
             <MaintenanceTable maintenance={maintenance} onEdit={handleOpenFormModal} onDelete={handleDeleteClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
           </div>
-          <div className={styles.mobileList}>
+          <div className={`${styles.mobileList} ${local.historyMobileList}`}>
             {maintenance.map((item) => (
-              <article key={item.id} className={styles.mobileItem}>
+              <article key={item.id} className={`${styles.mobileItem} ${local.historyMobileItem}`}>
                 <div className={styles.mobileItemTop}>
                   <div>
                     <strong className={local.vehiclePlate}>{item.vehicle.plate}</strong>
@@ -393,7 +405,7 @@ export default function MaintenanceClientPage({
               </article>
             ))}
           </div>
-          <nav className={styles.pagination} aria-label="Paginação de manutenções">
+          <nav className={`${styles.pagination} ${local.historyPagination}`} aria-label="Paginação de manutenções">
             <span>Mostrando {maintenance.length} de {total} manutenções</span>
             <div>
               <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
@@ -402,6 +414,9 @@ export default function MaintenanceClientPage({
             </div>
           </nav>
         </>
+      )}
+      </section>
+      </>
       )}
 
       <Modal

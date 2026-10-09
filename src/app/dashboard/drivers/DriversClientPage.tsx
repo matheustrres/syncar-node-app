@@ -8,25 +8,27 @@ import { Driver, WithoutBaseItem } from "@/types";
 import { DriverFilters, useFetchDrivers } from "@/hooks/useData";
 import Modal from "@/components/ui/Modal";
 import DriverForm from "@/components/forms/DriverForm";
-import { Plus, Edit2, Trash2, UsersRound, Download, ArrowRight, CircleAlert } from "lucide-react";
+import { Plus, Edit2, Trash2, UsersRound, Download, ArrowRight, CircleAlert, UserCheck, UserX, IdCard } from "lucide-react";
 import DriversSkeleton from "./DriversSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
 import DeleteConfirmationModal from "@/components/ui/DeleteConfirmationModal";
 import DriversFilterBar, { DriverFilterDraft, emptyDriverFilters } from "./DriversFilterBar";
 import DriversTable from "./DriversTable";
 import DriverStatus from "./DriverStatus";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
 import driverStyles from "./drivers.module.css";
 import EmptyState from "@/components/ui/EmptyState";
 
 interface ClientPageProps {
   initialDrivers: Driver[];
   total: number;
+  initialSummary: { total: number; active: number; inactive: number; missingCnh: number };
 }
 
 export default function DriversClientPage({
   initialDrivers,
   total: initialTotal,
+  initialSummary,
 }: ClientPageProps) {
   const { data: session, status } = useSession();
   const userPlan = status === "authenticated" ? session.user.plan : "BASIC";
@@ -149,6 +151,7 @@ export default function DriversClientPage({
         return { drivers: finalData, total: editingItem ? total : total + 1 };
       }, options);
       handleCloseFormModal();
+      router.refresh();
     } catch (error) {
       showToast(
         error instanceof Error ? error.message : "Ocorreu um erro",
@@ -190,6 +193,7 @@ export default function DriversClientPage({
         return { drivers: optimisticData, total: total - 1 };
       }, options);
       setItemToDelete(null);
+      router.refresh();
     } catch {
       showToast("Falha ao excluir motorista.", "error");
     }
@@ -233,6 +237,7 @@ export default function DriversClientPage({
         };
       }, options);
       setItemsToDelete([]);
+      router.refresh();
     } catch {
       showToast("Falha ao excluir motoristas.", "error");
     }
@@ -314,40 +319,50 @@ export default function DriversClientPage({
         </div>
       </header>
 
-      {(!showFirstRun || isLoading) && (
-        <DriversFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
-      )}
+      <section className={driverStyles.overview} aria-labelledby="drivers-overview-title">
+        <div className={driverStyles.overviewHeader}>
+          <h2 id="drivers-overview-title">Visão rápida da equipe</h2>
+          <span>Todos os motoristas cadastrados</span>
+        </div>
+        <div className={driverStyles.metricGrid}>
+          <div className={driverStyles.metric}><div className={driverStyles.metricTop}><span>Total de motoristas</span><UsersRound size={18} aria-hidden="true" /></div><strong>{initialSummary.total}</strong><span className={driverStyles.metricNote}>Pessoas cadastradas</span></div>
+          <div className={driverStyles.metric}><div className={driverStyles.metricTop}><span>Ativos</span><UserCheck size={18} aria-hidden="true" /></div><strong>{initialSummary.active}</strong><span className={driverStyles.metricNote}>Disponíveis na operação</span></div>
+          <div className={driverStyles.metric}><div className={driverStyles.metricTop}><span>Inativos</span><UserX size={18} aria-hidden="true" /></div><strong>{initialSummary.inactive}</strong><span className={driverStyles.metricNote}>Fora da operação</span></div>
+          <div className={`${driverStyles.metric} ${initialSummary.missingCnh > 0 ? driverStyles.pendingMetric : ""}`}><div className={driverStyles.metricTop}><span>CNH não informada</span><IdCard size={18} aria-hidden="true" /></div><strong>{initialSummary.missingCnh}</strong>{initialSummary.missingCnh > 0 ? <button type="button" className={driverStyles.pendingAction} onClick={() => { setFilterDraft({ ...emptyDriverFilters, missingCnh: "true" }); document.getElementById("drivers-list-title")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}>Ver pendências <ArrowRight size={15} aria-hidden="true" /></button> : <span className={driverStyles.metricNote}>Documentação informada</span>}</div>
+        </div>
+      </section>
 
-      {isLoading ? (
-        <DriversSkeleton />
-      ) : isError ? (
-        <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os motoristas" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateDrivers()}>Tentar novamente</button>} />
-      ) : showFirstRun ? (
+      {showFirstRun && !isLoading && !isError ? (
         <section className={styles.firstRun}>
           <div className={styles.firstRunIcon}><UsersRound size={28} strokeWidth={1.8} aria-hidden="true" /></div>
           <div className={styles.firstRunCopy}>
             <h2>Cadastre o primeiro motorista</h2>
             <p>Reúna contatos, documentos e situação de cada motorista para encontrar as informações quando precisar.</p>
-            <button type="button" className={styles.primaryAction} onClick={handleAddClick}>
-              <Plus size={19} aria-hidden="true" /> Cadastrar primeiro motorista
-            </button>
+            <button type="button" className={styles.primaryAction} onClick={handleAddClick}><Plus size={19} aria-hidden="true" /> Cadastrar primeiro motorista</button>
           </div>
           {userPlan === "BASIC" && <span className={styles.firstRunNote}>Plano Básico: até 3 motoristas cadastrados.</span>}
         </section>
+      ) : (
+      <section className={driverStyles.listPanel} aria-labelledby="drivers-list-title">
+        <div className={driverStyles.listHeader}>
+          <div><h2 id="drivers-list-title">Motoristas cadastrados</h2><p>Busque, filtre e gerencie a equipe da frota.</p></div>
+          <span>{total} {total === 1 ? "motorista" : "motoristas"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
+        </div>
+        <DriversFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
+      {isLoading ? (
+        <DriversSkeleton />
+      ) : isError ? (
+        <div className={driverStyles.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os motoristas" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateDrivers()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
-        <EmptyState Icon={UsersRound} title="Nenhum motorista encontrado" description="Altere os filtros para ver outros motoristas da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
+        <div className={driverStyles.panelMessage}><EmptyState Icon={UsersRound} title="Nenhum motorista encontrado" description="Altere os filtros para ver outros motoristas da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>
       ) : (
         <>
-          <div className={styles.resultsHeader}>
-            <h2>Motoristas cadastrados</h2>
-            <span>{total} {total === 1 ? "motorista" : "motoristas"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
-          </div>
           <div className={styles.desktopTable}>
             <DriversTable drivers={drivers} onOpen={handleRowClick} onEdit={handleOpenFormModal} onDelete={handleDeleteClick} onBulkDelete={handleBulkDelete} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} />
           </div>
-          <div className={styles.mobileList}>
+          <div className={`${styles.mobileList} ${driverStyles.listMobileList}`}>
             {drivers.map((driver) => (
-              <article key={driver.id} className={styles.mobileItem}>
+              <article key={driver.id} className={`${styles.mobileItem} ${driverStyles.listMobileItem}`}>
                 <div className={styles.mobileItemTop}>
                   <div>
                     <button type="button" className={styles.plateLink} onClick={() => handleRowClick(driver.id)}>{driver.name}</button>
@@ -358,15 +373,16 @@ export default function DriversClientPage({
                 <div className={driverStyles.mobileDetails}>
                   <span>{driver.phone}</span>
                   {driver.email && <span>{driver.email}</span>}
+                  {!driver.cnh && <span className={driverStyles.documentMissing}>CNH não informada</span>}
                 </div>
                 <div className={styles.mobileActions}>
-                  <button type="button" onClick={() => handleOpenFormModal(driver)}><Edit2 size={17} aria-hidden="true" /> Editar</button>
+                  <button type="button" onClick={() => handleOpenFormModal(driver)}><Edit2 size={17} aria-hidden="true" /> {driver.cnh ? "Editar" : "Informar CNH"}</button>
                   <button type="button" onClick={() => handleDeleteClick(driver)}><Trash2 size={17} aria-hidden="true" /> Excluir</button>
                 </div>
               </article>
             ))}
           </div>
-          <nav className={styles.pagination} aria-label="Paginação de motoristas">
+          <nav className={`${styles.pagination} ${driverStyles.listPagination}`} aria-label="Paginação de motoristas">
             <span>Mostrando {drivers.length} de {total} motoristas</span>
             <div>
               <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
@@ -375,6 +391,8 @@ export default function DriversClientPage({
             </div>
           </nav>
         </>
+      )}
+      </section>
       )}
 
       <Modal

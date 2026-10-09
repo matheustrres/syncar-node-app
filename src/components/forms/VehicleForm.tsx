@@ -59,6 +59,7 @@ const VehicleForm: React.FC<VehicleFormProps> = ({
     { value: "Disponível", label: "Disponível" },
     { value: "Alugado", label: "Alugado" },
     { value: "Manutenção", label: "Manutenção" },
+    { value: "Indisponível", label: "Indisponível" },
   ];
 
   useEffect(() => {

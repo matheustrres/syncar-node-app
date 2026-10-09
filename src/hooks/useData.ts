@@ -49,6 +49,7 @@ export type ExpenseWithRelations = Expense & {
 };
 
 export interface VehicleFilters {
+  search?: string;
   plate?: string;
   brand?: string;
   model?: string;
@@ -65,6 +66,7 @@ export interface DriverFilters {
   phone?: string;
   email?: string;
   status?: string;
+  missingCnh?: string;
 }
 
 export interface ContractFilters {

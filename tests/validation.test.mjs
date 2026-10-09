@@ -176,6 +176,8 @@ test('vehicle IDs and list filters enforce shape, bounds and ranges', () => {
   assert.equal(defaults.success, true);
   assert.equal(defaults.data.page, 1);
   assert.equal(defaults.data.limit, 10);
+  assert.equal(vehicleListQuerySchema.safeParse({ search: '  Corolla  ' }).data.search, 'Corolla');
+  assert.equal(vehicleListQuerySchema.safeParse({ search: 'x'.repeat(101) }).success, false);
   assert.equal(vehicleListQuerySchema.safeParse({ status: 'Desconhecido' }).success, false);
   assert.equal(vehicleListQuerySchema.safeParse({ kmMin: '100', kmMax: '10' }).success, false);
   assert.equal(vehicleListQuerySchema.safeParse({ extra: 'nope' }).success, false);

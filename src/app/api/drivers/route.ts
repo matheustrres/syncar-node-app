@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     if (value) where[field] = { contains: value, mode: "insensitive" };
   }
   if (query.status) where.status = query.status;
+  if (query.missingCnh === "true") where.OR = [{ cnh: null }, { cnh: "" }];
   const skip = (query.page - 1) * query.limit;
   try {
     const [drivers, total] = await prisma.$transaction([

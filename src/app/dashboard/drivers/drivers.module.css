@@ -2,3 +2,69 @@
 .active { color: var(--syncar-success); background: color-mix(in srgb, var(--syncar-success) 12%, var(--syncar-surface)); }
 .inactive { color: var(--syncar-text-muted); background: var(--syncar-surface-subtle); }
 .mobileDetails { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 11px; color: var(--syncar-text-muted); font-size: 13px; overflow-wrap: anywhere; }
+.overview { margin-bottom: 32px; }
+.overviewHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.overviewHeader h2 { margin: 0; font-size: 15px; font-weight: 750; }
+.overviewHeader span { color: var(--syncar-text-muted); font-size: 12px; }
+.metricGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.metric, .listPanel { min-width: 0; background: var(--syncar-surface); border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-panel); box-shadow: var(--syncar-shadow-panel); }
+.metric { display: flex; flex-direction: column; min-height: 158px; padding: 20px; }
+.metricTop { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; color: var(--syncar-text-muted); font-size: 13px; font-weight: 650; }
+.metricTop svg { flex: none; box-sizing: content-box; padding: 7px; border-radius: 8px; background: var(--syncar-surface-subtle); color: var(--syncar-success); }
+.metric:nth-child(3) .metricTop svg { color: var(--syncar-warning); background: color-mix(in srgb, var(--syncar-warning) 12%, white); }
+.metric strong { margin-top: auto; font-size: 36px; line-height: 1.1; font-weight: 750; font-variant-numeric: tabular-nums; letter-spacing: -.035em; }
+.metricNote { margin-top: 9px; color: var(--syncar-text-muted); font-size: 12px; line-height: 1.4; }
+.pendingMetric { border-color: color-mix(in srgb, var(--syncar-warning) 42%, var(--syncar-border)); }
+.pendingMetric .metricTop svg { color: var(--syncar-warning); background: color-mix(in srgb, var(--syncar-warning) 12%, white); }
+.pendingAction { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start; min-height: 36px; margin-top: 4px; color: var(--syncar-success); font-size: 12px; font-weight: 750; }
+.pendingAction:hover { text-decoration: underline; }
+.pendingChip { display: inline-flex; align-items: center; gap: 5px; min-height: 35px; padding: 0 10px; border-radius: 99px; background: color-mix(in srgb, var(--syncar-warning) 12%, white); color: var(--syncar-text); font-size: 12px; font-weight: 700; }
+.documentMissing { color: var(--syncar-warning); font-size: 12px; font-weight: 750; }
+.listPanel { overflow: hidden; }
+.listHeader { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 24px 24px 12px; }
+.listHeader h2 { margin: 0; font-size: 18px; font-weight: 750; letter-spacing: -.02em; }
+.listHeader p { margin: 8px 0 0; color: var(--syncar-text-muted); font-size: 12px; }
+.listHeader > span { color: var(--syncar-text-muted); font-size: 12px; white-space: nowrap; }
+.filters { padding: 10px 24px 20px; }
+.filterControls { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.searchField { display: flex; align-items: center; gap: 11px; width: min(360px, 100%); min-height: 44px; padding: 0 13px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); color: var(--syncar-text-muted); }
+.searchField:focus-within { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+.searchField input { width: 100%; min-width: 0; outline: 0; background: transparent; color: var(--syncar-text); font-size: 13px; }
+.searchField input::placeholder, .field input::placeholder { color: var(--syncar-text-muted); opacity: 1; }
+.filterTabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 4px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); background: var(--syncar-surface-subtle); }
+.filterTabs button { min-height: 35px; padding: 0 12px; border-radius: 6px; color: var(--syncar-text-muted); font-size: 12px; font-weight: 700; }
+.filterTabs button:hover { color: var(--syncar-text); }
+.filterTabs .activeTab { background: var(--syncar-surface); box-shadow: 0 1px 3px rgb(16 45 48 / 10%); color: var(--syncar-text); }
+.moreFilters { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; margin-left: auto; padding: 0 14px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); color: var(--syncar-text); font-size: 12px; font-weight: 700; }
+.moreFilters:hover { background: var(--syncar-surface-subtle); }
+.clearButton { display: inline-flex; min-height: 36px; align-items: center; gap: 5px; color: var(--syncar-success); font-size: 12px; font-weight: 700; }
+.advancedFilters { margin-top: 18px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); }
+.advancedFilters h3 { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--syncar-border); font-size: 13px; font-weight: 700; }
+.filterGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 18px; }
+.field { display: flex; flex-direction: column; min-width: 0; gap: 7px; }
+.field > span { color: var(--syncar-text); font-size: 12px; font-weight: 700; }
+.field input { width: 100%; min-width: 0; height: 44px; padding: 0 12px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); background: var(--syncar-surface); color: var(--syncar-text); font-size: 13px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.panelMessage { padding: 0 24px 24px; }
+.panelMessage > section { border: 0; border-radius: 0; box-shadow: none; padding-inline: 0; }
+.listPagination { margin-top: 0; padding: 16px 24px; }
+.listMobileList { gap: 0; }
+.listMobileItem { border: 0; border-top: 1px solid var(--syncar-border); border-radius: 0; box-shadow: none; }
+@media (max-width: 1200px) { .metricGrid, .filterGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 800px) { .searchField { flex: 1 1 100%; } .moreFilters { margin-left: 0; } }
+@media (max-width: 640px) { .overviewHeader span { display: none; } .metricGrid { gap: 10px; } .metric { min-height: 140px; padding: 15px; } .metricTop { font-size: 11px; } .metric strong { font-size: 29px; } .metricNote { font-size: 11px; } .listHeader { padding: 20px 18px 12px; } .filters { padding: 10px 18px 18px; } .filterGrid { grid-template-columns: 1fr; } .filterTabs { width: 100%; } .filterTabs button { flex: 1; padding: 0 6px; } .panelMessage { padding: 0 18px 18px; } }
+@media (max-width: 420px) { .listHeader { flex-direction: column; gap: 6px; } }
+
+.filterDescription { margin: 0 0 24px; color: var(--syncar-text-muted); font-size: 14px; line-height: 1.5; }
+.filterForm .filterGrid { grid-template-columns: 1fr; padding: 0; gap: 20px; }
+.filterFooter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--syncar-border); }
+.applyFilters { min-height: 44px; padding: 0 18px; border-radius: var(--syncar-radius-control); background: var(--syncar-action); color: var(--syncar-text); font-size: 14px; font-weight: 700; }
+.applyFilters:hover { opacity: .9; }
+.activeFilters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.activeFilters button { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 6px 10px; border-radius: 6px; background: var(--syncar-surface-subtle); color: var(--syncar-text); font-size: 12px; overflow-wrap: anywhere; }
+.activeFilters .clearButton { background: transparent; color: var(--syncar-success); }
+.filterForm button:focus-visible, .filterForm input:focus-visible, .activeFilters button:focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+
+.statusSelect select { min-height: 44px; max-width: 100%; padding: 0 32px 0 12px; border: 1px solid var(--syncar-border); border-radius: var(--syncar-radius-control); background: var(--syncar-surface); color: var(--syncar-text); font-size: 13px; }
+.statusSelect select:focus-visible { outline: 3px solid var(--syncar-focus); outline-offset: 2px; }
+@media (max-width: 640px) { .statusSelect { flex: 1 1 100%; } .statusSelect select { width: 100%; } }

@@ -64,6 +64,7 @@ export const driverListQuerySchema = z.object({
   phone: z.string().trim().max(24).optional(),
   email: z.string().trim().max(254).optional(),
   status: driverStatusSchema.optional().or(z.literal("")),
+  missingCnh: z.enum(["true", "false"]).optional(),
 }).strict();
 
 export async function parseDriverJson<T extends z.ZodType>(request: Request, schema: T) {

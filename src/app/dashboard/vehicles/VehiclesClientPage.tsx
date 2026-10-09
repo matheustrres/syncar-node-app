@@ -16,6 +16,10 @@ import {
   Download,
   ArrowRight,
   CircleAlert,
+  Grid2X2,
+  ArrowUpRight,
+  CircleCheck,
+  Wrench,
 } from "lucide-react";
 import VehiclesSkeleton from "./VehiclesSkeleton";
 import UpgradeModal from "@/components/ui/UpgradeModal";
@@ -29,11 +33,13 @@ import EmptyState from "@/components/ui/EmptyState";
 interface ClientPageProps {
   initialVehicles: Vehicle[];
   total: number;
+  initialStatusCounts: { rented: number; available: number; maintenance: number; unavailable: number };
 }
 
 export default function VehiclesClientPage({
   initialVehicles,
   total: initialTotal,
+  initialStatusCounts,
 }: ClientPageProps) {
   const { data: dataSession, status } = useSession();
   const userPlan = status === "authenticated" ? dataSession.user.plan : "BASIC";
@@ -140,6 +146,7 @@ export default function VehiclesClientPage({
         }
         const savedVehicle = await response.json();
         if (!editingItem) setFleetCount((count) => count + 1);
+        router.refresh();
         showToast(
           `Veículo ${editingItem ? "atualizado" : "cadastrado"} com sucesso!`,
           "success"
@@ -192,6 +199,7 @@ export default function VehiclesClientPage({
           throw new Error("Falha ao excluir");
         }
         setFleetCount((count) => Math.max(0, count - 1));
+        router.refresh();
         showToast("Veículo excluído com sucesso!", "success");
         return { vehicles: optimisticData, total: total - 1 };
       }, options);
@@ -233,6 +241,7 @@ export default function VehiclesClientPage({
         });
         if (!response.ok) throw new Error("Falha ao excluir veículos.");
         setFleetCount((count) => Math.max(0, count - idsToDelete.length));
+        router.refresh();
         showToast("Veículos excluídos com sucesso!", "success");
         return {
           vehicles: optimisticData,
@@ -298,13 +307,14 @@ export default function VehiclesClientPage({
 
   const isFiltersEmpty = Object.keys(filters).length === 0;
   const activeFilterCount = Object.values(filterDraft).filter((value) => value.trim() !== "").length;
-  const showFirstRun = total === 0 && isFiltersEmpty && activeFilterCount === 0;
+  const showFirstRun = !isLoading && total === 0 && isFiltersEmpty && activeFilterCount === 0;
   const showFilters = !showFirstRun || isLoading;
   const clearFilters = () => {
     setFilterDraft({ ...emptyVehicleFilters });
     setFilters({});
     setPage(1);
   };
+  const occupancy = initialTotal > 0 ? Math.round((initialStatusCounts.rented / initialTotal) * 100) : 0;
 
   return (
     <div className={styles.page}>
@@ -312,7 +322,7 @@ export default function VehiclesClientPage({
         <div>
           <span className={styles.eyebrow}>Gestão da frota</span>
           <h1>Veículos</h1>
-          <p>Acompanhe a disponibilidade e os dados da sua frota.</p>
+          <p>Consulte a frota e encontre rapidamente o veículo certo para cada tarefa.</p>
         </div>
         <div className={styles.headerActions}>
           <button type="button" onClick={handleExportClick} className={styles.secondaryAction} disabled={fleetCount === 0} title={fleetCount === 0 ? "Cadastre um veículo para exportar o CSV" : undefined}>
@@ -324,18 +334,18 @@ export default function VehiclesClientPage({
         </div>
       </header>
 
-      {showFilters && (
-        <VehiclesFilterBar
-          value={filterDraft}
-          onChange={setFilterDraft}
-          onClear={clearFilters}
-          activeCount={activeFilterCount}
-        />
-      )}
+      <section className={styles.overview} aria-labelledby="fleet-overview-title">
+        <div className={styles.overviewHeader}><h2 id="fleet-overview-title">Visão rápida da frota</h2><span>{initialTotal} {initialTotal === 1 ? "veículo cadastrado" : "veículos cadastrados"}</span></div>
+        <div className={styles.metricGrid}>
+          <div className={styles.metric}><div className={styles.metricTop}><span>Total da frota</span><span className={styles.metricIcon}><Grid2X2 size={17} aria-hidden="true" /></span></div><strong>{initialTotal}</strong><span className={styles.metricNote}>Veículos cadastrados</span></div>
+          <div className={styles.metric}><div className={styles.metricTop}><span>Alugados</span><span className={styles.metricIcon}><ArrowUpRight size={17} aria-hidden="true" /></span></div><strong>{initialStatusCounts.rented}</strong><span className={styles.metricNote}>{occupancy}% de ocupação da frota</span></div>
+          <div className={styles.metric}><div className={styles.metricTop}><span>Disponíveis</span><span className={`${styles.metricIcon} ${styles.availableIcon}`}><CircleCheck size={17} aria-hidden="true" /></span></div><strong>{initialStatusCounts.available}</strong><span className={styles.metricNote}>Prontos para locação</span></div>
+          <div className={styles.metric}><div className={styles.metricTop}><span>Em manutenção</span><span className={`${styles.metricIcon} ${styles.otherIcon}`}><Wrench size={17} aria-hidden="true" /></span></div><strong>{initialStatusCounts.maintenance}</strong><span className={styles.metricNote}>Temporariamente fora da locação</span></div>
+          <div className={styles.metric}><div className={styles.metricTop}><span>Indisponíveis</span><span className={`${styles.metricIcon} ${styles.otherIcon}`}><CircleAlert size={17} aria-hidden="true" /></span></div><strong>{initialStatusCounts.unavailable}</strong><span className={styles.metricNote}>Fora de locação por outro motivo</span></div>
+        </div>
+      </section>
 
-      {isLoading ? (
-        <VehiclesSkeleton />
-      ) : isError ? (
+      {isError ? (
         <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os veículos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateVehicles()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
@@ -349,24 +359,21 @@ export default function VehiclesClientPage({
           </div>
           {userPlan === "BASIC" && <span className={styles.firstRunNote}>Plano Básico: até 3 veículos cadastrados.</span>}
         </section>
-      ) : total === 0 ? (
-        <EmptyState Icon={Car} title="Nenhum veículo encontrado" description="Altere os filtros para ver outros veículos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} />
       ) : (
-        <>
-          <div className={styles.resultsHeader}>
-            <h2>Frota cadastrada</h2>
-            <span>{total} {total === 1 ? "veículo" : "veículos"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
-          </div>
+        <section className={styles.fleetPanel} aria-labelledby="fleet-list-title">
+          <div className={styles.resultsHeader}><div><h2 id="fleet-list-title">Frota cadastrada</h2><p>Busque, filtre e abra os detalhes sem perder a lista.</p></div><span>{total} de {initialTotal} {initialTotal === 1 ? "veículo" : "veículos"}</span></div>
+          {showFilters && <VehiclesFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />}
+          {isLoading ? <VehiclesSkeleton /> : total === 0 ? <div className={styles.filteredEmpty}><EmptyState Icon={Car} title="Nenhum veículo encontrado" description="Altere os filtros para ver outros veículos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div> : <>
           <div className={styles.desktopTable}>
-            <VehiclesTable vehicles={vehicles} onOpen={handleRowClick} onEdit={handleOpenFormModal} onDelete={handleDeleteClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
+            <VehiclesTable vehicles={vehicles} onOpen={handleRowClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
           </div>
           <div className={styles.mobileList}>
             {vehicles.map((vehicle) => (
               <article key={vehicle.id} className={styles.mobileItem}>
                 <div className={styles.mobileItemTop}>
                   <div>
-                    <button type="button" className={styles.plateLink} onClick={() => handleRowClick(vehicle.id)}>{vehicle.plate}</button>
-                    <p>{vehicle.brand} {vehicle.model}</p>
+                    <strong>{vehicle.brand} {vehicle.model}</strong>
+                    <p><button type="button" className={styles.plateLink} onClick={() => handleRowClick(vehicle.id)}>{vehicle.plate}</button> · {vehicle.year} · {vehicle.km.toLocaleString("pt-BR")} km</p>
                   </div>
                   <VehicleStatus status={vehicle.status} />
                 </div>
@@ -378,14 +385,15 @@ export default function VehiclesClientPage({
             ))}
           </div>
           <nav className={styles.pagination} aria-label="Paginação de veículos">
-            <span>Mostrando {vehicles.length} de {total} veículos</span>
+            <span>Mostrando {(page - 1) * limit + 1}–{(page - 1) * limit + vehicles.length} de {total} veículos</span>
             <div>
               <button type="button" onClick={() => setPage(page - 1)} disabled={page === 1}>Anterior</button>
               <span>Página {page} de {totalPages}</span>
               <button type="button" onClick={() => setPage(page + 1)} disabled={page >= totalPages}>Próximo</button>
             </div>
           </nav>
-        </>
+          </>}
+        </section>
       )}
 
       <Modal

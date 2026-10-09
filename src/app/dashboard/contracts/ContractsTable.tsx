@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Edit2, Trash2 } from "lucide-react";
 import { ContractWithRelations } from "@/hooks/useData";
 import ContractStatus from "./ContractStatus";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
 import contractStyles from "./contracts.module.css";
 
 const currency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -37,7 +37,7 @@ export default function ContractsTable({ contracts, onOpen, onEdit, onDelete, on
   const sort = (key: string) => onSort(key, sortColumn === key && sortDirection === "asc" ? "desc" : "asc");
 
   return (
-    <div className={styles.tablePanel}>
+    <>
       {visibleSelected.length > 0 && <div className={styles.selectionBar}><span>{visibleSelected.length} {visibleSelected.length === 1 ? "contrato selecionado" : "contratos selecionados"}</span><button type="button" onClick={() => onBulkDelete(visibleSelected)}><Trash2 size={17} aria-hidden="true" /> Excluir selecionados</button></div>}
       <div className={styles.tableScroll}>
         <table className={styles.table}>
@@ -58,6 +58,6 @@ export default function ContractsTable({ contracts, onOpen, onEdit, onDelete, on
           </tr>)}</tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }

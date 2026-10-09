@@ -6,7 +6,7 @@ export default function VehicleStatus({ status }: { status: string }) {
       ? styles.statusAvailable
       : status === "Manutenção"
         ? styles.statusMaintenance
-        : styles.statusRented;
+        : status === "Alugado" ? styles.statusRented : styles.statusUnavailable;
 
   return <span className={`${styles.status} ${tone}`}>{status}</span>;
 }

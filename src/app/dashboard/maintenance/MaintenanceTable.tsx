@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Edit2, Trash2 } from "lucide-react";
 import { MaintenanceWithRelations } from "@/hooks/useData";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
 import local from "./maintenance.module.css";
 
 export const maintenanceTypeLabels: Record<string, string> = {
@@ -41,7 +41,7 @@ export default function MaintenanceTable({ maintenance, onEdit, onDelete, onBulk
   const sort = (key: string) => onSort(key, sortColumn === key && sortDirection === "asc" ? "desc" : "asc");
 
   return (
-    <div className={styles.tablePanel}>
+    <>
       {selected.length > 0 && <div className={styles.selectionBar}><span>{selected.length} {selected.length === 1 ? "manutenção selecionada" : "manutenções selecionadas"}</span><button type="button" onClick={() => onBulkDelete(selected)}><Trash2 size={17} aria-hidden="true" /> Excluir selecionadas</button></div>}
       <div className={styles.tableScroll}>
         <table className={styles.table}>
@@ -62,6 +62,6 @@ export default function MaintenanceTable({ maintenance, onEdit, onDelete, onBulk
           </tr>)}</tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }

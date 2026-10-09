@@ -1,10 +1,8 @@
 "use client";
 
-import styles from "../vehicles/vehicles.module.css";
-
 export default function DriversSkeleton() {
   return (
-    <div className={styles.tablePanel} role="status" aria-label="Carregando motoristas">
+    <div role="status" aria-label="Carregando motoristas">
       <div className="space-y-5 p-5" aria-hidden="true">
         <div className="h-4 w-40 rounded bg-syncar-surface-subtle" />
         {[1, 2, 3, 4].map((item) => (

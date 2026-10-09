@@ -17,6 +17,46 @@ export interface MaintenanceWithRelations extends Maintenance {
 
 export const getDataAccessSession = cache(() => getServerSession(authOptions));
 
+export const getVehicleStatusCounts = cache(async () => {
+  const session = await getDataAccessSession();
+  if (!session?.user?.id) return { rented: 0, available: 0, maintenance: 0, unavailable: 0 };
+  const groups = await prisma.vehicle.groupBy({
+    by: ["status"],
+    where: { userId: session.user.id },
+    _count: { status: true },
+  });
+  return groups.reduce((counts, group) => {
+    const key = group.status === "Alugado" ? "rented" : group.status === "Disponível" ? "available" : group.status === "Manutenção" ? "maintenance" : "unavailable";
+    counts[key] += group._count.status;
+    return counts;
+  }, { rented: 0, available: 0, maintenance: 0, unavailable: 0 });
+});
+
+export const getMaintenanceSummary = cache(async () => {
+  const session = await getDataAccessSession();
+  const empty = { total: 0, preventive: 0, corrective: 0, oil: 0, tires: 0, brakes: 0, other: 0, cost: 0 };
+  if (!session?.user?.id) return empty;
+
+  const groups = await prisma.maintenance.groupBy({
+    by: ["type"],
+    where: { userId: session.user.id },
+    _count: { _all: true },
+    _sum: { cost: true },
+  });
+
+  return groups.reduce((summary, group) => {
+    summary.total += group._count._all;
+    summary.cost += group._sum.cost ?? 0;
+    if (group.type === "PREVENTIVA") summary.preventive = group._count._all;
+    if (group.type === "CORRETIVA") summary.corrective = group._count._all;
+    if (group.type === "TROCA_OLEO") summary.oil = group._count._all;
+    if (group.type === "PNEUS") summary.tires = group._count._all;
+    if (group.type === "FREIOS") summary.brakes = group._count._all;
+    if (group.type === "OUTROS") summary.other = group._count._all;
+    return summary;
+  }, empty);
+});
+
 export const getMaintenance = cache(
   async (
     page = 1,
@@ -177,6 +217,55 @@ export const getAllContracts = cache(async () => {
       weeklyValue: true,
     },
   }) as unknown as Contract[];
+});
+
+export const getContractSummary = cache(async () => {
+  const session = await getDataAccessSession();
+  if (!session?.user?.id) return { total: 0, active: 0, finished: 0, activeWeeklyValue: 0 };
+  const groups = await prisma.contract.groupBy({
+    by: ["status"],
+    where: { userId: session.user.id },
+    _count: { _all: true },
+    _sum: { weeklyValue: true },
+  });
+  const activeGroup = groups.find((group) => group.status === "Ativo");
+  return {
+    total: groups.reduce((count, group) => count + group._count._all, 0),
+    active: activeGroup?._count._all ?? 0,
+    finished: groups.find((group) => group.status === "Encerrado")?._count._all ?? 0,
+    activeWeeklyValue: activeGroup?._sum.weeklyValue ?? 0,
+  };
+});
+
+export const getContractsEndingSoon = cache(async () => {
+  const session = await getDataAccessSession();
+  if (!session?.user?.id) return [];
+  const contracts = await prisma.contract.findMany({
+    where: { userId: session.user.id, status: "Ativo", duration: { gt: 0 } },
+    select: { id: true, startDate: true, duration: true, driver: { select: { name: true } }, vehicle: { select: { plate: true } } },
+  });
+  const now = Date.now();
+  const windowEnd = now + 30 * 24 * 60 * 60 * 1000;
+  return contracts.flatMap((contract) => {
+    const endDate = new Date(contract.startDate.getTime() + contract.duration! * 7 * 24 * 60 * 60 * 1000);
+    return endDate.getTime() >= now && endDate.getTime() <= windowEnd
+      ? [{ id: contract.id, driverName: contract.driver.name, vehiclePlate: contract.vehicle.plate, endDate: endDate.toISOString() }]
+      : [];
+  }).sort((a, b) => a.endDate.localeCompare(b.endDate));
+});
+
+export const getDriverSummary = cache(async () => {
+  const session = await getDataAccessSession();
+  if (!session?.user?.id) return { total: 0, active: 0, inactive: 0, missingCnh: 0 };
+  const userId = session.user.id;
+  const [groups, missingCnh] = await Promise.all([
+    prisma.driver.groupBy({ by: ["status"], where: { userId }, _count: { status: true } }),
+    prisma.driver.count({ where: { userId, OR: [{ cnh: null }, { cnh: "" }] } }),
+  ]);
+  const active = groups.find((group) => group.status === "Ativo")?._count.status ?? 0;
+  const inactive = groups.find((group) => group.status === "Inativo")?._count.status ?? 0;
+  const total = groups.reduce((count, group) => count + group._count.status, 0);
+  return { total, active, inactive, missingCnh };
 });
 
 export const getDrivers = cache(

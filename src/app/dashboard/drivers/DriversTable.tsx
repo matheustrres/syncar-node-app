@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Edit2, Trash2 } from "lucide-react";
 import { Driver } from "@/types";
 import DriverStatus from "./DriverStatus";
-import styles from "../vehicles/vehicles.module.css";
+import styles from "../listing.module.css";
+import driverStyles from "./drivers.module.css";
 
 interface Props {
   drivers: Driver[];
@@ -36,7 +37,7 @@ export default function DriversTable({ drivers, onOpen, onEdit, onDelete, onBulk
     onSort(key, sortColumn === key && sortDirection === "asc" ? "desc" : "asc");
 
   return (
-    <div className={styles.tablePanel}>
+    <>
       {visibleSelected.length > 0 && (
         <div className={styles.selectionBar}>
           <span>{visibleSelected.length} {visibleSelected.length === 1 ? "motorista selecionado" : "motoristas selecionados"}</span>
@@ -60,6 +61,7 @@ export default function DriversTable({ drivers, onOpen, onEdit, onDelete, onBulk
                   </button>
                 </th>
               ))}
+              <th scope="col">CNH</th>
               <th scope="col" className={styles.actionHeading}>Ações</th>
             </tr>
           </thead>
@@ -73,8 +75,9 @@ export default function DriversTable({ drivers, onOpen, onEdit, onDelete, onBulk
                 <td>{driver.cpf}</td>
                 <td>{driver.phone}</td>
                 <td><DriverStatus status={driver.status} /></td>
+                <td>{driver.cnh ? "Informada" : <span className={driverStyles.documentMissing}>Pendente</span>}</td>
                 <td className={styles.rowActions}>
-                  <button type="button" aria-label={`Editar motorista ${driver.name}`} title="Editar motorista" onClick={() => onEdit(driver)}><Edit2 size={17} aria-hidden="true" /></button>
+                  <button type="button" aria-label={driver.cnh ? `Editar motorista ${driver.name}` : `Informar CNH de ${driver.name}`} title={driver.cnh ? "Editar motorista" : "Informar CNH"} onClick={() => onEdit(driver)}><Edit2 size={17} aria-hidden="true" /></button>
                   <button type="button" aria-label={`Excluir motorista ${driver.name}`} title="Excluir motorista" onClick={() => onDelete(driver)}><Trash2 size={17} aria-hidden="true" /></button>
                 </td>
               </tr>
@@ -82,6 +85,6 @@ export default function DriversTable({ drivers, onOpen, onEdit, onDelete, onBulk
           </tbody>
         </table>
       </div>
-    </div>
+    </>
   );
 }
