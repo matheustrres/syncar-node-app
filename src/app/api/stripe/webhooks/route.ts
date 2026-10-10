@@ -61,7 +61,6 @@ export async function POST(req: Request) {
     event.type === "customer.subscription.deleted"
   ) {
     const subscription = event.data.object as Stripe.Subscription;
-    console.log({ subscription });
     const user = await prisma.user.findUnique({
       where: {
         stripeCustomerId: subscription.customer as string,

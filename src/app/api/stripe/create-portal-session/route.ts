@@ -18,9 +18,12 @@ export async function POST(req: Request) {
   if (!user || !user.stripeCustomerId) {
     return new NextResponse("Stripe customer not found", { status: 404 });
   }
-  const baseUrl = `${req.headers.get("x-forwarded-proto")}://${req.headers.get(
-    "x-forwarded-host"
-  )}`;
+  const appUrl = process.env.NEXTAUTH_URL;
+  if (!appUrl) {
+    console.error("NEXTAUTH_URL is not configured.");
+    return new NextResponse("Service unavailable", { status: 503 });
+  }
+  const baseUrl = new URL(appUrl).origin;
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,

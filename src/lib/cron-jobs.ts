@@ -18,7 +18,7 @@ async function createNotification(notification: {
   });
   if (!existing) {
     await prisma.notification.create({ data: notification });
-    console.log(`--> Notificação criada: ${notification.message}`);
+    console.log(`Notification created: ${notification.type}`);
   }
 }
 
@@ -41,13 +41,6 @@ export async function checkContractEndings() {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + contract.duration * 7);
     const conditionMet = endDate >= today && endDate <= fifteenDaysFromNow;
-    console.log(`\n  Contract ID: ${contract.id}`);
-    console.log(`  Start Date: ${startDate.toISOString()}`);
-    console.log(`  Duration (weeks): ${contract.duration}`);
-    console.log(`  Calculated End Date: ${endDate.toISOString()}`);
-    console.log(
-      `  Condition Met (endDate >= today && endDate <= fifteenDaysFromNow): ${conditionMet}`
-    );
     if (conditionMet) {
       const daysLeft = Math.ceil(
         (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
@@ -76,8 +69,6 @@ export async function checkOverduePayments() {
   });
   console.log(`Found ${overduePayments.length} overdue payments to process.`);
   for (const payment of overduePayments) {
-    console.log(`\n  Processing Payment ID: ${payment.id}`);
-    console.log(`  Due Date: ${payment.dueDate.toISOString()}`);
     await createNotification({
       userId: payment.contract.userId,
       type: "PAYMENT_OVERDUE",

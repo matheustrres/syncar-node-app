@@ -45,7 +45,12 @@ export async function POST(req: Request) {
     return new NextResponse("User not found", { status: 404 });
   }
   let stripeCustomerId = user.stripeCustomerId;
-  const baseUrl = `${req.headers.get("x-forwarded-proto")}://${req.headers.get("x-forwarded-host")}`;
+  const appUrl = process.env.NEXTAUTH_URL;
+  if (!appUrl) {
+    console.error("NEXTAUTH_URL is not configured.");
+    return new NextResponse("Service unavailable", { status: 503 });
+  }
+  const baseUrl = new URL(appUrl).origin;
   try {
     if (!stripeCustomerId) {
       const stripeCustomer = await stripe.customers.create({
