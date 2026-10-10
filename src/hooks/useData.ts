@@ -127,6 +127,7 @@ export function useFetchMaintenance(
   }>(`/api/maintenance?${queryParams.toString()}`, fetcher, {
     fallbackData,
     revalidateOnMount: !fallbackData,
+    keepPreviousData: true,
   });
 
   return {
@@ -169,6 +170,7 @@ export function useFetchContracts(
   }>(`/api/contracts?${queryParams.toString()}`, fetcher, {
     fallbackData,
     revalidateOnMount: !fallbackData,
+    keepPreviousData: true,
   });
   return {
     contracts: data?.contracts || [],
@@ -209,6 +211,7 @@ export function useFetchDrivers(
   }>(`/api/drivers?${queryParams.toString()}`, fetcher, {
     fallbackData,
     revalidateOnMount: false,
+    keepPreviousData: true,
   });
   return {
     drivers: data?.drivers || [],
@@ -249,6 +252,7 @@ export function useFetchVehicles(
   }>(`/api/vehicles?${queryParams.toString()}`, fetcher, {
     fallbackData,
     revalidateOnMount: fallbackData ? false : true,
+    keepPreviousData: true,
   });
   return {
     vehicles: data?.vehicles || [],

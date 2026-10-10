@@ -232,9 +232,9 @@ export default function ContractsClientPage({ initialContracts, total: initialTo
           <span>{total} {total === 1 ? "contrato" : "contratos"}{activeFilterCount > 0 ? " nos resultados" : ""}</span>
         </div>
         <ContractsFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
-      {isLoading ? (
+      {isLoading && contracts.length === 0 ? (
         <ContractsSkeleton />
-      ) : isError ? (
+      ) : isError && contracts.length === 0 ? (
         <div className={contractStyles.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os contratos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateContracts()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
         <div className={contractStyles.panelMessage}><EmptyState Icon={FileText} title="Nenhum contrato encontrado" description="Altere os filtros para ver outros contratos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>

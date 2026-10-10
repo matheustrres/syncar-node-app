@@ -368,12 +368,11 @@ export default function MaintenanceClientPage({
           onChange={setFilterDraft}
           onClear={clearFilters}
           activeCount={activeFilterCount}
-          summary={initialSummary}
         />
 
-      {isLoading ? (
+      {isLoading && maintenance.length === 0 ? (
         <MaintenanceSkeleton />
-      ) : isError ? (
+      ) : isError && maintenance.length === 0 ? (
         <div className={local.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar as manutenções" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateMaintenance()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
         <div className={local.panelMessage}><EmptyState Icon={Wrench} title="Nenhuma manutenção encontrada" description="Altere os filtros para consultar outros registros." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>

@@ -345,7 +345,7 @@ export default function VehiclesClientPage({
         </div>
       </section>
 
-      {isError ? (
+      {isError && vehicles.length === 0 ? (
         <EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os veículos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateVehicles()}>Tentar novamente</button>} />
       ) : showFirstRun ? (
         <section className={styles.firstRun}>
@@ -363,7 +363,7 @@ export default function VehiclesClientPage({
         <section className={styles.fleetPanel} aria-labelledby="fleet-list-title">
           <div className={styles.resultsHeader}><div><h2 id="fleet-list-title">Frota cadastrada</h2><p>Busque, filtre e abra os detalhes sem perder a lista.</p></div><span>{total} de {initialTotal} {initialTotal === 1 ? "veículo" : "veículos"}</span></div>
           {showFilters && <VehiclesFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />}
-          {isLoading ? <VehiclesSkeleton /> : total === 0 ? <div className={styles.filteredEmpty}><EmptyState Icon={Car} title="Nenhum veículo encontrado" description="Altere os filtros para ver outros veículos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div> : <>
+          {isLoading && vehicles.length === 0 ? <VehiclesSkeleton /> : isError && vehicles.length === 0 ? <div className={styles.filteredEmpty}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os veículos" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateVehicles()}>Tentar novamente</button>} /></div> : total === 0 && vehicles.length === 0 ? <div className={styles.filteredEmpty}><EmptyState Icon={Car} title="Nenhum veículo encontrado" description="Altere os filtros para ver outros veículos da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div> : <>
           <div className={styles.desktopTable}>
             <VehiclesTable vehicles={vehicles} onOpen={handleRowClick} onSort={handleSort} sortColumn={sortColumn} sortDirection={sortDirection} onBulkDelete={handleBulkDelete} />
           </div>

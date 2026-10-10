@@ -26,7 +26,6 @@ interface Props {
   onChange: (value: MaintenanceFilterDraft) => void;
   onClear: () => void;
   activeCount: number;
-  summary: { total: number; preventive: number; corrective: number; oil: number; tires: number; brakes: number; other: number };
 }
 
 const ranges = [
@@ -35,18 +34,18 @@ const ranges = [
   { minLabel: "Quilometragem mínima", maxLabel: "Quilometragem máxima", label: "Quilometragem (km)", min: "mileageMin", max: "mileageMax", type: "number" },
 ] as const;
 
-export default function MaintenanceFilterBar({ value, onChange, onClear, activeCount, summary }: Props) {
+export default function MaintenanceFilterBar({ value, onChange, onClear, activeCount }: Props) {
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [draft, setDraft] = useState(value);
   const set = (key: keyof MaintenanceFilterDraft, next: string) => onChange({ ...value, [key]: next });
   const advancedCount = ranges.filter(({ min, max }) => value[min] || value[max]).length;
   const types = [
-    { value: "PREVENTIVA", label: "Preventiva", count: summary.preventive },
-    { value: "CORRETIVA", label: "Corretiva", count: summary.corrective },
-    { value: "TROCA_OLEO", label: "Troca de óleo", count: summary.oil },
-    { value: "PNEUS", label: "Pneus", count: summary.tires },
-    { value: "FREIOS", label: "Freios", count: summary.brakes },
-    { value: "OUTROS", label: "Outros", count: summary.other },
+    { value: "PREVENTIVA", label: "Preventiva" },
+    { value: "CORRETIVA", label: "Corretiva" },
+    { value: "TROCA_OLEO", label: "Troca de óleo" },
+    { value: "PNEUS", label: "Pneus" },
+    { value: "FREIOS", label: "Freios" },
+    { value: "OUTROS", label: "Outros" },
   ];
   const display = (text: string, type: string) => type === "date" ? text.split("-").reverse().join("/") : Number(text).toLocaleString("pt-BR");
   return (
@@ -54,10 +53,10 @@ export default function MaintenanceFilterBar({ value, onChange, onClear, activeC
       <div className={styles.filterControls}>
         <label className={styles.searchField}><Search size={17} aria-hidden="true" /><span className={styles.srOnly}>Buscar placa ou modelo</span><input value={value.vehicle} onChange={(event) => set("vehicle", event.target.value)} placeholder="Buscar placa ou modelo" /></label>
         <label className={styles.typeSelect}>
-          <span className={styles.srOnly}>Tipo de serviço — contagens do histórico completo</span>
+          <span className={styles.srOnly}>Filtrar por tipo de serviço</span>
           <select value={value.type} onChange={(event) => set("type", event.target.value)}>
-            <option value="">Tipo de serviço: Todos ({summary.total})</option>
-            {types.map((type) => <option key={type.value} value={type.value}>{type.label} ({type.count})</option>)}
+            <option value="">Tipo de serviço: Todos</option>
+            {types.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
           </select>
         </label>
         <button type="button" className={styles.moreFilters} aria-haspopup="dialog" onClick={() => { setDraft(value); setAdvancedOpen(true); }}><SlidersHorizontal size={16} aria-hidden="true" /> Mais filtros{advancedCount > 0 ? ` · ${advancedCount}` : ""}</button>

@@ -349,9 +349,9 @@ export default function DriversClientPage({
           <span>{total} {total === 1 ? "motorista" : "motoristas"}{!isFiltersEmpty ? " nos resultados" : ""}</span>
         </div>
         <DriversFilterBar value={filterDraft} onChange={setFilterDraft} onClear={clearFilters} activeCount={activeFilterCount} />
-      {isLoading ? (
+      {isLoading && drivers.length === 0 ? (
         <DriversSkeleton />
-      ) : isError ? (
+      ) : isError && drivers.length === 0 ? (
         <div className={driverStyles.panelMessage}><EmptyState Icon={CircleAlert} role="alert" title="Não foi possível carregar os motoristas" description="Verifique a conexão e tente novamente." actionButton={<button type="button" onClick={() => mutateDrivers()}>Tentar novamente</button>} /></div>
       ) : total === 0 ? (
         <div className={driverStyles.panelMessage}><EmptyState Icon={UsersRound} title="Nenhum motorista encontrado" description="Altere os filtros para ver outros motoristas da frota." actionButton={<button type="button" onClick={clearFilters}>Limpar filtros <ArrowRight size={17} aria-hidden="true" /></button>} /></div>
