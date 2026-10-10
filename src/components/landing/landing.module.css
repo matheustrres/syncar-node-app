@@ -52,8 +52,16 @@
   font-weight: 750;
   letter-spacing: -.035em;
 }
-.brand svg {
-  color: var(--blue);
+.logoMark {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--lime);
+  color: var(--dark);
 }
 .desktopNav {
   display: flex;
@@ -1128,6 +1136,7 @@
 }
 .footer .logo-symbol svg {
   width: 20px;
+  transform: translateY(2px);
 }
 .footer a:not(.logo):hover {
   color: var(--lime);
@@ -1327,14 +1336,6 @@
 .brand {
   color: white;
   letter-spacing: -.04em;
-}
-.brand .logoIcon {
-  padding: 6px;
-  width: 37px;
-  height: 37px;
-  border-radius: 12px;
-  background: var(--lime);
-  color: var(--dark);
 }
 .desktopNav {
   gap: 28px;
@@ -1635,9 +1636,13 @@
     font-size: 21px;
     gap: 7px;
   }
-  .brand .logoIcon {
+  .logoMark {
     width: 32px;
     height: 32px;
+  }
+  .logoMark svg {
+    width: 21px;
+    height: 21px;
   }
   .desktopNav {
     display: none;

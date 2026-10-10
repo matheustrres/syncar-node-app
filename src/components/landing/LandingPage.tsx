@@ -120,8 +120,8 @@ export default function LandingPage() {
     <div className={styles["wrap"] + " " + styles["footer-inner"]}>
     <a className={styles["logo"]} href="#inicio">
     <span className={styles["logo-symbol"]}>
-    <svg viewBox="0 0 32 32" fill="none" aria-hidden="true">
-    <path d="M5 18.5 8 10h16l3 8.5M5 18.5h22v7H5v-7ZM9 25.5v2m14-2v2M9 19h3m8 0h3" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <path d="M3.5 17.5 8.3 7h12.2l-4.8 10.5H3.5Z" fill="currentColor" />
     </svg>
     </span>syncar.</a>
     <span>© {new Date().getFullYear()} SynCar. Todos os direitos reservados.</span>

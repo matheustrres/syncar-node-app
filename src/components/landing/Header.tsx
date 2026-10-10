@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, CarFront, Menu, X } from "lucide-react";
+import { ArrowUpRight, Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import styles from "./landing.module.css";
 const navLinks = [
@@ -10,6 +10,17 @@ const navLinks = [
     { href: "#como-funciona", label: "Como funciona" },
     { href: "#planos", label: "Planos" },
 ];
+
+function BrandMark() {
+    return (
+        <span className={styles.logoMark} aria-hidden="true">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M3.5 17.5 8.3 7h12.2l-4.8 10.5H3.5Z" fill="currentColor" />
+            </svg>
+        </span>
+    );
+}
+
 export default function Header() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,7 +73,7 @@ export default function Header() {
       <header className={styles.header}>
         <nav aria-label="Navegação principal" className={`${styles.container} ${styles.headerNav}`}>
           <Link href="/" className={styles.brand}>
-            <CarFront size={27} className={styles.logoIcon} aria-hidden="true"/>
+            <BrandMark />
             syncar.
           </Link>
           <div className={styles.desktopNav}>
@@ -84,7 +95,7 @@ export default function Header() {
       {isMenuOpen && (<div id="mobile-navigation" role="dialog" aria-modal="true" aria-label="Menu de navegação" className="fixed inset-0 z-50 bg-white md:hidden">
           <div className="mx-auto flex max-w-7xl items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-8">
             <span className="inline-flex items-center gap-2 text-2xl font-bold text-slate-900">
-              <CarFront size={27} className={styles.logoIcon} aria-hidden="true"/>
+              <BrandMark />
               syncar.
             </span>
             <button ref={closeButtonRef} type="button" aria-label="Fechar menu" onClick={() => { setIsMenuOpen(false); menuButtonRef.current?.focus(); }} className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-current focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-700">
