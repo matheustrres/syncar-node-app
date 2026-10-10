@@ -1,3 +1,5 @@
+![Página inicial do Syncar](public/screenshots/landing_page/landing_page1.png)
+
 # Syncar
 
 **Português (Brasil)** · [English](#english)
@@ -34,28 +36,21 @@ As capturas de demonstração ficam em [`public/screenshots`](public/screenshots
 ### Executar localmente
 
 1. Instale as dependências:
-
-   ```bash
+  ```bash
    pnpm install
-   ```
-
+  ```
 2. Inicie PostgreSQL e Redis:
-
-   ```bash
+  ```bash
    docker compose up -d
-   ```
+  ```
 
    O PostgreSQL fica disponível em `127.0.0.1:5433` e os dados persistem no volume `postgres_data`. O Redis usa `127.0.0.1:6379` e o volume `redis_data`. As credenciais do PostgreSQL no Compose correspondem à URL do arquivo de desenvolvimento; se alterá-las, atualize também a URL. Um volume já inicializado mantém as credenciais originais.
-
 3. Copie `.env.development.example` para `.env.development.local` e ajuste os valores para seu ambiente. O arquivo de exemplo já aponta para os serviços locais do Compose. Configure também os dados de teste do Stripe e do serviço de e-mail se for usar esses recursos.
-
 4. Aplique as migrações e inicie o servidor:
-
-   ```bash
+  ```bash
    pnpm exec prisma migrate dev
    pnpm dev
-   ```
-
+  ```
 5. Acesse [http://localhost:3000](http://localhost:3000).
 
 O Next.js carrega `.env.development.local` durante `pnpm dev`. Para produção, configure as variáveis no ambiente de deploy; `.env.production.example` serve como referência. O Prisma CLI segue essa seleção por meio de `prisma.config.ts`. Não versione arquivos `.env*.local` nem use um `.env` genérico: o Next.js também o carrega em produção.
@@ -104,28 +99,21 @@ Demonstration screenshots are available in [`public/screenshots`](public/screens
 ### Run locally
 
 1. Install dependencies:
-
-   ```bash
+  ```bash
    pnpm install
-   ```
-
+  ```
 2. Start PostgreSQL and Redis:
-
-   ```bash
+  ```bash
    docker compose up -d
-   ```
+  ```
 
    PostgreSQL is available at `127.0.0.1:5433`, with data persisted in the `postgres_data` volume. Redis uses `127.0.0.1:6379` and the `redis_data` volume. The Compose PostgreSQL credentials match the development database URL; update the URL if you change them. An initialized volume keeps its original credentials.
-
 3. Copy `.env.development.example` to `.env.development.local` and set values for your environment. The example file is configured for the local Compose services. Add Stripe test credentials and email service settings if you plan to use those features.
-
 4. Apply database migrations and start the development server:
-
-   ```bash
+  ```bash
    pnpm exec prisma migrate dev
    pnpm dev
-   ```
-
+  ```
 5. Open [http://localhost:3000](http://localhost:3000).
 
 Next.js loads `.env.development.local` when running `pnpm dev`. In production, set variables in the deployment environment; `.env.production.example` is provided as a reference. Prisma CLI follows this selection through `prisma.config.ts`. Do not commit `.env*.local` files or use a generic `.env` file, which Next.js also loads in production.
